@@ -1837,14 +1837,14 @@ const Reports = () => {
             <table className="table" style={{ width: '100%', tableLayout: 'fixed' }}>
               <thead>
                 <tr>
-                  <th style={{ width: '17%', padding: '12px 10px', verticalAlign: 'middle' }}>Candidate Name</th>
-                  <th style={{ width: '10%', padding: '12px 10px', verticalAlign: 'middle' }}>Candidate ID</th>
+                  <th style={{ width: '20%', padding: '12px 10px', verticalAlign: 'middle' }}>Candidate Name</th>
+                  <th style={{ width: '11%', padding: '12px 10px', verticalAlign: 'middle' }}>Candidate ID</th>
                   <th style={{ width: '9%', padding: '12px 10px', verticalAlign: 'middle' }}>Role</th>
                   <th style={{ width: '7%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Transcript</th>
                   <th style={{ width: '8%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Tech Video Int.</th>
-                  <th style={{ width: '9%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Stage</th>
+                  <th style={{ width: '15%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Stage</th>
                   <th style={{ width: '6%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Remark</th>
-                  <th style={{ width: '12%', padding: '12px 10px', verticalAlign: 'middle' }}>Recommendation</th>
+                  <th style={{ width: '15%', padding: '12px 10px', verticalAlign: 'middle' }}>Recommendation</th>
                   <th style={{ width: '9%', padding: '12px 10px', verticalAlign: 'middle' }}>Actions</th>
                 </tr>
               </thead>
@@ -1866,7 +1866,7 @@ const Reports = () => {
                     </td>
                     <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
                       <span style={{ fontSize: '0.8rem', color: 'var(--brand-green)', backgroundColor: 'rgba(125, 186, 0, 0.1)', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
-                        {c.unique_id || String(c.id).substring(0,6)}
+                        #{c.display_id || c.unique_id || String(c.id).substring(0,6)}
                       </span>
                     </td>
                     <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
