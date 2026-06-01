@@ -672,27 +672,6 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
 
             {/* RIGHT CENTER SECTION: Status Badges */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flexShrink: 0, justifyContent: 'center' }}>
-              {isEditingReport ? (
-                <select
-                  value={editForm.finalRecommendation}
-                  onChange={(e) => setEditForm({ ...editForm, finalRecommendation: e.target.value })}
-                  style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700', backgroundColor: '#fff', border: '1px solid #ccc', color: '#000' }}
-                >
-                  <option value="Under Review">Under Review</option>
-                  <option value="Selected">Selected</option>
-                  <option value="Rejected">Rejected</option>
-                </select>
-              ) : (
-                <div style={{
-                  padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700',
-                  backgroundColor: 'rgba(245,158,11,0.1)',
-                  border: editForm.finalRecommendation === 'Selected' ? '1px solid #10b981' : editForm.finalRecommendation === 'Rejected' ? '1px solid #ef4444' : '1px solid #f59e0b',
-                  color: editForm.finalRecommendation === 'Selected' ? '#10b981' : editForm.finalRecommendation === 'Rejected' ? '#ef4444' : '#f59e0b',
-                  display: 'flex', alignItems: 'center', gap: '6px'
-                }}>
-                  <span style={{ fontSize: '10px' }}>●</span> {editForm.finalRecommendation || 'Under Review'}
-                </div>
-              )}
               <div style={{
                 padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700',
                 backgroundColor: 'rgba(16,185,129,0.05)',
@@ -1725,15 +1704,14 @@ const Reports = () => {
             <table className="table" style={{ width: '100%', tableLayout: 'fixed' }}>
               <thead>
                 <tr>
-                  <th style={{ width: '20%', padding: '12px 10px', verticalAlign: 'middle' }}>Candidate Name</th>
-                  <th style={{ width: '11%', padding: '12px 10px', verticalAlign: 'middle' }}>Candidate ID</th>
-                  <th style={{ width: '9%', padding: '12px 10px', verticalAlign: 'middle' }}>Role</th>
+                  <th style={{ width: '25%', padding: '12px 10px', verticalAlign: 'middle' }}>Candidate Name</th>
+                  <th style={{ width: '15%', padding: '12px 10px', verticalAlign: 'middle' }}>Candidate ID</th>
+                  <th style={{ width: '11%', padding: '12px 10px', verticalAlign: 'middle' }}>Role</th>
                   <th style={{ width: '7%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Transcript</th>
                   <th style={{ width: '8%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Tech Video Int.</th>
-                  <th style={{ width: '15%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Stage</th>
+                  <th style={{ width: '17%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Stage</th>
                   <th style={{ width: '6%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Remark</th>
-                  <th style={{ width: '15%', padding: '12px 10px', verticalAlign: 'middle' }}>Recommendation</th>
-                  <th style={{ width: '9%', padding: '12px 10px', verticalAlign: 'middle' }}>Actions</th>
+                  <th style={{ width: '11%', padding: '12px 10px', verticalAlign: 'middle' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -1861,33 +1839,7 @@ const Reports = () => {
                         );
                       })()}
                     </td>
-                    <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
-                      {(() => {
-                        const stageLower = String(c.current_stage ?? c.currentStage ?? c.stage ?? '').toLowerCase();
-                        const isRejected = stageLower.includes('reject');
-                        const isSelected = stageLower.includes('selected') || stageLower.includes('hired');
-                        
-                        const displayRec = isRejected ? 'Rejected' : isSelected ? 'Selected' : (c.finalRecommendation || c.final_recommendation || 'Under Review');
-                        
-                        return (
-                          <span style={{
-                            padding: '3px 8px', borderRadius: '999px', fontSize: '0.7rem', fontWeight: '700',
-                            backgroundColor:
-                              displayRec === 'Selected' ? 'rgba(16,185,129,0.1)' :
-                              displayRec === 'Rejected' ? 'rgba(239,68,68,0.1)' : 'rgba(59,130,246,0.1)',
-                            color:
-                              displayRec === 'Selected' ? '#065f46' :
-                              displayRec === 'Rejected' ? '#7f1d1d' : '#1e40af',
-                            border: `1px solid ${
-                              displayRec === 'Selected' ? 'rgba(16,185,129,0.25)' :
-                              displayRec === 'Rejected' ? 'rgba(239,68,68,0.25)' : 'rgba(59,130,246,0.25)'
-                            }`
-                          }}>
-                            {displayRec}
-                          </span>
-                        );
-                      })()}
-                    </td>
+
                     <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
                       <div style={{ display: 'flex', gap: '4px' }}>
                         <button
