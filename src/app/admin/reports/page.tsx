@@ -686,11 +686,11 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
                 <div style={{
                   padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700',
                   backgroundColor: 'rgba(245,158,11,0.1)',
-                  border: candidate.finalRecommendation === 'Selected' ? '1px solid #10b981' : candidate.finalRecommendation === 'Rejected' ? '1px solid #ef4444' : '1px solid #f59e0b',
-                  color: candidate.finalRecommendation === 'Selected' ? '#10b981' : candidate.finalRecommendation === 'Rejected' ? '#ef4444' : '#f59e0b',
+                  border: editForm.finalRecommendation === 'Selected' ? '1px solid #10b981' : editForm.finalRecommendation === 'Rejected' ? '1px solid #ef4444' : '1px solid #f59e0b',
+                  color: editForm.finalRecommendation === 'Selected' ? '#10b981' : editForm.finalRecommendation === 'Rejected' ? '#ef4444' : '#f59e0b',
                   display: 'flex', alignItems: 'center', gap: '6px'
                 }}>
-                  <span style={{ fontSize: '10px' }}>●</span> {candidate.finalRecommendation || 'Under Review'}
+                  <span style={{ fontSize: '10px' }}>●</span> {editForm.finalRecommendation || 'Under Review'}
                 </div>
               )}
               <div style={{
@@ -757,118 +757,6 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
             </div>
           </div>
 
-
-
-          {/* BOTTOM KPI BAR */}
-          <div style={{ padding: '0 32px 12px 32px', backgroundColor: 'transparent' }}>
-            <div style={{ 
-              maxWidth: '1440px', 
-              margin: '0 auto', 
-              backgroundColor: '#0A2D82', 
-              borderRadius: '12px', 
-              border: '1px solid rgba(255,255,255,0.1)', 
-              padding: '12px 24px', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between', 
-              width: '100%',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
-            }}>
-              
-              {/* KPI 1: Resume Match */}
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                <FileText size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Resume Match</span>
-                  {isEditingReport ? (
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={editForm.resumeScore}
-                      onChange={(e) => setEditForm({ ...editForm, resumeScore: Number(e.target.value) })}
-                      style={{ width: '60px', color: '#000', padding: '2px 4px', fontSize: '0.85rem', borderRadius: '4px', border: '1px solid #ccc' }}
-                    />
-                  ) : (
-                    <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{resolvedScores.resumeScore || 0}%</span>
-                  )}
-                </div>
-              </div>
-              <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
-
-              {/* KPI 2: Video Score */}
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                <Video size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Screening Video</span>
-                  {isEditingReport ? (
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={editForm.videoScore}
-                      onChange={(e) => setEditForm({ ...editForm, videoScore: Number(e.target.value) })}
-                      style={{ width: '60px', color: '#000', padding: '2px 4px', fontSize: '0.85rem', borderRadius: '4px', border: '1px solid #ccc' }}
-                    />
-                  ) : (
-                    <span style={{ color: '#3b82f6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{resolvedScores.videoScore || 0}%</span>
-                  )}
-                </div>
-              </div>
-              <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
-
-              {/* KPI 3: Technical Score */}
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                <Code2 size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Tech Interview</span>
-                  {isEditingReport ? (
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={editForm.techScore}
-                      onChange={(e) => setEditForm({ ...editForm, techScore: Number(e.target.value) })}
-                      style={{ width: '60px', color: '#000', padding: '2px 4px', fontSize: '0.85rem', borderRadius: '4px', border: '1px solid #ccc' }}
-                    />
-                  ) : (
-                    <span style={{ color: '#8b5cf6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{resolvedScores.techScore || 0}%</span>
-                  )}
-                </div>
-              </div>
-              <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
-
-              {/* KPI 4: Communication */}
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                <MessageSquare size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Communication</span>
-                  <span style={{ color: '#f59e0b', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{commScore}%</span>
-                </div>
-              </div>
-              <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
-
-              {/* KPI 5: Confidence */}
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                <Activity size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Confidence</span>
-                  <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{confLabel}</span>
-                </div>
-              </div>
-              <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
-
-              {/* KPI 6: Recommendation */}
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                <Award size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Recommendation</span>
-                  <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{recLabel}</span>
-                </div>
-              </div>
-
-            </div>
-          </div>
         </div>
 
         {/* Custom Styles for Hover Zoom / Expansion */}
