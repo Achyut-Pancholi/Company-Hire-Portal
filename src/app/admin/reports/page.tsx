@@ -331,11 +331,18 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
 
   // States for report edit and sharing link generation
   const [isEditingReport, setIsEditingReport] = useState(false);
-  const [editForm, setEditForm] = useState({
-    finalRecommendation: candidate.finalRecommendation || 'Under Review',
-    resumeScore: candidate.resumeScore || 0,
-    videoScore: candidate.videoScore || 0,
-    techScore: candidate.techScore || 0,
+  const [editForm, setEditForm] = useState(() => {
+    const stageLower = String(candidate?.current_stage ?? candidate?.currentStage ?? candidate?.stage ?? '').toLowerCase();
+    const isRejected = stageLower.includes('reject');
+    const isSelected = stageLower.includes('selected') || stageLower.includes('hired');
+    const defaultRec = isRejected ? 'Rejected' : isSelected ? 'Selected' : (candidate?.finalRecommendation || candidate?.final_recommendation || 'Under Review');
+    
+    return {
+      finalRecommendation: defaultRec,
+      resumeScore: candidate?.resumeScore || 0,
+      videoScore: candidate?.videoScore || 0,
+      techScore: candidate?.techScore || 0,
+    };
   });
 
   const [generatedLink, setGeneratedLink] = useState('');
@@ -346,8 +353,13 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
 
   useEffect(() => {
     if (candidate) {
+      const stageLower = String(candidate?.current_stage ?? candidate?.currentStage ?? candidate?.stage ?? '').toLowerCase();
+      const isRejected = stageLower.includes('reject');
+      const isSelected = stageLower.includes('selected') || stageLower.includes('hired');
+      const defaultRec = isRejected ? 'Rejected' : isSelected ? 'Selected' : (candidate?.finalRecommendation || candidate?.final_recommendation || 'Under Review');
+
       setEditForm({
-        finalRecommendation: candidate.finalRecommendation || 'Under Review',
+        finalRecommendation: defaultRec,
         resumeScore: candidate.resumeScore || 0,
         videoScore: candidate.videoScore || 0,
         techScore: candidate.techScore || 0,
@@ -1825,11 +1837,9 @@ const Reports = () => {
             <table className="table" style={{ width: '100%', tableLayout: 'fixed' }}>
               <thead>
                 <tr>
-                  <th style={{ width: '17%', padding: '12px 10px', verticalAlign: 'middle' }}>Candidate Name & ID</th>
+                  <th style={{ width: '17%', padding: '12px 10px', verticalAlign: 'middle' }}>Candidate Name</th>
+                  <th style={{ width: '10%', padding: '12px 10px', verticalAlign: 'middle' }}>Candidate ID</th>
                   <th style={{ width: '9%', padding: '12px 10px', verticalAlign: 'middle' }}>Role</th>
-                  <th style={{ width: '5%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Resume</th>
-                  <th style={{ width: '9%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Screening Video</th>
-                  <th style={{ width: '9%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Tech Int. Score</th>
                   <th style={{ width: '7%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Transcript</th>
                   <th style={{ width: '8%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Tech Video Int.</th>
                   <th style={{ width: '9%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Stage</th>
@@ -1849,25 +1859,18 @@ const Reports = () => {
                         <div style={{ minWidth: 0, overflow: 'hidden' }}>
                           <div style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {c.name}
-                            <span style={{ marginLeft: '6px', fontSize: '0.7rem', color: 'var(--brand-green)', backgroundColor: 'rgba(125, 186, 0, 0.1)', padding: '2px 6px', borderRadius: '10px' }}>
-                              {c.unique_id || String(c.id).substring(0,6)}
-                            </span>
                           </div>
                           <div style={{ fontSize: '0.68rem', color: 'var(--gray-500)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</div>
                         </div>
                       </div>
                     </td>
                     <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--brand-green)', backgroundColor: 'rgba(125, 186, 0, 0.1)', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
+                        {c.unique_id || String(c.id).substring(0,6)}
+                      </span>
+                    </td>
+                    <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
                       <span className="badge badge-info" style={{ fontSize: '0.68rem', whiteSpace: 'nowrap' }}>{c.jobApplied || '—'}</span>
-                    </td>
-                    <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
-                      <span style={{ fontWeight: '700', color: scoreColor(c.resumeScore), fontSize: '0.82rem' }}>{c.resumeScore || '—'}</span>
-                    </td>
-                    <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
-                      <span style={{ fontWeight: '700', color: scoreColor(c.videoScore), fontSize: '0.82rem' }}>{c.videoScore || '—'}</span>
-                    </td>
-                    <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
-                      <span style={{ fontWeight: '700', color: scoreColor(c.techScore), fontSize: '0.82rem' }}>{c.techScore || '—'}</span>
                     </td>
                     <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
                       <button
@@ -1971,21 +1974,31 @@ const Reports = () => {
                       })()}
                     </td>
                     <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
-                      <span style={{
-                        padding: '3px 8px', borderRadius: '999px', fontSize: '0.7rem', fontWeight: '700',
-                        backgroundColor:
-                          c.finalRecommendation === 'Selected' ? 'rgba(16,185,129,0.1)' :
-                          c.finalRecommendation === 'Rejected' ? 'rgba(239,68,68,0.1)' : 'rgba(59,130,246,0.1)',
-                        color:
-                          c.finalRecommendation === 'Selected' ? '#065f46' :
-                          c.finalRecommendation === 'Rejected' ? '#7f1d1d' : '#1e40af',
-                        border: `1px solid ${
-                          c.finalRecommendation === 'Selected' ? 'rgba(16,185,129,0.25)' :
-                          c.finalRecommendation === 'Rejected' ? 'rgba(239,68,68,0.25)' : 'rgba(59,130,246,0.25)'
-                        }`
-                      }}>
-                        {c.finalRecommendation || 'Under Review'}
-                      </span>
+                      {(() => {
+                        const stageLower = String(c.current_stage ?? c.currentStage ?? c.stage ?? '').toLowerCase();
+                        const isRejected = stageLower.includes('reject');
+                        const isSelected = stageLower.includes('selected') || stageLower.includes('hired');
+                        
+                        const displayRec = isRejected ? 'Rejected' : isSelected ? 'Selected' : (c.finalRecommendation || c.final_recommendation || 'Under Review');
+                        
+                        return (
+                          <span style={{
+                            padding: '3px 8px', borderRadius: '999px', fontSize: '0.7rem', fontWeight: '700',
+                            backgroundColor:
+                              displayRec === 'Selected' ? 'rgba(16,185,129,0.1)' :
+                              displayRec === 'Rejected' ? 'rgba(239,68,68,0.1)' : 'rgba(59,130,246,0.1)',
+                            color:
+                              displayRec === 'Selected' ? '#065f46' :
+                              displayRec === 'Rejected' ? '#7f1d1d' : '#1e40af',
+                            border: `1px solid ${
+                              displayRec === 'Selected' ? 'rgba(16,185,129,0.25)' :
+                              displayRec === 'Rejected' ? 'rgba(239,68,68,0.25)' : 'rgba(59,130,246,0.25)'
+                            }`
+                          }}>
+                            {displayRec}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
                       <div style={{ display: 'flex', gap: '4px' }}>

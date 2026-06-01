@@ -420,15 +420,23 @@ export default async function CandidateReportPage({ params }: { params: Promise<
 
           {/* RIGHT CENTER SECTION: Status Badges */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flexShrink: 0, justifyContent: 'center' }}>
-            <div style={{
-              padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700',
-              backgroundColor: 'rgba(245,158,11,0.1)',
-              border: mappedCandidate.finalRecommendation === 'Selected' ? '1px solid #10b981' : mappedCandidate.finalRecommendation === 'Rejected' ? '1px solid #ef4444' : '1px solid #f59e0b',
-              color: mappedCandidate.finalRecommendation === 'Selected' ? '#10b981' : mappedCandidate.finalRecommendation === 'Rejected' ? '#ef4444' : '#f59e0b',
-              display: 'flex', alignItems: 'center', gap: '6px'
-            }}>
-              <span style={{ fontSize: '10px' }}>●</span> {mappedCandidate.finalRecommendation || 'Under Review'}
-            </div>
+            {(() => {
+              const stageLower = String(mappedCandidate.current_stage || mappedCandidate.stage || '').toLowerCase();
+              const isRejected = stageLower.includes('reject');
+              const isSelected = stageLower.includes('selected') || stageLower.includes('hired');
+              const displayRec = isRejected ? 'Rejected' : isSelected ? 'Selected' : (mappedCandidate.finalRecommendation || 'Under Review');
+              return (
+                <div style={{
+                  padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700',
+                  backgroundColor: 'rgba(245,158,11,0.1)',
+                  border: displayRec === 'Selected' ? '1px solid #10b981' : displayRec === 'Rejected' ? '1px solid #ef4444' : '1px solid #f59e0b',
+                  color: displayRec === 'Selected' ? '#10b981' : displayRec === 'Rejected' ? '#ef4444' : '#f59e0b',
+                  display: 'flex', alignItems: 'center', gap: '6px'
+                }}>
+                  <span style={{ fontSize: '10px' }}>●</span> {displayRec}
+                </div>
+              );
+            })()}
             <div style={{
               padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700',
               backgroundColor: 'rgba(16,185,129,0.05)',
