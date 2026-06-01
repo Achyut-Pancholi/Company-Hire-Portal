@@ -715,6 +715,201 @@ const ResumeUpload = () => {
                 <MessageSquare size={16} color="#d97706" />
               </div>
               <div>
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                              }}
+                            >
+                              <CheckSquare size={12} />
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => setConfirmModal({ type: 'reject', candidate })}
+                              disabled={actionLoading === candidate.id}
+                              title="Reject Resume"
+                              style={{
+                                padding: '4px 8px',
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                border: 'none',
+                                borderRadius: '6px',
+                                background: '#ef4444',
+                                color: '#fff',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                              }}
+                            >
+                              <XSquare size={12} />
+                              Reject
+                            </button>
+                          </>
+                        )}
+                        <div style={{ position: 'relative' }}>
+                          <button 
+                            className="btn btn-ghost dropdown-trigger" 
+                            style={{ padding: '0.25rem 0.5rem' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveDropdown(activeDropdown === candidate.id ? null : candidate.id);
+                            }}
+                          >
+                            <MoreVertical size={16} />
+                          </button>
+                          
+                          {activeDropdown === candidate.id && (
+                            <div 
+                              className="dropdown-menu"
+                              style={{ 
+                                position: 'absolute', 
+                                right: 0, 
+                                top: '100%', 
+                                backgroundColor: 'var(--surface)', 
+                                border: '1px solid var(--border)', 
+                                borderRadius: 'var(--radius-md)', 
+                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', 
+                                zIndex: 50,
+                                minWidth: '150px',
+                                padding: '0.375rem 0'
+                              }}
+                            >
+                              <button 
+                                style={{ 
+                                  width: '100%', 
+                                  textAlign: 'left', 
+                                  padding: '0.5rem 1rem', 
+                                  fontSize: '0.875rem', 
+                                  color: 'var(--brand-navy)',
+                                  background: 'none',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.5rem'
+                                }}
+                                className="hover:bg-gray-50 transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveDropdown(null);
+                                  const shareUrl = `${window.location.origin.replace('5173', '3000')}/resume/share/${candidate.id}`;
+                                  if (navigator.clipboard && window.isSecureContext) {
+                                    navigator.clipboard.writeText(shareUrl).then(() => {
+                                      setStatus({ type: 'success', message: 'Read-only resume link copied to clipboard!' });
+                                      setTimeout(() => setStatus({ type: '', message: '' }), 3000);
+                                    }).catch(err => {
+                                      prompt("Copy this link to share:", shareUrl);
+                                    });
+                                  } else {
+                                    prompt("Copy this link to share:", shareUrl);
+                                  }
+                                }}
+                              >
+                                <Share2 size={14} /> Share Resume
+                              </button>
+                              <button 
+                                style={{ 
+                                  width: '100%', 
+                                  textAlign: 'left', 
+                                  padding: '0.5rem 1rem', 
+                                  fontSize: '0.875rem', 
+                                  color: 'var(--danger)',
+                                  background: 'none',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.5rem'
+                                }}
+                                className="hover:bg-red-50 hover:bg-opacity-10 transition-colors"
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  setActiveDropdown(null);
+                                  if(window.confirm(`Are you sure you want to delete ${candidate.name}?`)) {
+                                    try {
+                                      const res = await apiFetch(`/api/candidates?id=${candidate.id}`, {
+                                        method: 'DELETE'
+                                      });
+                                      if(res.ok) {
+                                        refreshCandidates();
+                                        setStatus({ type: 'success', message: `${candidate.name} has been deleted.` });
+                                      } else {
+                                        setStatus({ type: 'error', message: `Failed to delete ${candidate.name}.` });
+                                      }
+                                    } catch(err) { 
+                                      console.error(err); 
+                                      setStatus({ type: 'error', message: `An error occurred while deleting.` });
+                                    }
+                                  }
+                                }}
+                              >
+                                <Trash2 size={14} /> Delete Profile
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Details Modal (Standard Resume) */}
+      {selectedCandidate && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 999,
+          padding: '2rem',
+          animation: 'fadeIn 0.2s ease-out'
+        }} onClick={() => setSelectedCandidate(null)}>
+          <StandardResume 
+            candidate={selectedCandidate} 
+            onClose={() => setSelectedCandidate(null)} 
+            onUpdate={refreshCandidates} 
+          />
+        </div>
+      )}
+
+      {/* Remark Popover Modal */}
+      {remarkPopover && (
+        <div
+          style={{
+            position: 'fixed', inset: 0,
+            backgroundColor: 'rgba(15,23,42,0.5)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 9999, padding: '1.5rem',
+          }}
+          onClick={() => setRemarkPopover(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#fff', borderRadius: '16px', padding: '24px 28px',
+              width: '100%', maxWidth: '400px',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+              animation: 'slideInRemark 0.18s ease',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(245,158,11,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <MessageSquare size={16} color="#d97706" />
+              </div>
+              <div>
                 <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#0f172a' }}>Add Remark</div>
                 <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{remarkPopover.name}</div>
               </div>
@@ -753,12 +948,16 @@ const ResumeUpload = () => {
                 onClick={async () => {
                   setRemarkSaving(true);
                   try {
-                    await apiFetch('/api/candidates', {
+                    const res = await apiFetch('/api/candidates', {
                       method: 'PATCH',
-                      body: JSON.stringify({ id: remarkPopover.candidateId, remark_reports: remarkText, remark: remarkText }),
+                      body: JSON.stringify({ id: remarkPopover.candidateId, remark_reports: remarkText }),
                     });
-                    await refreshCandidates();
-                    setRemarkPopover(null);
+                    if (res && res.ok) {
+                      await refreshCandidates();
+                      setRemarkPopover(null);
+                    } else {
+                      console.error('Failed to save remark:', res ? await res.text() : 'No response');
+                    }
                   } catch (e) {
                     console.error('Remark save error:', e);
                   } finally {

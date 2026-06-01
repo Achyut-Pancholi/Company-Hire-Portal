@@ -738,6 +738,32 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
 
         </div>
 
+        {/* If editing, show the edit controls directly below the header */}
+        {isEditingReport && (
+          <div style={{ padding: '16px 32px', backgroundColor: 'rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', gap: '24px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.75rem', color: '#fff', fontWeight: 'bold' }}>Resume Match (%)</label>
+              <input type="number" min="0" max="100" value={editForm.resumeScore} onChange={(e) => setEditForm({ ...editForm, resumeScore: Number(e.target.value) })} style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)', backgroundColor: '#fff', color: '#000', fontSize: '0.85rem' }} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.75rem', color: '#fff', fontWeight: 'bold' }}>Screening Video (%)</label>
+              <input type="number" min="0" max="100" value={editForm.videoScore} onChange={(e) => setEditForm({ ...editForm, videoScore: Number(e.target.value) })} style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)', backgroundColor: '#fff', color: '#000', fontSize: '0.85rem' }} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.75rem', color: '#fff', fontWeight: 'bold' }}>Tech Interview (%)</label>
+              <input type="number" min="0" max="100" value={editForm.techScore} onChange={(e) => setEditForm({ ...editForm, techScore: Number(e.target.value) })} style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)', backgroundColor: '#fff', color: '#000', fontSize: '0.85rem' }} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.75rem', color: '#fff', fontWeight: 'bold' }}>Recommendation</label>
+              <select value={editForm.finalRecommendation} onChange={(e) => setEditForm({ ...editForm, finalRecommendation: e.target.value })} style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)', backgroundColor: '#fff', color: '#000', fontSize: '0.85rem' }}>
+                <option value="Under Review">Under Review</option>
+                <option value="Selected">Selected</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+            </div>
+          </div>
+        )}
+
         {/* Custom Styles for Hover Zoom / Expansion */}
         <style dangerouslySetInnerHTML={{__html: `
           .zoom-box {
