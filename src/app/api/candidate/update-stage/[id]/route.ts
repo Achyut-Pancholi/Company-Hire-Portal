@@ -12,6 +12,7 @@ interface StageTransition {
   current_stage: string;
   stage_order: number;
   workflow_locked: boolean;
+  final_recommendation?: string;
 }
 
 const TRANSITIONS: Record<StageAction, StageTransition> = {
@@ -32,12 +33,14 @@ const TRANSITIONS: Record<StageAction, StageTransition> = {
     current_stage: "Report Generation",
     stage_order: 5,
     workflow_locked: true, // TERMINAL
+    final_recommendation: "Selected",
   },
   reject: {
     technical_stage_status: "Rejected",
     current_stage: "Rejected at Technical Stage",
     stage_order: 0,
     workflow_locked: true, // TERMINAL
+    final_recommendation: "Rejected",
   },
 };
 

@@ -57,6 +57,7 @@ export async function POST(
         workflow_locked: true, // TERMINAL
         rejected_reason: reason || null,
         rejected_at: new Date().toISOString(),
+        final_recommendation: "Rejected",
       })
       .eq("id", id)
       .select()
