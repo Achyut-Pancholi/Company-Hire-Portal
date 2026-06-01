@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { UploadCloud, CheckCircle, AlertCircle, FileText, Search, MoreVertical, Loader2, Trash2, Clock, Mail, Send, Share2, CheckSquare, XSquare } from 'lucide-react';
+import { UploadCloud, CheckCircle, AlertCircle, FileText, Search, MoreVertical, Loader2, Trash2, Clock, Mail, Send, Share2, CheckSquare, XSquare, MessageSquare } from 'lucide-react';
 import { useAppContext } from '@/components/admin/context/AppContext';
 import StandardResume from '@/components/admin/StandardResume';
 import WorkflowBadge from '@/components/admin/WorkflowBadge';
@@ -21,6 +21,10 @@ const ResumeUpload = () => {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [confirmModal, setConfirmModal] = useState<{ type: 'approve' | 'reject', candidate: any } | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  
+  const [remarkPopover, setRemarkPopover] = useState<{ candidateId: string | number, name: string } | null>(null);
+  const [remarkText, setRemarkText] = useState('');
+  const [remarkSaving, setRemarkSaving] = useState(false);
 
   const handleWorkflowAction = async (candidate: any, type: 'approve' | 'reject', reason?: string) => {
     setActionLoading(candidate.id);
@@ -411,6 +415,7 @@ const ResumeUpload = () => {
                 <th>Email</th>
                 <th>Role</th>
                 <th>Status</th>
+                <th style={{ textAlign: 'center' }}>Remark</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -446,6 +451,50 @@ const ResumeUpload = () => {
                     <td>{candidate.jobApplied}</td>
                     <td>
                       <WorkflowBadge status={candidate.resume_stage_status || candidate.resumeStageStatus || 'Pending'} size="sm" />
+                    </td>
+                    <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                      {(() => {
+                        const candidateRemark = candidate.remark_reports || candidate.remark;
+                        const hasRemark = !!candidateRemark;
+                        return (
+                          <button
+                            onClick={() => {
+                              setRemarkPopover({ candidateId: candidate.id, name: candidate.name });
+                              setRemarkText(candidateRemark || '');
+                            }}
+                            title={hasRemark ? `Remark: ${candidateRemark}` : 'Add Remark'}
+                            style={{
+                              width: '30px',
+                              height: '30px',
+                              borderRadius: '8px',
+                              border: hasRemark ? '1.5px solid #d97706' : '1.5px solid #e2e8f0',
+                              background: hasRemark ? '#f59e0b' : '#f8fafc',
+                              color: hasRemark ? '#fff' : '#94a3b8',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              position: 'relative',
+                              transition: 'all 0.2s',
+                              boxShadow: hasRemark ? '0 2px 5px rgba(245,158,11,0.3)' : 'none',
+                            }}
+                          >
+                            <MessageSquare size={13} />
+                            {hasRemark && (
+                              <span style={{
+                                position: 'absolute',
+                                top: '-4px',
+                                right: '-4px',
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                background: '#10b981',
+                                border: '1.5px solid #fff',
+                              }} />
+                            )}
+                          </button>
+                        );
+                      })()}
                     </td>
                     <td>
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -640,7 +689,104 @@ const ResumeUpload = () => {
         </div>
       )}
 
+      {/* Remark Popover Modal */}
+      {remarkPopover && (
+        <div
+          style={{
+            position: 'fixed', inset: 0,
+            backgroundColor: 'rgba(15,23,42,0.5)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 9999, padding: '1.5rem',
+          }}
+          onClick={() => setRemarkPopover(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#fff', borderRadius: '16px', padding: '24px 28px',
+              width: '100%', maxWidth: '400px',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+              animation: 'slideInRemark 0.18s ease',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(245,158,11,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <MessageSquare size={16} color="#d97706" />
+              </div>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#0f172a' }}>Add Remark</div>
+                <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{remarkPopover.name}</div>
+              </div>
+            </div>
 
+            <textarea
+              value={remarkText}
+              onChange={(e) => setRemarkText(e.target.value)}
+              placeholder="Write your remark about this candidate..."
+              rows={4}
+              autoFocus
+              style={{
+                width: '100%', boxSizing: 'border-box',
+                border: '1.5px solid #e2e8f0', borderRadius: '10px',
+                padding: '10px 12px', fontSize: '0.85rem', color: '#1e293b',
+                resize: 'vertical', outline: 'none', fontFamily: 'inherit',
+                transition: 'border-color 0.2s', marginBottom: '16px',
+              }}
+              onFocus={(e) => (e.target.style.borderColor = '#f59e0b')}
+              onBlur={(e) => (e.target.style.borderColor = '#e2e8f0')}
+            />
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => setRemarkPopover(null)}
+                disabled={remarkSaving}
+                style={{
+                  flex: 1, padding: '9px', border: '1.5px solid #e2e8f0',
+                  borderRadius: '8px', background: '#f8fafc', color: '#475569',
+                  fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  setRemarkSaving(true);
+                  try {
+                    await apiFetch('/api/candidates', {
+                      method: 'PATCH',
+                      body: JSON.stringify({ id: remarkPopover.candidateId, remark_reports: remarkText, remark: remarkText }),
+                    });
+                    await refreshCandidates();
+                    setRemarkPopover(null);
+                  } catch (e) {
+                    console.error('Remark save error:', e);
+                  } finally {
+                    setRemarkSaving(false);
+                  }
+                }}
+                disabled={remarkSaving}
+                style={{
+                  flex: 1, padding: '9px', border: 'none',
+                  borderRadius: '8px',
+                  background: remarkSaving ? '#fde68a' : '#f59e0b',
+                  color: '#fff', fontSize: '0.85rem', fontWeight: 700,
+                  cursor: remarkSaving ? 'not-allowed' : 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                }}
+              >
+                {remarkSaving ? 'Saving...' : '💾 Save Remark'}
+              </button>
+            </div>
+          </div>
+          <style>{`
+            @keyframes slideInRemark {
+              from { opacity: 0; transform: scale(0.95) translateY(-8px); }
+              to   { opacity: 1; transform: scale(1) translateY(0); }
+            }
+          `}</style>
+        </div>
+      )}
 
     </div>
   );
