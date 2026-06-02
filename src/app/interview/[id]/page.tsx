@@ -76,6 +76,12 @@ export default function InterviewPage() {
         if (data.status === "in_progress") { setStage("in-progress-blocked"); return; }
         if (isExpired(data.expires_at)) { setStage("expired"); return; }
 
+        const localBlock = localStorage.getItem(`interview_started_${id}`);
+        if (localBlock === "true") {
+          setStage("in-progress-blocked");
+          return;
+        }
+
         setInterview(data);
         setStage("welcome");
       } catch {
@@ -287,18 +293,25 @@ export default function InterviewPage() {
       });
     }
     
-    setStage("interview");
-
-    // 2. Wait for backend to confirm the 'in_progress' status
+    // 2. Wait for backend to confirm the 'in_progress' status before proceeding
     try {
-      await fetch(`/api/interviews/${id}`, {
+      const patchRes = await fetch(`/api/interviews/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "in_progress" })
       });
+      if (!patchRes.ok) {
+        alert("Failed to start the interview session. Please check your connection and try again.");
+        return;
+      }
     } catch (err) {
       console.error("Failed to update status:", err);
+      alert("Failed to start the interview session. Please check your connection and try again.");
+      return;
     }
+
+    localStorage.setItem(`interview_started_${id}`, "true");
+    setStage("interview");
     
     // 3. Start AI voice
     if (interview) {
