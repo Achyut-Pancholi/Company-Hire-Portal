@@ -370,7 +370,6 @@ export function TranscriptIntelligenceEngine({ transcript, storedAnalysis }: Tra
         <Pill label="Tone"        value={analysis.tone}          color={toneStyle.color}   bg={toneStyle.bg}   />
         <Pill label="Sentiment"   value={analysis.sentiment}     color={sentStyle.color}   bg={sentStyle.bg}   />
         <Pill label="Filler Words" value={`${analysis.fillerWordCount} detected`}  color={fillerStyle.color} bg={fillerStyle.bg} />
-        <Pill label="Recommendation" value={analysis.recommendation} color={recStyle.color} bg={recStyle.bg} />
       </div>
 
       {/* ── RADAR CHART + DETAILED SCORE BREAKDOWN ── */}
@@ -441,38 +440,8 @@ export function TranscriptIntelligenceEngine({ transcript, storedAnalysis }: Tra
         </div>
       </div>
 
-      {/* ── TWO COLUMN: RECOMMENDATION + KEY OBSERVATIONS ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-
-        {/* AI Recommendation */}
-        <div style={{
-          backgroundColor: '#fff', borderRadius: '20px',
-          border: '1px solid var(--border)', padding: '1.25rem',
-          display: 'flex', flexDirection: 'column', gap: '12px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Lightbulb size={15} color="#f59e0b" />
-            <p style={{ margin: 0, fontSize: '0.74rem', fontWeight: '700', color: 'var(--brand-navy)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              AI Recommendation
-            </p>
-          </div>
-          <div style={{
-            padding: '12px 14px', borderRadius: '12px',
-            backgroundColor: recStyle.bg,
-            border: `1px solid ${recStyle.color}33`,
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center'
-          }}>
-            <p style={{ margin: 0, fontSize: '0.78rem', fontWeight: '700', color: recStyle.color, marginBottom: '8px' }}>
-              {analysis.recommendation}
-            </p>
-            <div style={{ margin: 0, fontSize: '0.74rem', color: 'var(--gray-700)', lineHeight: 1.6 }}>
-              <StructuredAnalysisView text={analysis.recommendationReason} />
-            </div>
-          </div>
-        </div>
+      {/* ── KEY OBSERVATIONS ── */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
         {/* Key Observations */}
         <div style={{
