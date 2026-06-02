@@ -17,6 +17,7 @@ create table public.interviews (
   video_url text,
   transcript jsonb,
   summary text,
+  sender_email text,
   share_token uuid default gen_random_uuid() not null unique
 );
 

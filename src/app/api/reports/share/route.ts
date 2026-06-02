@@ -89,7 +89,7 @@ function reportEmailTemplate(
               <table width="100%" cellpadding="0" cellspacing="0">
                 ${scoreRow("Resume Score", scores.resume)}
                 ${scoreRow("Video Interview", scores.video)}
-                ${scoreRow("Technical Score", scores.tech)}
+                ${scoreRow("Tech Interview", scores.tech)}
                 <tr style="border-top:1px solid #e2e8f0;">
                   <td style="padding:10px 0 4px;color:#0E2D7B;font-size:13px;font-weight:700;">Final Recommendation</td>
                   <td style="padding:10px 0 4px;text-align:right;">
@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
 
     // 1. Generate a secure random token
     const token = crypto.randomBytes(32).toString("hex");
-    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours
 
     // 2. First fetch the existing extracted_data so we can merge into it
     const { data: existing, error: fetchError } = await supabase
@@ -182,8 +182,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Failed to generate report link" }, { status: 500 });
     }
 
-    // 5. Build the report URL
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    // 5. Build the report URL dynamically from the request origin to guarantee correctness
+    let baseUrl = req.nextUrl.origin;
+    if (baseUrl === "null" || !baseUrl || baseUrl.includes("localhost")) {
+      baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    }
+    baseUrl = baseUrl.replace(/\/$/, "");
     const reportUrl = `${baseUrl}/report/${token}`;
 
     // 6. Send email to the candidate

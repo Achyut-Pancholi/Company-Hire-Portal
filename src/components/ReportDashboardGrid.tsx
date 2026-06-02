@@ -8,7 +8,73 @@ import {
 } from 'lucide-react';
 import { ResumeViewButton } from '@/components/ResumeViewButton';
 import { TranscriptIntelligenceEngine } from '@/components/reports/TranscriptIntelligenceEngine';
+import { useAppContext } from '@/components/admin/context/AppContext';
 import { analyzeTranscript } from '@/utils/transcriptAnalyzer';
+
+// CONTROL_BAR_PX: Google Drive /preview renders its controls ~52px below the video frame.
+// We over-size the iframe height by this amount so the bar is fully visible.
+const GDRIVE_CTRL_BAR = 52;
+
+export const EmbeddableVideo = ({ url, ...props }: any) => {
+  if (!url) return null;
+  const trimmedUrl = url.trim();
+
+  // Google Drive Link
+  if (trimmedUrl.includes('drive.google.com/file/d/')) {
+    const match = trimmedUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) {
+      const embedUrl = `https://drive.google.com/file/d/${match[1]}/preview`;
+      // Wrapper clips left/right/top flush; leaves bottom open for the controls bar.
+      return (
+        <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
+          <iframe
+            src={embedUrl}
+            allow="autoplay; encrypted-media; fullscreen"
+            allowFullScreen
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              // Taller than the container so the control bar is included
+              height: `calc(100% + ${GDRIVE_CTRL_BAR}px)`,
+              border: 'none',
+            }}
+          />
+        </div>
+      );
+    }
+  }
+  // YouTube Link
+  if (trimmedUrl.includes('youtube.com/watch') || trimmedUrl.includes('youtu.be/')) {
+    const match = trimmedUrl.match(/(?:v=|youtu\.be\/)([^&]+)/);
+    if (match && match[1]) {
+      const embedUrl = `https://www.youtube.com/embed/${match[1]}`;
+      return <iframe src={embedUrl} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" style={{ width: '100%', height: '100%', border: 'none' }} allowFullScreen></iframe>;
+    }
+  }
+
+  // SharePoint auto-conversion to embed view
+  let embedUrl = trimmedUrl;
+  if (trimmedUrl.includes('sharepoint.com') && !trimmedUrl.includes('action=') && !trimmedUrl.includes('Action=')) {
+    try {
+      const urlObj = new URL(trimmedUrl);
+      urlObj.searchParams.set('action', 'embedview');
+      embedUrl = urlObj.toString();
+    } catch (e) {
+      // Keep original
+    }
+  }
+
+  // If it's a web link and does NOT end with a direct video extension, render in an iframe
+  const isDirectVideo = /\.(mp4|webm|ogg|mov|m4v|avi|mkv)(?:\?|$)/i.test(trimmedUrl);
+  if (trimmedUrl.startsWith('http') && !isDirectVideo) {
+    return <iframe src={embedUrl} allow="autoplay; encrypted-media; fullscreen" style={{ width: '100%', height: '100%', border: 'none' }} allowFullScreen></iframe>;
+  }
+  
+  // Standard video fallback
+  return <video src={trimmedUrl} {...props} />;
+};
 
 /* ─────────────────── SVG Radial Progress ─────────────────────── */
 const RadialProgress = ({ value = 0, size = 80, stroke = 7, color = '#3b82f6', label }: any) => {
@@ -75,12 +141,149 @@ const scoreColor = (v: any) => {
 interface ReportDashboardGridProps {
   candidate: any;
   NEXT_JS_URL: string;
+  matchedInterviewFromDb?: any;
 }
 
-export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardGridProps) {
+export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFromDb }: ReportDashboardGridProps) {
   const [activeModal, setActiveModal] = useState<'scores' | 'resume' | 'strengths' | 'transcript' | 'videoTranscript' | null>(null);
   const [scoresViewMode, setScoresViewMode] = useState<'radial' | 'bar'>('radial');
   const [mounted, setMounted] = useState(false);
+  const [matchedInterview, setMatchedInterview] = useState<any>(matchedInterviewFromDb || null);
+  
+  const screeningVideoRef = React.useRef<HTMLVideoElement>(null);
+  const [activeClipIndex, setActiveClipIndex] = useState<number | null>(null);
+
+  // Always call hook unconditionally at top level (Rules of Hooks)
+  const contextValue = useAppContext();
+  // Safely use context — it may be null if AppContext is not in the tree
+  const context: any = contextValue ?? null;
+
+  // Tech Video (Admin Uploaded) - Transcript Intelligence
+  const transcriptVideoUrl = useMemo(() => {
+    const ext = candidate.extractedData || candidate.extracted_data || {};
+    const url = ext.videoUrl || ext.video_url || candidate.videoUrl || candidate.video_url;
+    
+    if (!url || typeof url !== 'string') return null;
+    const clean = url.trim();
+    if (
+      clean === "" || 
+      clean === "—" || 
+      clean === "null" || 
+      clean === "undefined" || 
+      clean.includes("mixkit.co") ||
+      clean.includes("drive.google.com") ||
+      clean.includes("youtube.com") ||
+      clean.includes("youtu.be") ||
+      clean.includes("sharepoint.com") ||
+      clean.includes("w3schools.com")
+    ) {
+      return null;
+    }
+    return clean;
+  }, [candidate]);
+
+  useEffect(() => {
+    if (matchedInterviewFromDb) {
+      setMatchedInterview(matchedInterviewFromDb);
+    }
+  }, [matchedInterviewFromDb]);
+
+  useEffect(() => {
+    if (matchedInterviewFromDb) return;
+
+    // Dynamic fetch by matching email or name (only if inside Admin dashboard context)
+    const fetchInterviewData = async () => {
+      try {
+        if (!context?.apiFetch) return;
+        const res = await context.apiFetch(`/api/interviews/list?t=${Date.now()}`);
+        if (res.ok) {
+          const data = await res.json();
+          const candidateEmail = (candidate.email || candidate.extractedData?.personalInformation?.email || "").trim().toLowerCase();
+          const cleanName = (n: string) => (n || "").toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+          const candName = cleanName(candidate.name || "");
+          
+          if (Array.isArray(data)) {
+            const match = data.find((i: any) => {
+              const matchesEmail = candidateEmail && (i.candidate_email || "").trim().toLowerCase() === candidateEmail;
+              const matchesName = candName && cleanName(i.candidate_name || "") === candName;
+              return (matchesEmail || matchesName) && i.status === 'completed';
+            });
+            if (match) {
+              setMatchedInterview(match);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch interview details:", err);
+      }
+    };
+
+    const targetEmail = (candidate.email || candidate.extractedData?.personalInformation?.email || "").trim();
+    if ((targetEmail || candidate.name) && context?.apiFetch) {
+      fetchInterviewData();
+    }
+  }, [candidate, context, matchedInterviewFromDb]);
+
+  const screeningVideoUrl = useMemo(() => {
+    let rawUrl = "";
+    const directScreeningUrl = candidate.screeningVideoUrl || candidate.screening_video_url;
+    if (directScreeningUrl && typeof directScreeningUrl === 'string' && directScreeningUrl.trim() !== "" && directScreeningUrl.trim() !== "—" && directScreeningUrl.trim() !== "null") {
+      rawUrl = directScreeningUrl.trim();
+    } else if (matchedInterview?.video_url) {
+      rawUrl = String(matchedInterview.video_url).trim();
+    }
+    
+    if (
+      rawUrl && 
+      rawUrl !== "" && 
+      rawUrl !== "—" && 
+      rawUrl !== "null" && 
+      rawUrl !== "undefined" && 
+      !rawUrl.includes("mixkit.co") &&
+      !rawUrl.includes("drive.google.com") &&
+      !rawUrl.includes("youtube.com") &&
+      !rawUrl.includes("youtu.be") &&
+      !rawUrl.includes("sharepoint.com") &&
+      !rawUrl.includes("w3schools.com")
+    ) {
+      return rawUrl;
+    }
+    return null;
+  }, [matchedInterview, candidate]);
+
+  const technicalVideoUrl = useMemo(() => {
+    const ext = candidate?.extractedData || {};
+    let rawUrl = String(ext.videoUrl || ext.video_url || ext.video || candidate?.videoUrl || candidate?.video_url || "").trim();
+    
+    if (
+      rawUrl && 
+      rawUrl !== "" && 
+      rawUrl !== "—" && 
+      rawUrl !== "null" && 
+      rawUrl !== "undefined" && 
+      !rawUrl.includes("mixkit.co") &&
+      !rawUrl.includes("drive.google.com") &&
+      !rawUrl.includes("youtube.com") &&
+      !rawUrl.includes("youtu.be") &&
+      !rawUrl.includes("sharepoint.com") &&
+      !rawUrl.includes("w3schools.com")
+    ) {
+      return rawUrl;
+    }
+    
+    // Fallback to screening video if no technical video is uploaded
+    return screeningVideoUrl;
+  }, [candidate, screeningVideoUrl]);
+
+  const videoUrl = screeningVideoUrl;
+
+  useEffect(() => {
+    console.log("Candidate Object:", candidate);
+    console.log("Candidate Screening Video URL fields:", candidate.screeningVideoUrl, candidate.screening_video_url);
+    console.log("Resolved Screening Video URL:", screeningVideoUrl);
+    console.log("Resolved Transcript Video URL (transcriptVideoUrl):", transcriptVideoUrl);
+    console.log("Technical Video URL (technicalVideoUrl):", technicalVideoUrl);
+  }, [candidate, screeningVideoUrl, transcriptVideoUrl, technicalVideoUrl]);
 
   useEffect(() => {
     setMounted(true);
@@ -88,8 +291,107 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
 
   const edu = candidate.extractedData?.educationDetails || [];
   const skills = candidate.skills || [];
-  const transcript = candidate.transcript || candidate.extractedData?.transcript || [];
-  const storedAnalysis = candidate.extractedData?.transcriptAnalysis || null;
+
+  const transcript = useMemo(() => {
+    if (matchedInterview?.transcript && Array.isArray(matchedInterview.transcript) && matchedInterview.transcript.length > 0) {
+      return matchedInterview.transcript.map((t: any) => ({
+        question: t.question || "",
+        answer: t.text || t.answer || "",
+        timestamp_start: t.timestamp_start,
+        timestamp_end: t.timestamp_end
+      }));
+    }
+    return candidate.transcript || candidate.extractedData?.transcript || [];
+  }, [matchedInterview, candidate]);
+
+  const storedAnalysis = useMemo(() => {
+    const baseAnalysis = candidate.extractedData?.transcriptAnalysis || {};
+    if (matchedInterview?.summary && matchedInterview?.scores) {
+      const s = matchedInterview.scores;
+      return {
+        ...baseAnalysis,
+        communication: s.Communication ? s.Communication * 20 : (candidate.videoScore || undefined),
+        technical: s.Clarity ? s.Clarity * 20 : (candidate.techScore || undefined),
+        problemSolving: s.Relevance ? s.Relevance * 20 : undefined,
+        confidence: s.Confidence ? s.Confidence * 20 : undefined,
+        recommendation: candidate.finalRecommendation || candidate.final_recommendation || matchedInterview.final_recommendation || (matchedInterview.status === 'completed' ? 'Recommend' : 'Under Review'),
+        recommendationReason: matchedInterview.summary || baseAnalysis.recommendationReason || ""
+      };
+    }
+    return candidate.extractedData?.transcriptAnalysis || null;
+  }, [matchedInterview, candidate]);
+
+  // Format seconds to MM:SS helper
+  const formatTime = (seconds: number | undefined) => {
+    if (seconds === undefined || isNaN(seconds)) return '00:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  };
+
+  // Parsed highlights from matchedInterview summary
+  const parsedHighlights = useMemo(() => {
+    if (matchedInterview?.summary) {
+      try {
+        // Try to parse as JSON first
+        const data = typeof matchedInterview.summary === 'string' ? JSON.parse(matchedInterview.summary) : matchedInterview.summary;
+        let highlights: string[] = [];
+        if (data.pros && Array.isArray(data.pros)) highlights.push(...data.pros);
+        if (data.cons && Array.isArray(data.cons)) highlights.push(...data.cons);
+        if (data.okok && Array.isArray(data.okok)) highlights.push(...data.okok);
+        
+        if (highlights.length > 0) {
+          return highlights.slice(0, 4);
+        }
+      } catch(e) {
+        // Fallback to string splitting if not JSON
+        const str = typeof matchedInterview.summary === 'string' ? matchedInterview.summary : JSON.stringify(matchedInterview.summary);
+        const lines = str.split('\n')
+          .map((l: string) => l.trim().replace(/^[-*•\d.]+\s*/, ''))
+          .filter((l: string) => l.length > 5 && !l.toLowerCase().includes("overall match") && !l.toLowerCase().includes("recommendation") && !l.startsWith('{') && !l.startsWith('}') && !l.includes('":'));
+        if (lines.length > 0) {
+          return lines.slice(0, 4);
+        }
+      }
+    }
+    // Dynamic NLP-based observations from transcript if no summary
+    if (transcript && transcript.length > 0) {
+      const analysis = analyzeTranscript(transcript);
+      return analysis.keyObservations.slice(0, 4);
+    }
+    return [
+      'No screening analysis available yet.'
+    ];
+  }, [matchedInterview, transcript]);
+
+  // Sliced real transcript entries
+  const transcriptPreview = useMemo(() => {
+    if (transcript && transcript.length > 0) {
+      return transcript.map((t: any) => ({
+        time: formatTime(t.timestamp_start),
+        text: t.answer || t.question || ""
+      })).slice(0, 4);
+    }
+    return [
+      { time: '—', text: 'No transcript recorded yet.' }
+    ];
+  }, [transcript]);
+
+  // Video Analysis metrics mapping
+  const analysisMetrics = useMemo(() => {
+    const s = matchedInterview?.scores || {};
+    const confidence = s.Confidence !== undefined ? s.Confidence * 20 : (candidate.videoScore || 0);
+    const clarity = s.Clarity !== undefined ? s.Clarity * 20 : (candidate.techScore || candidate.videoScore || 0);
+    const communication = s.Communication !== undefined ? s.Communication * 20 : (candidate.videoScore || 0);
+    const engagement = s.Relevance !== undefined ? s.Relevance * 20 : (candidate.techScore || candidate.videoScore || 0);
+
+    return [
+      { label: 'Confidence', value: Math.round(confidence) },
+      { label: 'Clarity', value: Math.round(clarity) },
+      { label: 'Communication', value: Math.round(communication) },
+      { label: 'Engagement', value: Math.round(engagement) }
+    ];
+  }, [matchedInterview, candidate]);
   
   // Derive strengths and weaknesses
   const strengths: string[] = [];
@@ -144,8 +446,8 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '2rem 0', gap: '20px' }}>
               <RadialProgress value={candidate.resumeScore || 0} color={scoreColor(candidate.resumeScore)} label="Resume Evaluation" size={120} stroke={9} />
-              <RadialProgress value={candidate.videoScore || 0} color={scoreColor(candidate.videoScore)} label="Video Interview" size={120} stroke={9} />
-              <RadialProgress value={candidate.techScore || 0} color={scoreColor(candidate.techScore)} label="Technical Assessment" size={120} stroke={9} />
+              <RadialProgress value={candidate.videoScore || 0} color={scoreColor(candidate.videoScore)} label="Screening Video" size={120} stroke={9} />
+              <RadialProgress value={candidate.techScore || 0} color={scoreColor(candidate.techScore)} label="Tech Interview" size={120} stroke={9} />
             </div>
             <div style={{ padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '14px', fontSize: '0.82rem', lineHeight: '1.5', color: 'var(--gray-700)' }}>
               <strong>Scores Overview:</strong> These radial progress meters capture standard assessment dimensions. Each score is normalized on a 100-point scale based on skills extraction, response clarity, and automated test suite evaluations.
@@ -245,7 +547,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
         return (
           <div style={{ backgroundColor: '#fff', borderRadius: '24px', padding: '2rem', width: '100%', maxWidth: '1050px', display: 'flex', flexDirection: 'column', gap: '1.5rem', border: '1px solid var(--border)', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.15)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: 'var(--brand-navy)', display: 'flex', alignItems: 'center', gap: '6px' }}><Brain size={18} /> TRANSCRIPT INTELLIGENCE</h3>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: 'var(--brand-navy)', display: 'flex', alignItems: 'center', gap: '6px' }}><Brain size={18} /> TECHNICAL INTERVIEW</h3>
               <button onClick={handleClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--gray-400)' }}><X size={20} /></button>
             </div>
             <div style={{ padding: '0.5rem 0' }}>
@@ -330,19 +632,18 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
               </button>
             </div>
           </div>
-          
           {scoresViewMode === 'radial' ? (
             <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', gap: '8px', paddingTop: '4px' }}>
               <RadialProgress value={candidate.resumeScore || 0} color="#3b82f6" label="Resume" size={76} />
-              <RadialProgress value={candidate.videoScore || 0} color="#10b981" label="Video" size={76} />
-              <RadialProgress value={candidate.techScore || 0} color="#8b5cf6" label="Technical" size={76} />
+              <RadialProgress value={candidate.videoScore || 0} color="#10b981" label="Screening Video" size={76} />
+              <RadialProgress value={candidate.techScore || 0} color="#8b5cf6" label="Tech Interview" size={76} />
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '4px' }}>
               {[
                 { label: 'Resume', value: candidate.resumeScore || 0, color: '#3b82f6' },
-                { label: 'Video', value: candidate.videoScore || 0, color: '#10b981' },
-                { label: 'Technical', value: candidate.techScore || 0, color: '#8b5cf6' },
+                { label: 'Screening Video', value: candidate.videoScore || 0, color: '#10b981' },
+                { label: 'Tech Interview', value: candidate.techScore || 0, color: '#8b5cf6' },
               ].map((b, idx) => (
                 <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -440,69 +741,112 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
             {/* Row 1: Video and Highlights */}
             <div style={{ display: 'flex', gap: '10px', height: '48%', minHeight: 0, alignItems: 'stretch', flexShrink: 0 }}>
               {/* Video Player */}
-              <div style={{ flex: 1, height: '100%', position: 'relative', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a', backgroundImage: 'url(/video_screening_thumbnail.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
-                {/* Play Button Overlay */}
-                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid rgba(255,255,255,0.8)', boxShadow: '0 4px 8px rgba(0,0,0,0.2)', cursor: 'pointer' }}>
-                  <svg width="12" height="14" viewBox="0 0 16 18" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginLeft: '2px' }}>
-                    <path d="M14.5 9L1.75 16.3612L1.75 1.63878L14.5 9Z" fill="white"/>
-                  </svg>
-                </div>
-                {/* Control Bar */}
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0) 100%)', display: 'flex', flexDirection: 'column', padding: '4px 8px 6px', flexShrink: 0 }}>
-                  {/* Progress Line */}
-                  <div style={{ position: 'relative', width: '100%', height: '3px', backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: '2px', marginBottom: '4px' }}>
-                    <div style={{ width: '26%', height: '100%', backgroundColor: '#ef4444', borderRadius: '2px' }} />
-                    <div style={{ position: 'absolute', top: '50%', left: '26%', transform: 'translate(-50%, -50%)', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ef4444' }} />
+              <div style={{ flex: 1, height: '100%', position: 'relative', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a', display: 'flex', flexDirection: 'column' }}>
+                {screeningVideoUrl ? (
+                  <>
+                    <video 
+                      key={screeningVideoUrl}
+                      ref={screeningVideoRef}
+                      controls
+                      preload="metadata"
+                      src={screeningVideoUrl}
+                      style={{ width: '100%', flex: 1, minHeight: 0, objectFit: 'contain' }}
+                      onTimeUpdate={() => {
+                        if (activeClipIndex !== null && screeningVideoRef.current && transcript && transcript[activeClipIndex]) {
+                          const endTime = transcript[activeClipIndex].timestamp_end;
+                          if (endTime && screeningVideoRef.current.currentTime >= endTime) {
+                            screeningVideoRef.current.pause();
+                            setActiveClipIndex(null);
+                          }
+                        }
+                      }}
+                    />
+                    {transcript && transcript.length > 0 && (
+                      <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', padding: '6px 8px', backgroundColor: '#1e293b', flexShrink: 0, alignItems: 'center', justifyContent: 'center' }}>
+                        <button
+                          onClick={() => {
+                            if (activeClipIndex !== null && activeClipIndex > 0) {
+                              const prevIndex = activeClipIndex - 1;
+                              if (screeningVideoRef.current) {
+                                screeningVideoRef.current.currentTime = transcript[prevIndex].timestamp_start || 0;
+                                screeningVideoRef.current.play().catch(console.error);
+                                setActiveClipIndex(prevIndex);
+                              }
+                            }
+                          }}
+                          disabled={activeClipIndex === null || activeClipIndex === 0}
+                          style={{
+                            padding: '4px 8px', fontSize: '0.65rem', fontWeight: '700', borderRadius: '4px', border: 'none', cursor: 'pointer',
+                            backgroundColor: '#334155', color: '#fff', whiteSpace: 'nowrap', opacity: (activeClipIndex === null || activeClipIndex === 0) ? 0.5 : 1
+                          }}
+                        >
+                          &larr; Prev
+                        </button>
+                        
+                        <div style={{ display: 'flex', gap: '4px', overflowX: 'auto' }}>
+                          {transcript.map((t: any, i: number) => (
+                            <button
+                              key={i}
+                              onClick={() => {
+                                if (screeningVideoRef.current) {
+                                  screeningVideoRef.current.currentTime = t.timestamp_start || 0;
+                                  screeningVideoRef.current.play().catch(console.error);
+                                  setActiveClipIndex(i);
+                                }
+                              }}
+                              style={{
+                                padding: '4px 8px',
+                                fontSize: '0.65rem',
+                                fontWeight: '700',
+                                borderRadius: '4px',
+                                border: '1px solid',
+                                borderColor: activeClipIndex === i ? '#10b981' : '#475569',
+                                cursor: 'pointer',
+                                backgroundColor: activeClipIndex === i ? '#10b981' : '#334155',
+                                color: '#fff',
+                                whiteSpace: 'nowrap',
+                                transition: 'all 0.2s'
+                              }}
+                            >
+                              Q{i + 1}
+                            </button>
+                          ))}
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            if (activeClipIndex !== null && activeClipIndex < transcript.length - 1) {
+                              const nextIndex = activeClipIndex + 1;
+                              if (screeningVideoRef.current) {
+                                screeningVideoRef.current.currentTime = transcript[nextIndex].timestamp_start || 0;
+                                screeningVideoRef.current.play().catch(console.error);
+                                setActiveClipIndex(nextIndex);
+                              }
+                            }
+                          }}
+                          disabled={activeClipIndex === null || activeClipIndex === transcript.length - 1}
+                          style={{
+                            padding: '4px 8px', fontSize: '0.65rem', fontWeight: '700', borderRadius: '4px', border: 'none', cursor: 'pointer',
+                            backgroundColor: '#334155', color: '#fff', whiteSpace: 'nowrap', opacity: (activeClipIndex === null || activeClipIndex === transcript.length - 1) ? 0.5 : 1
+                          }}
+                        >
+                          Next &rarr;
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9', color: '#64748b', fontSize: '0.8rem', fontStyle: 'italic' }}>
+                    Screening video unavailable
                   </div>
-                  {/* Buttons */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {/* Play Icon */}
-                      <svg width="8" height="10" viewBox="0 0 10 12" fill="white" style={{ opacity: 0.9 }}>
-                        <path d="M1 1L9 6L1 11V1Z" fill="white"/>
-                      </svg>
-                      {/* Skip Icon */}
-                      <svg width="8" height="8" viewBox="0 0 10 10" fill="white" style={{ opacity: 0.9 }}>
-                        <path d="M1 1V9L6.5 5L1 1Z" fill="white"/>
-                        <rect x="7.5" y="1" width="1.5" height="8" fill="white"/>
-                      </svg>
-                      <span style={{ fontSize: '0.62rem', color: '#fff', fontWeight: '500', fontFamily: 'sans-serif' }}>2:14 / 8:32</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {/* CC */}
-                      <svg width="12" height="10" viewBox="0 0 14 12" fill="none" style={{ opacity: 0.9 }}>
-                        <rect x="0.75" y="0.75" width="12.5" height="10.5" rx="1.5" stroke="white" strokeWidth="1.5"/>
-                        <text x="2.5" y="8" fill="white" fontSize="6" fontWeight="900" fontFamily="sans-serif">CC</text>
-                      </svg>
-                      {/* Settings */}
-                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none" style={{ opacity: 0.9 }}>
-                        <circle cx="6" cy="6" r="1.5" stroke="white" strokeWidth="1.5"/>
-                        <path d="M6 1V2M6 10V11M1 6H2M10 6H11M2.5 2.5L3.2 3.2M8.8 8.8L9.5 9.5M2.5 9.5L3.2 8.8M8.8 3.2L9.5 2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-                      </svg>
-                      {/* PIP */}
-                      <svg width="10" height="8" viewBox="0 0 12 10" fill="none" style={{ opacity: 0.9 }}>
-                        <rect x="0.75" y="0.75" width="10.5" height="8.5" rx="1.5" stroke="white" strokeWidth="1.5"/>
-                        <rect x="6" y="5" width="3.5" height="2.5" rx="0.5" fill="white"/>
-                      </svg>
-                      {/* Maximize */}
-                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none" style={{ opacity: 0.9 }}>
-                        <path d="M1.5 4V1.5H4M10.5 4V1.5H8M1.5 8V10.5H4M10.5 8V10.5H8" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
               
               {/* Highlights */}
               <div style={{ flex: 1.4, backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '8px 10px', display: 'flex', flexDirection: 'column', justifyContent: 'center', overflow: 'hidden' }}>
-                <p style={{ margin: '0 0 4px 0', fontSize: '0.74rem', fontWeight: '700', color: '#0e2d7b' }}>Video Highlights</p>
+                <p style={{ margin: '0 0 4px 0', fontSize: '0.74rem', fontWeight: '700', color: '#0e2d7b' }}>Screening Analysis</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                  {[
-                    'Clear and confident introduction',
-                    'Explained design process well',
-                    'Good understanding of user research',
-                    'Answered 3 structured questions'
-                  ].map((hl, i) => (
+                  {parsedHighlights.map((hl, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'flex-start' }}>
                       <span style={{ display: 'inline-block', width: '4px', height: '4px', borderRadius: '50%', backgroundColor: '#10b981', marginRight: '6px', marginTop: '5px', flexShrink: 0 }} />
                       <span style={{ fontSize: '0.64rem', color: '#334155', lineHeight: 1.25 }}>{hl}</span>
@@ -519,12 +863,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
                 <div>
                   <p style={{ margin: '0 0 4px 0', fontSize: '0.74rem', fontWeight: '700', color: '#0e2d7b' }}>Transcript</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                    {[
-                      { time: '00:15', text: 'I have around 3 years of experience in UI/UX design.' },
-                      { time: '00:28', text: 'My design process starts with understanding the user and business goals.' },
-                      { time: '00:52', text: 'I use tools like Figma, Adobe XD, and conduct user research.' },
-                      { time: '01:24', text: 'I believe user-centered design is the key to solving real problems.' }
-                    ].map((t, i) => (
+                    {transcriptPreview.map((t, i) => (
                       <div key={i} style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
                         <span style={{ fontSize: '0.64rem', fontWeight: '700', color: '#64748b', flexShrink: 0, width: '28px' }}>{t.time}</span>
                         <span style={{ fontSize: '0.64rem', color: '#334155', lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{t.text}</span>
@@ -533,12 +872,14 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
                   </div>
                 </div>
                 <div style={{ alignSelf: 'flex-end', marginTop: '2px' }}>
-                  <span 
-                    onClick={() => setActiveModal('videoTranscript')}
-                    style={{ fontSize: '0.64rem', fontWeight: '700', color: '#3b82f6', cursor: 'pointer', textDecoration: 'none' }}
-                  >
-                    View Full Transcript
-                  </span>
+                  {transcript.length > 0 && (
+                    <span 
+                      onClick={() => setActiveModal('videoTranscript')}
+                      style={{ fontSize: '0.64rem', fontWeight: '700', color: '#3b82f6', cursor: 'pointer', textDecoration: 'none' }}
+                    >
+                      View Full Transcript
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -546,12 +887,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
               <div style={{ flex: 1.4, border: '1px solid #e2e8f0', borderRadius: '10px', padding: '8px 10px', backgroundColor: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'center', overflow: 'hidden' }}>
                 <p style={{ margin: '0 0 6px 0', fontSize: '0.74rem', fontWeight: '700', color: '#0e2d7b' }}>Video Analysis</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  {[
-                    { label: 'Confidence', value: 85 },
-                    { label: 'Clarity', value: 80 },
-                    { label: 'Communication', value: 88 },
-                    { label: 'Engagement', value: 78 }
-                  ].map((metric, i) => (
+                  {analysisMetrics.map((metric, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span style={{ fontSize: '0.62rem', fontWeight: '600', color: '#475569', width: '58px', flexShrink: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{metric.label}</span>
                       <div style={{ flex: 1, height: '4px', backgroundColor: '#f1f5f9', borderRadius: '99px', overflow: 'hidden' }}>
@@ -574,46 +910,36 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
           <p style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--brand-navy)', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
-            <Brain size={14} /> Transcript Intelligence
+            <Brain size={14} /> Technical Interview
           </p>
         </div>
 
         {/* Small Tech Video Player in Column 3 */}
-        <div style={{ width: '144px', height: '81px', margin: '0 auto 4px', position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a', backgroundImage: 'url(/tech_video_thumbnail.png)', backgroundSize: 'cover', backgroundPosition: 'center', flexShrink: 0 }}>
-          {/* Play Button Overlay */}
-          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid rgba(255,255,255,0.8)', boxShadow: '0 2px 6px rgba(0,0,0,0.2)', cursor: 'pointer' }}>
-            <svg width="10" height="12" viewBox="0 0 16 18" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginLeft: '1.5px' }}>
-              <path d="M14.5 9L1.75 16.3612L1.75 1.63878L14.5 9Z" fill="white"/>
-            </svg>
-          </div>
-          {/* Control Bar */}
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0) 100%)', display: 'flex', flexDirection: 'column', padding: '3px 6px 4px', flexShrink: 0 }}>
-            {/* Progress Line */}
-            <div style={{ position: 'relative', width: '100%', height: '2px', backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: '2px', marginBottom: '3px' }}>
-              <div style={{ width: '18%', height: '100%', backgroundColor: '#ef4444', borderRadius: '2px' }} />
+        <div style={{ width: '240px', height: '135px', margin: '0 auto 4px', position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a', flexShrink: 0 }}>
+          {transcriptVideoUrl ? (
+            <EmbeddableVideo 
+              key={transcriptVideoUrl}
+              controls
+              preload="metadata"
+              url={transcriptVideoUrl}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
+              onClick={(e: any) => {
+                const video = e.currentTarget;
+                if (video && typeof video.play === 'function') {
+                  if (video.paused) {
+                    video.play().catch((err: any) => console.error("Video play failed:", err));
+                  } else {
+                    video.pause();
+                  }
+                }
+              }}
+              title="Click to Play / Pause"
+            />
+          ) : (
+            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9', color: '#64748b', fontSize: '0.75rem', fontStyle: 'italic', textAlign: 'center', padding: '0 10px' }}>
+              Technical interview video pending or not uploaded
             </div>
-            {/* Buttons */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                {/* Play Icon */}
-                <svg width="6" height="8" viewBox="0 0 10 12" fill="white" style={{ opacity: 0.9 }}>
-                  <path d="M1 1L9 6L1 11V1Z" fill="white"/>
-                </svg>
-                <span style={{ fontSize: '0.55rem', color: '#fff', fontWeight: '500', fontFamily: 'sans-serif' }}>4:03 / 22:18</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                {/* CC */}
-                <svg width="9" height="8" viewBox="0 0 14 12" fill="none" style={{ opacity: 0.9 }}>
-                  <rect x="0.75" y="0.75" width="12.5" height="10.5" rx="1.5" stroke="white" strokeWidth="1.5"/>
-                  <text x="2.5" y="8" fill="white" fontSize="6" fontWeight="900" fontFamily="sans-serif">CC</text>
-                </svg>
-                {/* Maximize */}
-                <svg width="8" height="8" viewBox="0 0 12 12" fill="none" style={{ opacity: 0.9 }}>
-                  <path d="M1.5 4V1.5H4M10.5 4V1.5H8M1.5 8V10.5H4M10.5 8V10.5H8" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
 
         {transcript.length > 0 ? (
@@ -621,7 +947,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL }: ReportDashboardG
         ) : (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '1rem' }}>
             <Brain size={28} color="var(--brand-navy)" opacity={0.25} />
-            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'center', margin: 0, fontStyle: 'italic' }}>No transcript uploaded yet</p>
+            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'center', margin: 0, fontStyle: 'italic' }}>No technical interview transcript uploaded or generated yet</p>
           </div>
         )}
       </div>

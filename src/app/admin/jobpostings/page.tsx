@@ -9,6 +9,7 @@ const JobPostings = () => {
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState('');
   const [department, setDepartment] = useState('');
+  const [subDepartment, setSubDepartment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingJob, setEditingJob] = useState<any>(null);
   const formRef = React.useRef<HTMLDivElement>(null);
@@ -35,30 +36,48 @@ const JobPostings = () => {
         if (editingJob.isParentEdit) {
           const jobsToUpdate = jobs.filter((j: any) => j.department === editingJob.oldDeptName);
           await Promise.all(
-            jobsToUpdate.map((j: any) =>
-              apiFetch('/api/jobs', {
-                method: 'PATCH',
-                body: JSON.stringify({ id: j.id, department: department.trim() })
-              })
-            )
+            jobsToUpdate.map((j: any) => {
+              if (j.id === editingJob.id) {
+                // Update everything for this specific row
+                return apiFetch('/api/jobs', {
+                  method: 'PATCH',
+                  body: JSON.stringify({ 
+                    id: j.id, 
+                    department: department.trim(), 
+                    sub_department: subDepartment.trim(),
+                    title: title.trim()
+                  })
+                });
+              } else {
+                // Only rename the parent department for other rows
+                return apiFetch('/api/jobs', {
+                  method: 'PATCH',
+                  body: JSON.stringify({ 
+                    id: j.id, 
+                    department: department.trim()
+                  })
+                });
+              }
+            })
           );
           res = { ok: true };
         } else {
           res = await apiFetch('/api/jobs', {
             method: 'PATCH',
-            body: JSON.stringify({ id: editingJob.id, title: title.trim(), department: department.trim() })
+            body: JSON.stringify({ id: editingJob.id, title: title.trim(), department: department.trim(), sub_department: subDepartment.trim() })
           });
         }
       } else {
         res = await apiFetch('/api/jobs', {
           method: 'POST',
-          body: JSON.stringify({ title: title.trim(), department: department.trim() })
+          body: JSON.stringify({ title: title.trim(), department: department.trim(), sub_department: subDepartment.trim() })
         });
       }
 
       if (res.ok) {
         setTitle('');
         setDepartment('');
+        setSubDepartment('');
         setEditingJob(null);
         setShowForm(false);
         refreshJobs(); // Reload jobs from Supabase
@@ -77,6 +96,7 @@ const JobPostings = () => {
     setEditingJob(job);
     setTitle(job.title);
     setDepartment(job.department || '');
+    setSubDepartment(job.sub_department || '');
     setShowForm(true);
     setTimeout(() => {
       formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -87,7 +107,8 @@ const JobPostings = () => {
     const firstJob = subDepts[0];
     if (!firstJob) return;
     setEditingJob({ ...firstJob, isParentEdit: true, oldDeptName: deptName });
-    setTitle('');
+    setTitle(firstJob.title || '');
+    setSubDepartment(firstJob.sub_department || '');
     setDepartment(deptName);
     setShowForm(true);
     setTimeout(() => {
@@ -148,7 +169,7 @@ const JobPostings = () => {
             </h3>
           </div>
           <div className="card-body">
-            <div className="grid grid-cols-2 gap-6" style={{ marginBottom: '1.5rem' }}>
+            <div className="grid grid-cols-3 gap-6" style={{ marginBottom: '1.5rem' }}>
               <div className="form-group">
                 <label className="form-label">Parent Department</label>
                 <input 
@@ -172,12 +193,24 @@ const JobPostings = () => {
                    type="text"
                    className="form-input"
                    placeholder="e.g. Frontend, Backend, UI/UX"
-                   value={title}
-                   onChange={(e) => setTitle(e.target.value)}
-                   disabled={editingJob?.isParentEdit}
+                   value={subDepartment}
+                   onChange={(e) => setSubDepartment(e.target.value)}
                  />
                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                   {editingJob?.isParentEdit ? 'Sub-departments cannot be edited when editing the parent department.' : 'The sub-department under the parent department.'}
+                   {editingJob?.isParentEdit ? 'Updates the sub-department for this specific role, and renames the parent department for all roles in it.' : 'The sub-department under the parent.'}
+                 </span>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Role Title</label>
+                 <input
+                   type="text"
+                   className="form-input"
+                   placeholder="e.g. Senior Frontend Dev"
+                   value={title}
+                   onChange={(e) => setTitle(e.target.value)}
+                 />
+                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                   {editingJob?.isParentEdit ? 'Updates the role title for this specific role, and renames the parent department for all roles in it.' : 'The role under the sub-department.'}
                  </span>
               </div>
             </div>
@@ -195,6 +228,7 @@ const JobPostings = () => {
                 setEditingJob(null);
                 setTitle('');
                 setDepartment('');
+                setSubDepartment('');
               }}>Cancel</button>
             </div>
           </div>
@@ -212,31 +246,50 @@ const JobPostings = () => {
               <div className="card-header flex justify-between items-center" style={{ borderBottom: '1px solid var(--gray-100)', paddingBottom: '0.75rem', marginBottom: '1rem' }}>
                 <div className="flex items-center gap-2">
                   <Folder size={20} style={{ color: 'var(--primary-color, #3b82f6)' }} />
-                  <h3 className="card-title" style={{ fontSize: '1.2rem', fontWeight: '600' }}>{deptName}</h3>
+                  <h3 
+                    className="card-title" 
+                    style={{ fontSize: '1.2rem', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }} 
+                    onClick={() => handleEditParentDept(deptName, subDepts)}
+                    title="Click to edit parent department"
+                  >
+                    <span style={{ borderBottom: '1px dashed transparent' }} onMouseEnter={(e) => e.currentTarget.style.borderBottom = '1px dashed var(--brand-navy)'} onMouseLeave={(e) => e.currentTarget.style.borderBottom = '1px dashed transparent'}>{deptName}</span>
+                    <Edit2 size={12} style={{ color: 'var(--text-muted)', opacity: 0.6 }} />
+                  </h3>
                   <span className="badge" style={{ backgroundColor: 'var(--gray-100)', color: 'var(--text-main)', marginLeft: '0.5rem' }}>
                     {subDepts.length} {subDepts.length === 1 ? 'Sub-Department' : 'Sub-Departments'}
                   </span>
                 </div>
                 <div className="flex gap-2">
-                  <button className="btn btn-ghost" style={{ padding: '0.25rem' }} onClick={() => handleEditParentDept(deptName, subDepts)} title="Edit Parent Department"><Edit2 size={16} /></button>
+                  <button className="btn btn-ghost" style={{ padding: '0.25rem', cursor: 'pointer' }} onClick={() => handleEditParentDept(deptName, subDepts)} title="Edit Parent Department"><Edit2 size={16} /></button>
                 </div>
               </div>
               <div className="table-container" style={{ border: 'none', borderRadius: '0' }}>
                 <table className="table">
                   <thead>
                     <tr>
-                      <th style={{ paddingLeft: '1.5rem' }}>Sub-Department Title</th>
+                      <th style={{ paddingLeft: '1.5rem' }}>Sub-Department</th>
+                      <th>Role Title</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {subDepts.map((job: any) => (
-                      <tr key={job.id}>
-                        <td style={{ fontWeight: '500', paddingLeft: '1.5rem' }}>{job.title}</td>
-                        <td>
+                      <tr key={job.id} style={{ cursor: 'pointer' }} onClick={() => handleEditJob(job)} title="Click to edit sub-department or role">
+                        <td style={{ fontWeight: '500', paddingLeft: '1.5rem', color: 'var(--gray-600)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span>{job.sub_department || 'General'}</span>
+                          </div>
+                        </td>
+                        <td style={{ fontWeight: '500' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span>{job.title}</span>
+                            <Edit2 size={12} style={{ color: 'var(--text-muted)', opacity: 0, transition: 'opacity 0.2s' }} className="edit-icon-hover" />
+                          </div>
+                        </td>
+                        <td onClick={(e) => e.stopPropagation()}>
                           <div className="flex gap-2">
-                            <button className="btn btn-ghost" style={{ padding: '0.25rem' }} onClick={() => handleEditJob(job)} title="Edit"><Edit2 size={16} /></button>
-                            <button className="btn btn-ghost" style={{ padding: '0.25rem', color: 'var(--danger)' }} onClick={() => handleDeleteJob(job)} title="Delete"><Archive size={16} /></button>
+                            <button className="btn btn-ghost" style={{ padding: '0.25rem', cursor: 'pointer' }} onClick={() => handleEditJob(job)} title="Edit"><Edit2 size={16} /></button>
+                            <button className="btn btn-ghost" style={{ padding: '0.25rem', color: 'var(--danger)', cursor: 'pointer' }} onClick={() => handleDeleteJob(job)} title="Delete"><Archive size={16} /></button>
                           </div>
                         </td>
                       </tr>

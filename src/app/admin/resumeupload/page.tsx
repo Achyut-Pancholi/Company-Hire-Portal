@@ -1,14 +1,17 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { UploadCloud, CheckCircle, AlertCircle, FileText, Search, MoreVertical, Loader2, Trash2, Clock, Mail, Send, Share2 } from 'lucide-react';
+import { UploadCloud, CheckCircle, AlertCircle, FileText, Search, MoreVertical, Loader2, Trash2, Clock, Mail, Send, Share2, CheckSquare, XSquare, MessageSquare } from 'lucide-react';
 import { useAppContext } from '@/components/admin/context/AppContext';
 import StandardResume from '@/components/admin/StandardResume';
+import WorkflowBadge from '@/components/admin/WorkflowBadge';
+import ConfirmActionModal from '@/components/admin/ConfirmActionModal';
 
 const ResumeUpload = () => {
   const { jobs, candidates, refreshCandidates, apiFetch } = useAppContext();
   const [selectedDepartment, setSelectedDepartment] = useState('');
-  const [selectedJob, setSelectedJob] = useState('');
+  const [selectedSubDepartment, setSelectedSubDepartment] = useState('');
+  const [selectedRole, setSelectedRole] = useState('');
   const [dragActive, setDragActive] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStep, setUploadStep] = useState('');
@@ -16,11 +19,47 @@ const ResumeUpload = () => {
   const [status, setStatus] = useState({ type: '', message: '' });
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [activeDropdown, setActiveDropdown] = useState(null);
-
-  const dynamicDepartments = Array.from(new Set(jobs.map(j => j.department).filter(Boolean)));
+  const [confirmModal, setConfirmModal] = useState<{ type: 'approve' | 'reject', candidate: any } | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   
-  const getAvailableSubDepartments = (dept) => {
-    return Array.from(new Set(jobs.filter(j => j.department === dept).map(j => j.title)));
+  const [remarkPopover, setRemarkPopover] = useState<{ candidateId: string | number, name: string } | null>(null);
+  const [remarkText, setRemarkText] = useState('');
+  const [remarkSaving, setRemarkSaving] = useState(false);
+
+  const handleWorkflowAction = async (candidate: any, type: 'approve' | 'reject', reason?: string) => {
+    setActionLoading(candidate.id);
+    setConfirmModal(null);
+    try {
+      const endpoint = type === 'approve'
+        ? `/api/candidate/resume-approve/${candidate.id}`
+        : `/api/candidate/resume-reject/${candidate.id}`;
+      const res = await apiFetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: type === 'reject' ? JSON.stringify({ reason }) : undefined,
+      });
+      if (res.ok) {
+        refreshCandidates();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(errData?.error ?? `Failed to ${type} resume.`);
+      }
+    } catch (err) {
+      console.error('[handleWorkflowAction]', err);
+      alert('Network error. Please try again.');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const dynamicDepartments = Array.from(new Set(jobs.map((j: any) => j.department).filter(Boolean)));
+  
+  const getAvailableSubDepartments = (dept: string) => {
+    return Array.from(new Set(jobs.filter((j: any) => j.department === dept && j.sub_department).map((j: any) => j.sub_department)));
+  };
+
+  const getAvailableRoles = (dept: string, subDept: string) => {
+    return Array.from(new Set(jobs.filter((j: any) => j.department === dept && (j.sub_department === subDept || !j.sub_department)).map((j: any) => j.title)));
   };
 
   // Close dropdown when clicking outside
@@ -36,17 +75,17 @@ const ResumeUpload = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
   
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const parsedCandidates = candidates.filter(c => c.resumeStatus === 'Parsed');
+  const parsedCandidates = candidates.filter((c: any) => c.resumeStatus === 'Parsed');
 
-  const filteredCandidates = parsedCandidates.filter(c => 
+  const filteredCandidates = parsedCandidates.filter((c: any) => 
     c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     c.jobApplied.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleDrag = (e) => {
+  const handleDrag = (e: any) => {
     e.preventDefault();
     e.stopPropagation();
     if (e.type === "dragenter" || e.type === "dragover") {
@@ -56,7 +95,7 @@ const ResumeUpload = () => {
     }
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = (e: any) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
@@ -65,15 +104,15 @@ const ResumeUpload = () => {
     }
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = (e: any) => {
     if (e.target.files && e.target.files[0]) {
       handleUpload(e.target.files[0]);
     }
   };
 
   const handleContainerClick = () => {
-    if (!selectedJob) {
-      setStatus({ type: 'error', message: 'Please select a job listed first.' });
+    if (!selectedRole) {
+      setStatus({ type: 'error', message: 'Please select a role first.' });
       return;
     }
     if (!isUploading && fileInputRef.current) {
@@ -81,9 +120,9 @@ const ResumeUpload = () => {
     }
   };
 
-  const handleUpload = async (file) => {
-    if (!selectedJob) {
-      setStatus({ type: 'error', message: 'Please select a job listed first.' });
+  const handleUpload = async (file: File) => {
+    if (!selectedRole) {
+      setStatus({ type: 'error', message: 'Please select a role first.' });
       return;
     }
 
@@ -143,11 +182,11 @@ const ResumeUpload = () => {
           : Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
 
         const payload = {
-          name: data.personalInformation?.fullName || file.name.replace('.pdf', ''),
+          name: data.personalInformation?.fullName || (file.name.replace(/\.pdf$/i, '').replace(/[_-]/g, ' ').replace(/\b(resume|cv|document|copy)\b/gi, '').replace(/\s+/g, ' ').trim() || 'Unknown Candidate'),
           email: data.personalInformation?.email || 'No email provided',
           phone: data.personalInformation?.phoneNumber || 'No phone provided',
           skills: data.skillExtraction?.extractedSkills || [],
-          job_applied: selectedJob,
+          job_applied: selectedRole,
           resume_status: 'Parsed',
           form_status: 'N/A',
           video_status: 'Pending',
@@ -186,7 +225,7 @@ const ResumeUpload = () => {
           message: result.error || 'Parsing failed. Please check the PDF contents.' 
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       clearInterval(interval);
       console.error('Upload catch block:', err);
       setStatus({ 
@@ -205,6 +244,22 @@ const ResumeUpload = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       
+      {confirmModal && (
+        <ConfirmActionModal
+          title={confirmModal.type === 'approve' ? 'Approve Resume' : 'Reject Resume'}
+          message={confirmModal.type === 'approve' 
+            ? `Are you sure you want to approve ${confirmModal.candidate.name}'s resume? This will move them to the Video Bot Screening stage.`
+            : `Are you sure you want to reject ${confirmModal.candidate.name}'s resume?`
+          }
+          confirmLabel={confirmModal.type === 'approve' ? 'Approve' : 'Reject'}
+          onConfirm={(reason) => handleWorkflowAction(confirmModal.candidate, confirmModal.type, reason)}
+          onCancel={() => setConfirmModal(null)}
+          danger={confirmModal.type === 'reject'}
+          requireReason={confirmModal.type === 'reject'}
+          reasonPlaceholder="Enter rejection reason..."
+          loading={actionLoading === confirmModal.candidate.id}
+        />
+      )}
 
 
       {/* Upload Section */}
@@ -223,32 +278,52 @@ const ResumeUpload = () => {
                 onChange={(e) => {
                   const newDept = e.target.value;
                   setSelectedDepartment(newDept);
-                  const subDepts = getAvailableSubDepartments(newDept);
-                  setSelectedJob(subDepts.length === 1 ? subDepts[0] : '');
+                  setSelectedSubDepartment('');
+                  setSelectedRole('');
                   setStatus({ type: '', message: '' });
                 }}
               >
                 <option value="">-- Choose Department --</option>
                 {dynamicDepartments.map(dept => (
-                  <option key={dept} value={dept}>{dept}</option>
+                  <option key={dept as string} value={dept as string}>{dept as string}</option>
                 ))}
               </select>
             </div>
             
-            <div className="form-group" style={{ flex: 1, minWidth: '250px' }}>
+            <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
               <label className="form-label">Select Sub Department <span style={{ color: 'var(--danger)' }}>*</span></label>
               <select 
                 className="form-select" 
-                value={selectedJob} 
+                value={selectedSubDepartment} 
                 onChange={(e) => {
-                  setSelectedJob(e.target.value);
+                  const newSub = e.target.value;
+                  setSelectedSubDepartment(newSub);
+                  setSelectedRole('');
                   setStatus({ type: '', message: '' });
                 }}
                 disabled={!selectedDepartment}
               >
                 <option value="">-- Choose Sub Department --</option>
                 {selectedDepartment && getAvailableSubDepartments(selectedDepartment).map(subDept => (
-                  <option key={subDept} value={subDept}>{subDept}</option>
+                  <option key={subDept as string} value={subDept as string}>{subDept as string}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
+              <label className="form-label">Select Role <span style={{ color: 'var(--danger)' }}>*</span></label>
+              <select 
+                className="form-select" 
+                value={selectedRole} 
+                onChange={(e) => {
+                  setSelectedRole(e.target.value);
+                  setStatus({ type: '', message: '' });
+                }}
+                disabled={!selectedSubDepartment}
+              >
+                <option value="">-- Choose Role --</option>
+                {selectedSubDepartment && getAvailableRoles(selectedDepartment, selectedSubDepartment).map(r => (
+                  <option key={r as string} value={r as string}>{r as string}</option>
                 ))}
               </select>
             </div>
@@ -335,29 +410,39 @@ const ResumeUpload = () => {
           <table className="table">
             <thead>
               <tr>
+                <th>ID</th>
                 <th>Candidate Name</th>
                 <th>Email</th>
-                <th>Sub Department</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th style={{ textAlign: 'center' }}>Remark</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredCandidates.length === 0 ? (
                 <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
                     No candidates found.
                   </td>
                 </tr>
               ) : (
-                filteredCandidates.map(candidate => (
+                filteredCandidates.map((candidate: any) => (
                   <tr key={candidate.id}>
+                    <td>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--brand-green)', backgroundColor: 'rgba(125, 186, 0, 0.1)', padding: '4px 8px', borderRadius: '12px' }}>
+                        #{candidate.display_id || candidate.unique_id || String(candidate.id).substring(0,6)}
+                      </span>
+                    </td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
                         <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'rgba(14, 45, 123, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-navy)', fontWeight: '700', fontSize: '0.875rem' }}>
-                          {candidate.name.split(' ').map(n => n[0]).join('')}
+                          {candidate.name.split(' ').map((n: string) => n[0]).join('')}
                         </div>
                         <div>
-                          <div style={{ fontWeight: '600', color: 'var(--text-main)' }}>{candidate.name}</div>
+                          <div style={{ fontWeight: '600', color: 'var(--text-main)' }}>
+                            {candidate.name}
+                          </div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{candidate.phone}</div>
                         </div>
                       </div>
@@ -365,7 +450,54 @@ const ResumeUpload = () => {
                     <td style={{ color: 'var(--gray-600)' }}>{candidate.email}</td>
                     <td>{candidate.jobApplied}</td>
                     <td>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <WorkflowBadge status={candidate.resume_stage_status || candidate.resumeStageStatus || 'Pending'} size="sm" />
+                    </td>
+                    <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                      {(() => {
+                        const candidateRemark = candidate.remark_reports || candidate.remark;
+                        const hasRemark = !!candidateRemark;
+                        return (
+                          <button
+                            onClick={() => {
+                              setRemarkPopover({ candidateId: candidate.id, name: candidate.name });
+                              setRemarkText(candidateRemark || '');
+                            }}
+                            title={hasRemark ? `Remark: ${candidateRemark}` : 'Add Remark'}
+                            style={{
+                              width: '30px',
+                              height: '30px',
+                              borderRadius: '8px',
+                              border: hasRemark ? '1.5px solid #d97706' : '1.5px solid #e2e8f0',
+                              background: hasRemark ? '#f59e0b' : '#f8fafc',
+                              color: hasRemark ? '#fff' : '#94a3b8',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              position: 'relative',
+                              transition: 'all 0.2s',
+                              boxShadow: hasRemark ? '0 2px 5px rgba(245,158,11,0.3)' : 'none',
+                            }}
+                          >
+                            <MessageSquare size={13} />
+                            {hasRemark && (
+                              <span style={{
+                                position: 'absolute',
+                                top: '-4px',
+                                right: '-4px',
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                background: '#10b981',
+                                border: '1.5px solid #fff',
+                              }} />
+                            )}
+                          </button>
+                        );
+                      })()}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                         <button 
                           className="btn btn-outline" 
                           style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }}
@@ -373,6 +505,53 @@ const ResumeUpload = () => {
                         >
                           View
                         </button>
+                        
+                        {(candidate.resume_stage_status || candidate.resumeStageStatus || 'Pending') === 'Pending' && (
+                          <>
+                            <button
+                              onClick={() => setConfirmModal({ type: 'approve', candidate })}
+                              disabled={actionLoading === candidate.id}
+                              title="Approve Resume"
+                              style={{
+                                padding: '4px 8px',
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                border: 'none',
+                                borderRadius: '6px',
+                                background: '#10b981',
+                                color: '#fff',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                              }}
+                            >
+                              <CheckSquare size={12} />
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => setConfirmModal({ type: 'reject', candidate })}
+                              disabled={actionLoading === candidate.id}
+                              title="Reject Resume"
+                              style={{
+                                padding: '4px 8px',
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                border: 'none',
+                                borderRadius: '6px',
+                                background: '#ef4444',
+                                color: '#fff',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                              }}
+                            >
+                              <XSquare size={12} />
+                              Reject
+                            </button>
+                          </>
+                        )}
                         <div style={{ position: 'relative' }}>
                           <button 
                             className="btn btn-ghost dropdown-trigger" 
@@ -511,6 +690,108 @@ const ResumeUpload = () => {
       )}
 
 
+      {/* Remark Popover Modal */}
+      {remarkPopover && (
+        <div
+          style={{
+            position: 'fixed', inset: 0,
+            backgroundColor: 'rgba(15,23,42,0.5)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 9999, padding: '1.5rem',
+          }}
+          onClick={() => setRemarkPopover(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#fff', borderRadius: '16px', padding: '24px 28px',
+              width: '100%', maxWidth: '400px',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+              animation: 'slideInRemark 0.18s ease',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(245,158,11,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <MessageSquare size={16} color="#d97706" />
+              </div>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#0f172a' }}>Add Remark</div>
+                <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{remarkPopover.name}</div>
+              </div>
+            </div>
+
+            <textarea
+              value={remarkText}
+              onChange={(e) => setRemarkText(e.target.value)}
+              placeholder="Write your remark about this candidate..."
+              rows={4}
+              autoFocus
+              style={{
+                width: '100%', boxSizing: 'border-box',
+                border: '1.5px solid #e2e8f0', borderRadius: '10px',
+                padding: '10px 12px', fontSize: '0.85rem', color: '#1e293b',
+                resize: 'vertical', outline: 'none', fontFamily: 'inherit',
+                transition: 'border-color 0.2s', marginBottom: '16px',
+              }}
+              onFocus={(e) => (e.target.style.borderColor = '#f59e0b')}
+              onBlur={(e) => (e.target.style.borderColor = '#e2e8f0')}
+            />
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => setRemarkPopover(null)}
+                disabled={remarkSaving}
+                style={{
+                  flex: 1, padding: '9px', border: '1.5px solid #e2e8f0',
+                  borderRadius: '8px', background: '#f8fafc', color: '#475569',
+                  fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  setRemarkSaving(true);
+                  try {
+                    const res = await apiFetch('/api/candidates', {
+                      method: 'PATCH',
+                      body: JSON.stringify({ id: remarkPopover.candidateId, remark_reports: remarkText }),
+                    });
+                    if (res && res.ok) {
+                      await refreshCandidates();
+                      setRemarkPopover(null);
+                    } else {
+                      console.error('Failed to save remark:', res ? await res.text() : 'No response');
+                    }
+                  } catch (e) {
+                    console.error('Remark save error:', e);
+                  } finally {
+                    setRemarkSaving(false);
+                  }
+                }}
+                disabled={remarkSaving}
+                style={{
+                  flex: 1, padding: '9px', border: 'none',
+                  borderRadius: '8px',
+                  background: remarkSaving ? '#fde68a' : '#f59e0b',
+                  color: '#fff', fontSize: '0.85rem', fontWeight: 700,
+                  cursor: remarkSaving ? 'not-allowed' : 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                }}
+              >
+                {remarkSaving ? 'Saving...' : '💾 Save Remark'}
+              </button>
+            </div>
+          </div>
+          <style>{`
+            @keyframes slideInRemark {
+              from { opacity: 0; transform: scale(0.95) translateY(-8px); }
+              to   { opacity: 1; transform: scale(1) translateY(0); }
+            }
+          `}</style>
+        </div>
+      )}
 
     </div>
   );

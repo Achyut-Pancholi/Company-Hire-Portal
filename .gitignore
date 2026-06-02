@@ -40,4 +40,19 @@ yarn-error.log*
 next-env.d.ts
 # Verify .gitignore contains:
 .env*.local
-    
+/public/uploads
+
+# Debug / utility scripts (contain DB secrets - never commit)
+check_*.js
+fix_*.js
+run_migration.js
+test_*.js
+download_sample_video.js
+backfill*.js
+fix_*.js
+seed*.js
+migrate*.js
+debug*.js
+upload_*.js
+
+

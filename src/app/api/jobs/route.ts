@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
   if (authError) return authError;
   try {
     const body = await request.json();
-    const { title, department } = body;
+    const { title, department, sub_department } = body;
 
     // Allow creation of a department without a sub-department title
     if (!title && !department) {
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       );
     }
     // Determine insertion data
-    const insertData = title ? { title, department } : { title: department, department: null };
+    const insertData = title ? { title, department, sub_department: sub_department || 'General' } : { title: department, department: null, sub_department: null };
     const supabase = getServiceSupabase();
     const { data, error } = await supabase
       .from("jobs")
@@ -62,7 +62,7 @@ export async function PATCH(request: NextRequest) {
   if (authError) return authError;
   try {
     const body = await request.json();
-    const { id, title, department, status } = body;
+    const { id, title, department, status, sub_department } = body;
 
     if (!id) {
       return NextResponse.json({ error: "job id is required" }, { status: 400 });
@@ -71,6 +71,7 @@ export async function PATCH(request: NextRequest) {
     const updates: any = {};
     if (title) updates.title = title;
     if (department) updates.department = department;
+    if (sub_department) updates.sub_department = sub_department;
     if (status) updates.status = status;
 
     const supabase = getServiceSupabase();

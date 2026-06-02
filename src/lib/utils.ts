@@ -28,14 +28,37 @@ export function generateShareToken(): string {
   return crypto.randomUUID();
 }
 
+export function getBaseUrl(): string {
+  const configured = process.env.NEXT_PUBLIC_APP_URL;
+  
+  // If a Vercel Production URL is available, always prioritize it to prevent preview URL leaks
+  if (process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
+
+  // If configured URL is present, use it (unless it's a known old preview URL that was hardcoded by mistake)
+  if (configured && configured !== "http://localhost:3000") {
+    // If they accidentally hardcoded a Vercel preview branch URL in the Env Vars, we can still use it if it's the only option,
+    // but we prefer the production URL above.
+    return configured.replace(/\/$/, "");
+  }
+
+  // Fallback to Vercel preview URL if on a preview branch
+  if (process.env.NEXT_PUBLIC_VERCEL_URL) return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+
+  return "http://localhost:3000";
+}
+
 export function getInterviewUrl(id: string): string {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  return `${baseUrl}/interview/${id}`;
+  return `${getBaseUrl()}/interview/${id}`;
 }
 
 export function getShareUrl(token: string): string {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  return `${baseUrl}/share/${token}`;
+  return `${getBaseUrl()}/share/${token}`;
 }
 
 export function isExpired(expiresAt: string | Date): boolean {

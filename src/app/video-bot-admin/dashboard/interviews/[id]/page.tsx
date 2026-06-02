@@ -65,7 +65,8 @@ export default function InterviewReviewPage() {
     a.click();
   };
 
-  const PORTAL_URL = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:5173";
+  // Redirect to Admin Reports where all candidates are listed
+  const PORTAL_URL = "/admin/reports";
 
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this interview? This action cannot be undone.")) return;

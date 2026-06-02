@@ -213,6 +213,28 @@ export default async function CandidateReportPage({ params }: { params: Promise<
     notFound();
   }
 
+  // Load completed interview matching by candidate email or name
+  let matchedInterview = null;
+  const candidateEmail = (candidate.email || candidate.extracted_data?.personalInformation?.email || "").trim().toLowerCase();
+  const cleanName = (n: string) => (n || "").toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+  const candName = cleanName(candidate.name || "");
+  
+  const { data: interviews } = await supabase
+    .from("interviews")
+    .select("*")
+    .eq("status", "completed");
+    
+  if (interviews && interviews.length > 0) {
+    const match = interviews.find((i: any) => {
+      const matchesEmail = candidateEmail && (i.candidate_email || "").trim().toLowerCase() === candidateEmail;
+      const matchesName = candName && cleanName(i.candidate_name || "") === candName;
+      return matchesEmail || matchesName;
+    });
+    if (match) {
+      matchedInterview = match;
+    }
+  }
+
   // Check expiry stored inside extracted_data
   const expiresAt = candidate.extracted_data?._reportShareExpiresAt;
   if (expiresAt && new Date(expiresAt) < new Date()) {
@@ -253,10 +275,44 @@ export default async function CandidateReportPage({ params }: { params: Promise<
   };
 
   const data = mappedCandidate.extractedData || {};
+
+  // Bug 1: Experience always static
+  const dynamicExperience = (() => {
+    console.log("Extracted Experience:", data);
+    
+    // Check all possible database experience fields
+    const directExp = data.experience || data.totalExperience;
+    if (directExp && String(directExp).trim() && String(directExp).trim() !== "—" && String(directExp).trim() !== "null") {
+      const val = String(directExp).trim();
+      return val.toLowerCase().includes("fresher") ? "Fresher" : (val.toLowerCase().includes("exp") ? val : `${val} Exp`);
+    }
+
+    const expAnalysis = data.totalExperienceAnalysis;
+    if (expAnalysis) {
+      if (expAnalysis.totalExperience && String(expAnalysis.totalExperience).trim() && String(expAnalysis.totalExperience).trim() !== "—" && String(expAnalysis.totalExperience).trim() !== "null") {
+        const val = String(expAnalysis.totalExperience).trim();
+        return val.toLowerCase().includes("fresher") ? "Fresher" : (val.toLowerCase().includes("exp") ? val : `${val} Exp`);
+      }
+      if (typeof expAnalysis.domainExperience === 'number' && expAnalysis.domainExperience > 0) {
+        return `${expAnalysis.domainExperience} Years Exp`;
+      }
+    }
+
+    return "Fresher";
+  })();
   const skills = mappedCandidate.skills || [];
   const edu = data.educationDetails || [];
   const projs = data.projectAnalysis || [];
-  const transcript = mappedCandidate.transcript || data.transcript || [];
+  // Use DB Whisper transcript if available, fallback to candidate transcript
+  const transcript = (matchedInterview?.transcript && Array.isArray(matchedInterview.transcript) && matchedInterview.transcript.length > 0)
+    ? matchedInterview.transcript.map((t: any) => ({
+        question: t.question || "",
+        answer: t.text || t.answer || "",
+        timestamp_start: t.timestamp_start,
+        timestamp_end: t.timestamp_end
+      }))
+    : (mappedCandidate.transcript || data.transcript || []);
+
   const { strengths, weaknesses } = deriveStrengthsWeaknesses(mappedCandidate);
 
   // Use stored analysis from DB if available, fall back to live computation
@@ -265,17 +321,40 @@ export default async function CandidateReportPage({ params }: { params: Promise<
   const analysis = (storedAnalysis && storedAnalysis.recommendation && typeof storedAnalysis.communication === 'number')
     ? { ...liveAnalysis, ...storedAnalysis }
     : liveAnalysis;
-  const commScore = transcript.length > 0 ? analysis.communication : 85;
-  const confLabel = transcript.length > 0 ? (analysis.confidence >= 75 ? 'High' : analysis.confidence >= 55 ? 'Medium' : 'Low') : 'High';
-  const recLabel = mappedCandidate.finalRecommendation || (transcript.length > 0 ? (analysis.recommendation === 'Strongly Recommend' || analysis.recommendation === 'Recommend' ? 'Yes' : 'No') : 'Yes');
+
+  // Compute scores perfectly consistent with the real database records
+  const resolvedScores = (() => {
+    const s = matchedInterview?.scores || {};
+    const resumeScoreVal = mappedCandidate.resumeScore || 0;
+    const videoScoreVal = mappedCandidate.videoScore || 0;
+    const techScoreVal = mappedCandidate.techScore || 0;
+    const recLabelVal = mappedCandidate.finalRecommendation || 'Under Review';
+
+    const commScoreVal = s.Communication !== undefined ? s.Communication * 20 : videoScoreVal;
+    const confidenceVal = s.Confidence !== undefined ? s.Confidence * 20 : videoScoreVal;
+    const confLabelVal = confidenceVal >= 75 ? 'High' : confidenceVal >= 55 ? 'Medium' : 'Low';
+
+    const scoresList = [resumeScoreVal, videoScoreVal, techScoreVal].filter((v) => v !== null && v !== undefined);
+    const avgScoreVal = scoresList.length ? Math.round(scoresList.reduce((a, b) => a + b, 0) / scoresList.length) : 75;
+
+    return {
+      commScore: commScoreVal,
+      confLabel: confLabelVal,
+      recLabel: recLabelVal,
+      resumeScore: resumeScoreVal,
+      videoScore: videoScoreVal,
+      techScore: techScoreVal,
+      avgScore: avgScoreVal
+    };
+  })();
+
+  const commScore = resolvedScores.commScore;
+  const confLabel = resolvedScores.confLabel;
+  const recLabel = resolvedScores.recLabel;
+  const avgScore = resolvedScores.avgScore;
 
   const matchedJob = jobs.find((j: any) => j.title === mappedCandidate.jobApplied);
   const jobSkills = matchedJob?.required_skills || matchedJob?.skills || [];
-
-  const avgScore = (() => {
-    const vals = [mappedCandidate.resumeScore, mappedCandidate.videoScore, mappedCandidate.techScore].filter(Boolean);
-    return vals.length ? Math.round(vals.reduce((a: number, b: number) => a + b, 0) / vals.length) : null;
-  })();
 
   const NEXT_JS_URL = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
 
@@ -294,9 +373,14 @@ export default async function CandidateReportPage({ params }: { params: Promise<
               {getInitials(mappedCandidate.name)}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              <h2 style={{ color: '#fff', fontWeight: '800', fontSize: '1.3rem', margin: 0, letterSpacing: '-0.02em' }}>{mappedCandidate.name}</h2>
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#fff', fontWeight: '800', fontSize: '1.3rem', margin: 0, letterSpacing: '-0.02em' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--brand-green)', backgroundColor: 'rgba(125, 186, 0, 0.1)', padding: '4px 8px', borderRadius: '12px', border: '1px solid rgba(125, 186, 0, 0.2)' }}>
+                  #{mappedCandidate.display_id || mappedCandidate.unique_id || String(mappedCandidate.id).substring(0,6)}
+                </span>
+                {mappedCandidate.name}
+              </h2>
               <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', margin: 0, fontWeight: '500' }}>
-                {mappedCandidate.jobApplied} • {mappedCandidate.extractedData?.totalExperienceAnalysis?.totalExperience || '3 Years'} Exp {mappedCandidate.extractedData?.educationDetails?.[0]?.degree ? `• ${mappedCandidate.extractedData.educationDetails[0].degree}` : '• MCA'}
+                {mappedCandidate.jobApplied} • {dynamicExperience === "Fresher" ? "Fresher" : dynamicExperience} {mappedCandidate.extractedData?.educationDetails?.[0]?.degree ? `• ${mappedCandidate.extractedData.educationDetails[0].degree}` : '• MCA'}
               </p>
             </div>
           </div>
@@ -336,15 +420,7 @@ export default async function CandidateReportPage({ params }: { params: Promise<
 
           {/* RIGHT CENTER SECTION: Status Badges */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flexShrink: 0, justifyContent: 'center' }}>
-            <div style={{
-              padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700',
-              backgroundColor: 'rgba(245,158,11,0.1)',
-              border: mappedCandidate.finalRecommendation === 'Selected' ? '1px solid #10b981' : mappedCandidate.finalRecommendation === 'Rejected' ? '1px solid #ef4444' : '1px solid #f59e0b',
-              color: mappedCandidate.finalRecommendation === 'Selected' ? '#10b981' : mappedCandidate.finalRecommendation === 'Rejected' ? '#ef4444' : '#f59e0b',
-              display: 'flex', alignItems: 'center', gap: '6px'
-            }}>
-              <span style={{ fontSize: '10px' }}>●</span> {mappedCandidate.finalRecommendation || 'Under Review'}
-            </div>
+
             <div style={{
               padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700',
               backgroundColor: 'rgba(16,185,129,0.05)',
@@ -375,83 +451,6 @@ export default async function CandidateReportPage({ params }: { params: Promise<
           </div>
         </div>
 
-        {/* BOTTOM KPI BAR */}
-        <div style={{ padding: '0 32px 12px 32px', backgroundColor: 'transparent' }}>
-          <div style={{ 
-            maxWidth: '1440px', 
-            margin: '0 auto', 
-            backgroundColor: '#0A2D82', 
-            borderRadius: '12px', 
-            border: '1px solid rgba(255,255,255,0.1)', 
-            padding: '12px 24px', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'space-between', 
-            width: '100%',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
-          }}>
-            
-            {/* KPI 1: Resume Match */}
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-              <FileText size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Resume Match</span>
-                <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{mappedCandidate.resumeScore || 0}%</span>
-              </div>
-            </div>
-            <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
-
-            {/* KPI 2: Video Score */}
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-              <Video size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Video Score</span>
-                <span style={{ color: '#3b82f6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{mappedCandidate.videoScore || 0}%</span>
-              </div>
-            </div>
-            <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
-
-            {/* KPI 3: Technical Score */}
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-              <Code2 size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Technical Score</span>
-                <span style={{ color: '#8b5cf6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{mappedCandidate.techScore || 0}%</span>
-              </div>
-            </div>
-            <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
-
-            {/* KPI 4: Communication */}
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-              <MessageSquare size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Communication</span>
-                <span style={{ color: '#f59e0b', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{commScore}%</span>
-              </div>
-            </div>
-            <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
-
-            {/* KPI 5: Confidence */}
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-              <Activity size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Confidence</span>
-                <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{confLabel}</span>
-              </div>
-            </div>
-            <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
-
-            {/* KPI 6: Recommendation */}
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-              <Award size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Recommendation</span>
-                <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{recLabel}</span>
-              </div>
-            </div>
-
-          </div>
-        </div>
       </div>
 
       {/* Custom Styles */}
@@ -480,7 +479,7 @@ export default async function CandidateReportPage({ params }: { params: Promise<
 
         {/* Main 3-column grid — no scroll */}
         <div style={{ flex: 1, display: 'flex', gap: '1.5rem', padding: '1.5rem 2rem 1.5rem', backgroundColor: '#f8fafc', maxWidth: '1440px', margin: '0 auto', width: '100%', overflow: 'hidden' }}>
-          <ReportDashboardGrid candidate={mappedCandidate} NEXT_JS_URL={NEXT_JS_URL} />
+          <ReportDashboardGrid candidate={mappedCandidate} NEXT_JS_URL={NEXT_JS_URL} matchedInterviewFromDb={matchedInterview} />
         </div>
 
       </div>

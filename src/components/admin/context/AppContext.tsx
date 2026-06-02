@@ -46,21 +46,35 @@ export const AppProvider = ({ children }) => {
       const res = await apiFetch(`/api/candidates?t=${Date.now()}`);
       if (res.ok) {
         const data = await res.json();
-        const mapped = data.map(c => ({
-          ...c,
-          // Map snake_case from DB to camelCase expected by existing React UI
-          jobApplied: c.job_applied,
-          resumeStatus: c.resume_status,
-          formStatus: c.form_status,
-          videoStatus: c.video_status,
-          techStatus: c.tech_status,
-          reportStatus: c.report_status,
-          resumeScore: c.resume_score,
-          videoScore: c.video_score,
-          techScore: c.tech_score,
-          finalRecommendation: c.final_recommendation,
-          extractedData: c.extracted_data
-        }));
+        const mapped = data.map(c => {
+          const ext = c.extracted_data || {};
+          // Resolve the technical video URL from all possible storage locations in extracted_data
+          const technicalVideoUrl = (
+            ext.videoUrl ||
+            ext.video_url ||
+            ext.video ||
+            ext.video_path ||
+            ''
+          );
+          return {
+            ...c,
+            // Map snake_case from DB to camelCase expected by existing React UI
+            jobApplied: c.job_applied,
+            resumeStatus: c.resume_status,
+            formStatus: c.form_status,
+            videoStatus: c.video_status,
+            techStatus: c.tech_status,
+            reportStatus: c.report_status,
+            resumeScore: c.resume_score,
+            videoScore: c.video_score,
+            techScore: c.tech_score,
+            finalRecommendation: c.final_recommendation,
+            extractedData: c.extracted_data,
+            // Expose the technical video URL at top-level for easy access
+            videoUrl: technicalVideoUrl || undefined,
+            video_url: technicalVideoUrl || undefined,
+          };
+        });
         setCandidates(mapped);
         return mapped;
       }

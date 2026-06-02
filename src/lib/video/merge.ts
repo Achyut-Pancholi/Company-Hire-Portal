@@ -20,6 +20,11 @@ export async function uploadVideoToSupabase(
   supabaseUrl: string,
   anonKey: string
 ): Promise<string> {
+  if (!supabaseUrl || supabaseUrl.includes("your_supabase_project_url")) {
+    console.log("Mock Supabase connection: returning mock video url.");
+    return "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+  }
+
   const filename = `interviews/${interviewId}/final-interview.webm`;
 
   const response = await fetch(
@@ -41,6 +46,45 @@ export async function uploadVideoToSupabase(
   }
 
   // Return the public URL
+  return `${supabaseUrl}/storage/v1/object/public/interview-recordings/${filename}`;
+}
+
+/**
+ * Upload a single question clip. Returns the public URL.
+ * Filename: interviews/{interviewId}/clip-q{questionIndex+1}.webm
+ */
+export async function uploadClipToSupabase(
+  blob: Blob,
+  interviewId: string,
+  questionIndex: number,
+  supabaseUrl: string,
+  anonKey: string
+): Promise<string> {
+  if (!supabaseUrl || supabaseUrl.includes("your_supabase_project_url")) {
+    // Return a deterministic mock URL per question so the player can differentiate
+    return `https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4#q${questionIndex + 1}`;
+  }
+
+  const filename = `interviews/${interviewId}/clip-q${questionIndex + 1}.webm`;
+
+  const response = await fetch(
+    `${supabaseUrl}/storage/v1/object/interview-recordings/${filename}`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${anonKey}`,
+        "Content-Type": "video/webm",
+        "x-upsert": "true",
+      },
+      body: blob,
+    }
+  );
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Clip upload failed (Q${questionIndex + 1}): ${err}`);
+  }
+
   return `${supabaseUrl}/storage/v1/object/public/interview-recordings/${filename}`;
 }
 

@@ -34,7 +34,7 @@
       "id": "candidate-1779864718740-842",
       "created_at": "2026-05-27T06:51:58.740Z",
       "name": "Nikhil Raj Mali",
-      "email": "nikhilrajmali042@gmail.com",
+      "email": "mahimadangi78@gmail.com",
       "phone": "+91 95879 21877",
       "skills": [
         "Java",
@@ -50,18 +50,18 @@
       "job_applied": "AI Research Scientist",
       "resume_status": "Parsed",
       "form_status": "Pending",
-      "video_status": "Pending",
-      "tech_status": "Pending",
+      "video_status": "Completed",
+      "tech_status": "Completed",
       "report_status": "Not Shared",
-      "stage": "Technical Interview",
+      "stage": "Video Interview",
       "resume_score": 77,
-      "final_recommendation": "Under Review",
+      "final_recommendation": "Needs Improvement",
       "extracted_data": {
         "isResume": true,
         "personalInformation": {
-          "fullName": "Nikhil Raj Mali",
-          "email": "nikhilrajmali042@gmail.com",
-          "phoneNumber": "+91 95879 21877"
+          "fullName": "Unnati Sutradhar",
+          "email": "unnatiisutradhar@gmail.com",
+          "phoneNumber": "+91 81079 05572"
         },
         "totalExperienceAnalysis": {
           "totalExperience": null,
@@ -70,50 +70,163 @@
         },
         "skillExtraction": {
           "extractedSkills": [
-            "Java",
-            "Manual Testing",
-            "UI Testing",
-            "Functional Testing",
-            "Non-Functional Testing",
-            "Monkey Testing",
-            "Postman",
-            "Robot Framework",
-            "MySQL"
+            "Python",
+            "C++",
+            "C",
+            "HTML/CSS",
+            "TensorFlow",
+            "Keras",
+            "Scikit-learn",
+            "Pandas",
+            "NumPy",
+            "OpenCV",
+            "NLTK",
+            "MERN",
+            "VS Code",
+            "Git",
+            "Postman"
           ]
         },
         "educationDetails": [
           {
-            "degree": "Bachelor of Technology in Computer Science and Engineering",
-            "college": "Techno India NJR Institute of Technology, Udaipur",
-            "passingYear": "2026",
-            "cgpaOrPercentage": "8.0 / 10"
+            "degree": "Bachelor of Technology in Computer Science and Engineering (AI/ML Specialization)",
+            "college": "Sir Padampat Singhania University Udaipur",
+            "passingYear": null,
+            "cgpaOrPercentage": "8.0/10"
           }
         ],
         "projectAnalysis": [
           {
-            "projectName": "Login Page Testing",
-            "projectDescription": "Performed manual testing on a login module of a sample web application",
-            "technologiesUsed": [
-              "Manual Testing",
-              "UI Testing"
-            ]
+            "projectName": "DermaIQ: Burn Grading and Treatment Recommendation Platform",
+            "role": null,
+            "duration": null,
+            "projectDescription": "Built an interactive Streamlit web app for image upload, visual classification, and real-time treatment recommendations.",
+            "responsibilities": [],
+            "technologiesUsed": []
           },
           {
-            "projectName": "REST API Testing Using Postman",
-            "projectDescription": "Tested public REST APIs to validate request-response behavior and API functionality",
-            "technologiesUsed": [
-              "Postman",
-              "REST API"
-            ]
+            "projectName": "SmartShop AI – Intelligent Shopping App",
+            "role": null,
+            "duration": "Ongoing",
+            "projectDescription": "Built the UI and API-based product scraping for an AI-powered shopping app; advanced features in progress.",
+            "responsibilities": [],
+            "technologiesUsed": []
+          },
+          {
+            "projectName": "IOT Based Automated Library",
+            "role": null,
+            "duration": null,
+            "projectDescription": "Built an IoT and ML-powered automated library system to streamline book management, enhance user experience.",
+            "responsibilities": [],
+            "technologiesUsed": []
+          },
+          {
+            "projectName": "Product Management System",
+            "role": null,
+            "duration": null,
+            "projectDescription": "Built a MERN-based Product Management System with authentication and CRUD functionality.",
+            "responsibilities": [],
+            "technologiesUsed": []
           }
-        ]
-      }
+        ],
+        "_reportShareToken": "cd392fd46736471aa565ffc266735a354d8a80f9a88944309935a720e8b88978",
+        "_reportShareExpiresAt": "2026-06-28T11:06:26.423Z",
+        "video": "/uploads/candidate-1779873144021-640-1780056469124.mp4",
+        "videoUrl": "/uploads/candidate-1779873144021-640-1780056469124.mp4",
+        "video_url": "/uploads/candidate-1779873144021-640-1780056469124.mp4",
+        "video_path": "/uploads/candidate-1779873144021-640-1780056469124.mp4",
+        "localVideoBlobUrl": "blob:http://localhost:3001/9c771b2b-663c-4fe2-ae2c-2532bf6b66f3",
+        "videoUploadedAt": "2026-05-29T12:07:49.135Z",
+        "transcript": [
+          {
+            "question": "Why are you interested in joining our company?",
+            "answer": "I am impressed by your company's focus on innovation and strong engineering culture. I want to contribute to building impactful solutions."
+          },
+          {
+            "question": "What is your preferred working style?",
+            "answer": "I thrive in collaborative, cross-functional teams where communication is transparent and everyone has ownership over their tasks."
+          },
+          {
+            "question": "How do you manage tight deadlines?",
+            "answer": "I prioritize tasks using Eisenhower matrix, break them down into smaller milestones, and communicate proactively if any blockers arise."
+          }
+        ],
+        "transcriptAnalysis": {
+          "communication": 90,
+          "technical": 20,
+          "problemSolving": 60,
+          "professionalism": 90,
+          "leadership": 70,
+          "confidence": 80,
+          "fluency": 100,
+          "fillerWordCount": 0,
+          "fillerWords": [
+            "fillerWordCount: 0"
+          ],
+          "tone": "Collaborative and solution-focused",
+          "sentiment": "Positive and enthusiastic",
+          "recommendation": "Needs Improvement",
+          "recommendationReason": "The candidate demonstrates a clear appreciation for technical innovation, strong teamwork and communication skills, and a proactive approach to task management, but lacks specific technical skills discussion.",
+          "ownershipSignals": [
+            {
+              "signal": "Proactive communication about blockers",
+              "evidence": "communicate proactively if any blockers arise"
+            },
+            {
+              "signal": "Task ownership and responsibility",
+              "evidence": "everyone has ownership over their tasks"
+            }
+          ],
+          "hesitationPatterns": [
+            "Appreciation for technical innovation and strong engineering culture",
+            "Clear and structured communication style"
+          ],
+          "leadershipIndicators": [
+            {
+              "indicator": "Understanding of teamwork and task ownership",
+              "evidence": "I thrive in collaborative, cross-functional teams where communication is transparent and everyone has ownership over their tasks."
+            },
+            {
+              "indicator": "Proactive responsibility and task prioritization",
+              "evidence": "I prioritize tasks using Eisenhower matrix, break them down into smaller milestones, and communicate proactively if any blockers arise."
+            }
+          ],
+          "keyObservations": [
+            {
+              "observation": "Appreciation for technical innovation and strong engineering culture",
+              "evidence": "I am impressed by your company's focus on innovation and strong engineering culture."
+            },
+            {
+              "observation": "Clear and structured communication style",
+              "evidence": "The candidate's responses were clear, structured, and concise, with no noticeable filler words."
+            }
+          ],
+          "behavioralSignals": {
+            "ownership": 80,
+            "hesitation": 100,
+            "confidence": 80,
+            "communication": 90
+          },
+          "practicalExperienceScore": 20,
+          "technicalGaps": [
+            {
+              "gap": "Lack of specific technical skills discussion",
+              "evidence": "No specific coding concepts, frameworks, or architectures were mentioned."
+            }
+          ]
+        },
+        "transcriptUpdatedAt": "2026-05-29T11:20:15.802Z",
+        "sourceTranscriptLength": 604,
+        "analysisVersion": "2.0.0"
+      },
+      "video_score": 90,
+      "tech_score": 58
     },
     {
       "id": "candidate-1779873144021-640",
       "created_at": "2026-05-27T09:12:24.022Z",
       "name": "Dhanesh Vaishnav",
-      "email": "dhaneshvaishnav123@gmail.com",
+      "email": "mahimadangi78@gmail.com",
       "phone": "+91 86199 20583",
       "skills": [
         "Python",
@@ -139,18 +252,18 @@
       "job_applied": "AI Research Scientist",
       "resume_status": "Parsed",
       "form_status": "Pending",
-      "video_status": "Pending",
-      "tech_status": "Pending",
+      "video_status": "Completed",
+      "tech_status": "Completed",
       "report_status": "Not Shared",
-      "stage": "Technical Interview",
+      "stage": "Video Interview",
       "resume_score": 78,
-      "final_recommendation": "Under Review",
+      "final_recommendation": "Needs Improvement",
       "extracted_data": {
         "isResume": true,
         "personalInformation": {
-          "fullName": "Dhanesh Vaishnav",
-          "email": "dhaneshvaishnav123@gmail.com",
-          "phoneNumber": "+91 86199 20583"
+          "fullName": "Unnati Sutradhar",
+          "email": "unnatiisutradhar@gmail.com",
+          "phoneNumber": "+91 81079 05572"
         },
         "totalExperienceAnalysis": {
           "totalExperience": null,
@@ -160,84 +273,353 @@
         "skillExtraction": {
           "extractedSkills": [
             "Python",
-            "Java",
-            "FastAPI",
-            "Jinja2",
-            "HTML",
-            "CSS",
-            "Tailwind CSS",
-            "MySQL",
-            "PostgreSQL",
-            "MongoDB",
-            "Git",
-            "GitHub",
+            "C++",
+            "C",
+            "HTML/CSS",
+            "TensorFlow",
+            "Keras",
+            "Scikit-learn",
+            "Pandas",
+            "NumPy",
+            "OpenCV",
+            "NLTK",
+            "MERN",
             "VS Code",
-            "API Testing",
-            "Google Colab",
-            "AWS",
-            "Render",
-            "NewsAPI",
-            "JavaScript"
+            "Git",
+            "Postman"
           ]
         },
         "educationDetails": [
           {
-            "degree": "Master of Computer Applications",
-            "college": "Mohanlal Sukhadia University, Udaipur",
+            "degree": "Bachelor of Technology in Computer Science and Engineering (AI/ML Specialization)",
+            "college": "Sir Padampat Singhania University Udaipur",
             "passingYear": null,
-            "cgpaOrPercentage": "8.00 SGPA"
-          },
-          {
-            "degree": "Bachelor of Computer Applications",
-            "college": "Vidya Bhawan Rural Institute, Udaipur",
-            "passingYear": null,
-            "cgpaOrPercentage": "76.80 %"
+            "cgpaOrPercentage": "8.0/10"
           }
         ],
         "projectAnalysis": [
           {
-            "projectName": "Dhanesh_!NEWS",
-            "projectDescription": "API-Powered News Web Application",
-            "technologiesUsed": [
-              "Python",
-              "FastAPI",
-              "NewsAPI",
-              "Jinja2",
-              "HTML",
-              "CSS",
-              "Tailwind CSS",
-              "Render"
-            ]
+            "projectName": "DermaIQ: Burn Grading and Treatment Recommendation Platform",
+            "role": null,
+            "duration": null,
+            "projectDescription": "Built an interactive Streamlit web app for image upload, visual classification, and real-time treatment recommendations.",
+            "responsibilities": [],
+            "technologiesUsed": []
           },
           {
-            "projectName": "Expense Tracker System",
-            "projectDescription": "Web Application",
-            "technologiesUsed": [
-              "Python",
-              "FastAPI",
-              "PostgreSQL",
-              "Jinja2",
-              "HTML",
-              "CSS",
-              "JavaScript",
-              "Render"
-            ]
+            "projectName": "SmartShop AI – Intelligent Shopping App",
+            "role": null,
+            "duration": "Ongoing",
+            "projectDescription": "Built the UI and API-based product scraping for an AI-powered shopping app; advanced features in progress.",
+            "responsibilities": [],
+            "technologiesUsed": []
           },
           {
-            "projectName": "Personal Portfolio",
-            "projectDescription": "FastAPI Web Application",
-            "technologiesUsed": [
-              "Python",
-              "FastAPI",
-              "MongoDB",
-              "Jinja2",
-              "HTML",
-              "CSS",
-              "Tailwind CSS",
-              "Render"
-            ]
+            "projectName": "IOT Based Automated Library",
+            "role": null,
+            "duration": null,
+            "projectDescription": "Built an IoT and ML-powered automated library system to streamline book management, enhance user experience.",
+            "responsibilities": [],
+            "technologiesUsed": []
+          },
+          {
+            "projectName": "Product Management System",
+            "role": null,
+            "duration": null,
+            "projectDescription": "Built a MERN-based Product Management System with authentication and CRUD functionality.",
+            "responsibilities": [],
+            "technologiesUsed": []
           }
-        ]
+        ],
+        "_reportShareToken": "cd392fd46736471aa565ffc266735a354d8a80f9a88944309935a720e8b88978",
+        "_reportShareExpiresAt": "2026-06-28T11:06:26.423Z",
+        "video": "/uploads/candidate-1779873144021-640-1780056469124.mp4",
+        "videoUrl": "/uploads/candidate-1779873144021-640-1780056469124.mp4",
+        "video_url": "/uploads/candidate-1779873144021-640-1780056469124.mp4",
+        "video_path": "/uploads/candidate-1779873144021-640-1780056469124.mp4",
+        "localVideoBlobUrl": "blob:http://localhost:3001/9c771b2b-663c-4fe2-ae2c-2532bf6b66f3",
+        "videoUploadedAt": "2026-05-29T12:07:49.135Z",
+        "transcript": [
+          {
+            "question": "Why are you interested in joining our company?",
+            "answer": "I am impressed by your company's focus on innovation and strong engineering culture. I want to contribute to building impactful solutions."
+          },
+          {
+            "question": "What is your preferred working style?",
+            "answer": "I thrive in collaborative, cross-functional teams where communication is transparent and everyone has ownership over their tasks."
+          },
+          {
+            "question": "How do you manage tight deadlines?",
+            "answer": "I prioritize tasks using Eisenhower matrix, break them down into smaller milestones, and communicate proactively if any blockers arise."
+          }
+        ],
+        "transcriptAnalysis": {
+          "communication": 90,
+          "technical": 20,
+          "problemSolving": 60,
+          "professionalism": 90,
+          "leadership": 70,
+          "confidence": 80,
+          "fluency": 100,
+          "fillerWordCount": 0,
+          "fillerWords": [
+            "fillerWordCount: 0"
+          ],
+          "tone": "Collaborative and solution-focused",
+          "sentiment": "Positive and enthusiastic",
+          "recommendation": "Needs Improvement",
+          "recommendationReason": "The candidate demonstrates a clear appreciation for technical innovation, strong teamwork and communication skills, and a proactive approach to task management, but lacks specific technical skills discussion.",
+          "ownershipSignals": [
+            {
+              "signal": "Proactive communication about blockers",
+              "evidence": "communicate proactively if any blockers arise"
+            },
+            {
+              "signal": "Task ownership and responsibility",
+              "evidence": "everyone has ownership over their tasks"
+            }
+          ],
+          "hesitationPatterns": [
+            "Appreciation for technical innovation and strong engineering culture",
+            "Clear and structured communication style"
+          ],
+          "leadershipIndicators": [
+            {
+              "indicator": "Understanding of teamwork and task ownership",
+              "evidence": "I thrive in collaborative, cross-functional teams where communication is transparent and everyone has ownership over their tasks."
+            },
+            {
+              "indicator": "Proactive responsibility and task prioritization",
+              "evidence": "I prioritize tasks using Eisenhower matrix, break them down into smaller milestones, and communicate proactively if any blockers arise."
+            }
+          ],
+          "keyObservations": [
+            {
+              "observation": "Appreciation for technical innovation and strong engineering culture",
+              "evidence": "I am impressed by your company's focus on innovation and strong engineering culture."
+            },
+            {
+              "observation": "Clear and structured communication style",
+              "evidence": "The candidate's responses were clear, structured, and concise, with no noticeable filler words."
+            }
+          ],
+          "behavioralSignals": {
+            "ownership": 80,
+            "hesitation": 100,
+            "confidence": 80,
+            "communication": 90
+          },
+          "practicalExperienceScore": 20,
+          "technicalGaps": [
+            {
+              "gap": "Lack of specific technical skills discussion",
+              "evidence": "No specific coding concepts, frameworks, or architectures were mentioned."
+            }
+          ]
+        },
+        "transcriptUpdatedAt": "2026-05-29T11:20:15.802Z",
+        "sourceTranscriptLength": 604,
+        "analysisVersion": "2.0.0"
+      },
+      "video_score": 90,
+      "tech_score": 58
+    },
+    {
+      "id": "candidate-1780052786595-937",
+      "created_at": "2026-05-29T11:06:26.595Z",
+      "name": "Unnati Sutradhar",
+      "email": "mahimadangi78@gmail.com",
+      "phone": "+91 81079 05572",
+      "skills": [
+        "Python",
+        "C++",
+        "C",
+        "HTML/CSS",
+        "TensorFlow",
+        "Keras",
+        "Scikit-learn",
+        "Pandas",
+        "NumPy",
+        "OpenCV",
+        "NLTK",
+        "MERN",
+        "VS Code",
+        "Git",
+        "Postman"
+      ],
+      "job_applied": "AI Research Scientist",
+      "resume_status": "Parsed",
+      "form_status": "N/A",
+      "video_status": "Completed",
+      "tech_status": "Completed",
+      "report_status": "Not Shared",
+      "stage": "Video Interview",
+      "resume_score": 76,
+      "video_score": 90,
+      "tech_score": 58,
+      "final_recommendation": "Needs Improvement",
+      "extracted_data": {
+        "isResume": true,
+        "personalInformation": {
+          "fullName": "Unnati Sutradhar",
+          "email": "unnatiisutradhar@gmail.com",
+          "phoneNumber": "+91 81079 05572"
+        },
+        "totalExperienceAnalysis": {
+          "totalExperience": null,
+          "domainExperience": 0,
+          "leadershipExperience": "0.0 years"
+        },
+        "skillExtraction": {
+          "extractedSkills": [
+            "Python",
+            "C++",
+            "C",
+            "HTML/CSS",
+            "TensorFlow",
+            "Keras",
+            "Scikit-learn",
+            "Pandas",
+            "NumPy",
+            "OpenCV",
+            "NLTK",
+            "MERN",
+            "VS Code",
+            "Git",
+            "Postman"
+          ]
+        },
+        "educationDetails": [
+          {
+            "degree": "Bachelor of Technology in Computer Science and Engineering (AI/ML Specialization)",
+            "college": "Sir Padampat Singhania University Udaipur",
+            "passingYear": null,
+            "cgpaOrPercentage": "8.0/10"
+          }
+        ],
+        "projectAnalysis": [
+          {
+            "projectName": "DermaIQ: Burn Grading and Treatment Recommendation Platform",
+            "role": null,
+            "duration": null,
+            "projectDescription": "Built an interactive Streamlit web app for image upload, visual classification, and real-time treatment recommendations.",
+            "responsibilities": [],
+            "technologiesUsed": []
+          },
+          {
+            "projectName": "SmartShop AI – Intelligent Shopping App",
+            "role": null,
+            "duration": "Ongoing",
+            "projectDescription": "Built the UI and API-based product scraping for an AI-powered shopping app; advanced features in progress.",
+            "responsibilities": [],
+            "technologiesUsed": []
+          },
+          {
+            "projectName": "IOT Based Automated Library",
+            "role": null,
+            "duration": null,
+            "projectDescription": "Built an IoT and ML-powered automated library system to streamline book management, enhance user experience.",
+            "responsibilities": [],
+            "technologiesUsed": []
+          },
+          {
+            "projectName": "Product Management System",
+            "role": null,
+            "duration": null,
+            "projectDescription": "Built a MERN-based Product Management System with authentication and CRUD functionality.",
+            "responsibilities": [],
+            "technologiesUsed": []
+          }
+        ],
+        "_reportShareToken": "cd392fd46736471aa565ffc266735a354d8a80f9a88944309935a720e8b88978",
+        "_reportShareExpiresAt": "2026-06-28T11:06:26.423Z",
+        "video": "/uploads/candidate-1779873144021-640-1780056469124.mp4",
+        "videoUrl": "/uploads/candidate-1779873144021-640-1780056469124.mp4",
+        "video_url": "/uploads/candidate-1779873144021-640-1780056469124.mp4",
+        "video_path": "/uploads/candidate-1779873144021-640-1780056469124.mp4",
+        "localVideoBlobUrl": "blob:http://localhost:3001/9c771b2b-663c-4fe2-ae2c-2532bf6b66f3",
+        "videoUploadedAt": "2026-05-29T12:07:49.135Z",
+        "transcript": [
+          {
+            "question": "Why are you interested in joining our company?",
+            "answer": "I am impressed by your company's focus on innovation and strong engineering culture. I want to contribute to building impactful solutions."
+          },
+          {
+            "question": "What is your preferred working style?",
+            "answer": "I thrive in collaborative, cross-functional teams where communication is transparent and everyone has ownership over their tasks."
+          },
+          {
+            "question": "How do you manage tight deadlines?",
+            "answer": "I prioritize tasks using Eisenhower matrix, break them down into smaller milestones, and communicate proactively if any blockers arise."
+          }
+        ],
+        "transcriptAnalysis": {
+          "communication": 90,
+          "technical": 20,
+          "problemSolving": 60,
+          "professionalism": 90,
+          "leadership": 70,
+          "confidence": 80,
+          "fluency": 100,
+          "fillerWordCount": 0,
+          "fillerWords": [
+            "fillerWordCount: 0"
+          ],
+          "tone": "Collaborative and solution-focused",
+          "sentiment": "Positive and enthusiastic",
+          "recommendation": "Needs Improvement",
+          "recommendationReason": "The candidate demonstrates a clear appreciation for technical innovation, strong teamwork and communication skills, and a proactive approach to task management, but lacks specific technical skills discussion.",
+          "ownershipSignals": [
+            {
+              "signal": "Proactive communication about blockers",
+              "evidence": "communicate proactively if any blockers arise"
+            },
+            {
+              "signal": "Task ownership and responsibility",
+              "evidence": "everyone has ownership over their tasks"
+            }
+          ],
+          "hesitationPatterns": [
+            "Appreciation for technical innovation and strong engineering culture",
+            "Clear and structured communication style"
+          ],
+          "leadershipIndicators": [
+            {
+              "indicator": "Understanding of teamwork and task ownership",
+              "evidence": "I thrive in collaborative, cross-functional teams where communication is transparent and everyone has ownership over their tasks."
+            },
+            {
+              "indicator": "Proactive responsibility and task prioritization",
+              "evidence": "I prioritize tasks using Eisenhower matrix, break them down into smaller milestones, and communicate proactively if any blockers arise."
+            }
+          ],
+          "keyObservations": [
+            {
+              "observation": "Appreciation for technical innovation and strong engineering culture",
+              "evidence": "I am impressed by your company's focus on innovation and strong engineering culture."
+            },
+            {
+              "observation": "Clear and structured communication style",
+              "evidence": "The candidate's responses were clear, structured, and concise, with no noticeable filler words."
+            }
+          ],
+          "behavioralSignals": {
+            "ownership": 80,
+            "hesitation": 100,
+            "confidence": 80,
+            "communication": 90
+          },
+          "practicalExperienceScore": 20,
+          "technicalGaps": [
+            {
+              "gap": "Lack of specific technical skills discussion",
+              "evidence": "No specific coding concepts, frameworks, or architectures were mentioned."
+            }
+          ]
+        },
+        "transcriptUpdatedAt": "2026-05-29T11:20:15.802Z",
+        "sourceTranscriptLength": 604,
+        "analysisVersion": "2.0.0"
       }
     },
     {
@@ -561,7 +943,82 @@
       }
     }
   ],
-  "interviews": [],
+  "interviews": [
+    {
+      "id": "interview-1780053133105-336",
+      "created_at": "2026-05-29T11:12:13.105Z",
+      "candidate_name": "Unnati Sutradhar",
+      "candidate_email": "mahimadangi78@gmail.com",
+      "job_role": "AI Research Scientist",
+      "questions": [
+        "tell me about your self?"
+      ],
+      "status": "completed",
+      "expires_at": "2026-05-30T11:12:13.103Z",
+      "started_at": "2026-05-29T11:45:09.124Z",
+      "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "transcript": [
+        {
+          "question": "tell me about your self?",
+          "timestamp_start": 0,
+          "timestamp_end": 4.689
+        }
+      ],
+      "completed_at": "2026-05-29T11:45:22.025Z",
+      "summary": "- Demonstrates a strong understanding of artificial intelligence and machine learning.\n- Clearly articulates personal qualifications and specialized stream project experience.\n- Good communication style, structured logic, and confidence during responses.",
+      "scores": {
+        "Confidence": 4,
+        "Clarity": 4,
+        "Communication": 4,
+        "Relevance": 4
+      },
+      "final_recommendation": "Recommend"
+    },
+    {
+      "id": "interview-1780054239721-997",
+      "created_at": "2026-05-29T11:30:39.721Z",
+      "candidate_name": "Unnati Sutradhar",
+      "candidate_email": "mahimadangi78@gmail.com",
+      "job_role": "AI Research Scientist",
+      "questions": [
+        "tell me about your self?"
+      ],
+      "status": "completed",
+      "expires_at": "2026-05-30T11:30:39.720Z",
+      "started_at": "2026-05-29T11:45:09.124Z",
+      "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "transcript": [
+        {
+          "question": "tell me about your self?",
+          "timestamp_start": 0,
+          "timestamp_end": 4.689
+        }
+      ],
+      "completed_at": "2026-05-29T11:45:22.025Z"
+    },
+    {
+      "id": "interview-1780055088795-390",
+      "created_at": "2026-05-29T11:44:48.795Z",
+      "candidate_name": "Unnati Sutradhar",
+      "candidate_email": "mahimadangi78@gmail.com",
+      "job_role": "AI Research Scientist",
+      "questions": [
+        "tell me about your self?"
+      ],
+      "status": "completed",
+      "expires_at": "2026-05-30T11:44:48.794Z",
+      "started_at": "2026-05-29T11:45:09.124Z",
+      "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "transcript": [
+        {
+          "question": "tell me about your self?",
+          "timestamp_start": 0,
+          "timestamp_end": 4.689
+        }
+      ],
+      "completed_at": "2026-05-29T11:45:22.025Z"
+    }
+  ],
   "questions_bank": [
     {
       "id": "q-1",
@@ -583,6 +1040,15 @@
       "question_text": "What are the primary differences between fine-tuning and retrieval-augmented generation (RAG) when deploying LLMs?",
       "is_mandatory": true,
       "duration": 120
+    },
+    {
+      "id": "questions_ban-1780052823241-640",
+      "created_at": "2026-05-29T11:07:03.241Z",
+      "job_role": "Common",
+      "question_text": "tell me about your self?",
+      "is_mandatory": false,
+      "department": "Research",
+      "sub_department": "AI Research Scientist"
     }
   ]
 }

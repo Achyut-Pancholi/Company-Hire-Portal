@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/logo";
@@ -24,13 +24,26 @@ export default function NewInterviewPage() {
   const [copied, setCopied] = useState<"interview" | "share" | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Compute default expiry (7 days from now) — kept in a function so it
+  // never runs during SSR, preventing server/client Date.now() mismatch.
+  const getDefaultExpiry = () =>
+    new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
+
+  const [minDateTime, setMinDateTime] = useState("");
   const [form, setForm] = useState({
     candidate_name: "",
     candidate_email: "",
     job_role: "",
-    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
+    expires_at: "",           // populated after mount to avoid SSR mismatch
     questions: ["", "", ""],
   });
+
+  // Set date-dependent values only on the client after hydration
+  useEffect(() => {
+    const expiry = getDefaultExpiry();
+    setForm((prev) => ({ ...prev, expires_at: expiry }));
+    setMinDateTime(new Date().toISOString().slice(0, 16));
+  }, []);
 
   const updateForm = (key: string, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -188,7 +201,7 @@ export default function NewInterviewPage() {
               Back to dashboard
             </Button>
             <Button
-              onClick={() => { setCreated(null); setForm({ candidate_name: "", candidate_email: "", job_role: "", expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16), questions: ["", "", ""] }); }}
+              onClick={() => { setCreated(null); setForm({ candidate_name: "", candidate_email: "", job_role: "", expires_at: getDefaultExpiry(), questions: ["", "", ""] }); }}
               className="flex-1 bg-gradient-to-r from-blue-600 to-violet-600 text-white font-semibold"
             >
               Create another
@@ -266,7 +279,7 @@ export default function NewInterviewPage() {
                   type="datetime-local"
                   value={form.expires_at}
                   onChange={(e) => updateForm("expires_at", e.target.value)}
-                  min={new Date().toISOString().slice(0, 16)}
+                  min={minDateTime || undefined}
                   error={errors.expires_at}
                   className="bg-white/5 border-white/10 text-white focus-visible:border-white/30 focus-visible:ring-white/10 [color-scheme:dark]"
                 />

@@ -12,6 +12,8 @@ import StandardResume from '@/components/admin/StandardResume';
 import { ResumeParsedBox } from "@/components/ResumeParsedBox";
 import { ReportDashboardGrid } from "@/components/ReportDashboardGrid";
 import { analyzeTranscript } from '@/utils/transcriptAnalyzer';
+import WorkflowBadge from '@/components/admin/WorkflowBadge';
+import { useSWRConfig } from 'swr'; // removed useSWR import, we'll use fetch with SWRConfig for revalidation
 
 /* ─────────────────────────── helpers ─────────────────────────── */
 const NEXT_JS_URL = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
@@ -322,19 +324,231 @@ const deriveStrengthsWeaknesses = (candidate) => {
 };
 
 /* ─────────────────────── Detail Modal ──────────────────────── */
-const DetailModal = ({ candidate, jobs, onClose }) => {
+const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMessage, onCopyShareLink }) => {
+  const { refreshCandidates, apiFetch } = useAppContext();
+  const [viewResumeOpen, setViewResumeOpen] = useState(false);
+  const [matchedInterview, setMatchedInterview] = useState(null);
+
+  // States for report edit and sharing link generation
+  const [isEditingReport, setIsEditingReport] = useState(false);
+  const [editForm, setEditForm] = useState(() => {
+    const stageLower = String(candidate?.current_stage ?? candidate?.currentStage ?? candidate?.stage ?? '').toLowerCase();
+    const isRejected = stageLower.includes('reject');
+    const isSelected = stageLower.includes('selected') || stageLower.includes('hired');
+    const defaultRec = isRejected ? 'Rejected' : isSelected ? 'Selected' : (candidate?.finalRecommendation || candidate?.final_recommendation || 'Under Review');
+    
+    return {
+      finalRecommendation: defaultRec,
+      resumeScore: candidate?.resumeScore || 0,
+      videoScore: candidate?.videoScore || 0,
+      techScore: candidate?.techScore || 0,
+    };
+  });
+
+  const [generatedLink, setGeneratedLink] = useState('');
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [generatingLink, setGeneratingLink] = useState(false);
+
+  const prevCandidateIdRef = useRef(null);
+
+  useEffect(() => {
+    if (candidate) {
+      const stageLower = String(candidate?.current_stage ?? candidate?.currentStage ?? candidate?.stage ?? '').toLowerCase();
+      const isRejected = stageLower.includes('reject');
+      const isSelected = stageLower.includes('selected') || stageLower.includes('hired');
+      const defaultRec = isRejected ? 'Rejected' : isSelected ? 'Selected' : (candidate?.finalRecommendation || candidate?.final_recommendation || 'Under Review');
+
+      setEditForm({
+        finalRecommendation: defaultRec,
+        resumeScore: candidate.resumeScore || 0,
+        videoScore: candidate.videoScore || 0,
+        techScore: candidate.techScore || 0,
+      });
+      if (prevCandidateIdRef.current !== candidate.id) {
+        setGeneratedLink('');
+        prevCandidateIdRef.current = candidate.id;
+      }
+    }
+  }, [candidate]);
+
+  const handleGenerateLink = async () => {
+    setGeneratingLink(true);
+    try {
+      const res = await apiFetch('/api/reports/share', {
+        method: 'POST',
+        body: JSON.stringify({
+          candidateId: candidate.id,
+          candidateEmail: candidate.email,
+          candidateName: candidate.name,
+          jobRole: candidate.jobApplied,
+          scores: {
+            resume: candidate.resumeScore,
+            video: candidate.videoScore,
+            tech: candidate.techScore,
+          },
+          recommendation: candidate.finalRecommendation,
+          skipEmail: true
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setGeneratedLink(data.reportUrl);
+        await refreshCandidates();
+      } else {
+        alert(data.error || 'Failed to generate report link.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Network error. Failed to generate report link.');
+    } finally {
+      setGeneratingLink(false);
+    }
+  };
+
+  const handleSaveReport = async () => {
+    try {
+      const payload = {
+        id: candidate.id,
+        final_recommendation: editForm.finalRecommendation,
+        resume_score: Number(editForm.resumeScore),
+        video_score: Number(editForm.videoScore),
+        tech_score: Number(editForm.techScore),
+      };
+      const response = await apiFetch('/api/candidates', {
+        method: 'PATCH',
+        body: JSON.stringify(payload)
+      });
+      if (response.ok) {
+        setIsEditingReport(false);
+        await refreshCandidates();
+      } else {
+        const err = await response.json();
+        alert(err.error || 'Failed to update report');
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert('Error saving report');
+    }
+  };
+
   if (!candidate) return null;
 
   console.log("MODAL ANALYSIS:", candidate.extractedData?.transcriptAnalysis);
-
-  const { refreshCandidates } = useAppContext();
-  const [viewResumeOpen, setViewResumeOpen] = useState(false);
-
   const data = candidate.extractedData || {};
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedData, setEditedData] = useState({
+    name: candidate.name,
+    email: candidate.email || candidate.extractedData?.personalInformation?.email || "",
+    jobApplied: candidate.jobApplied,
+    resumeScore: candidate.resumeScore || 0,
+    videoScore: candidate.videoScore || 0,
+    techScore: candidate.techScore || 0,
+    finalRecommendation: candidate.finalRecommendation || 'Under Review',
+    summary: candidate.extractedData?.transcriptAnalysis?.summary || "",
+    pros: candidate.extractedData?.transcriptAnalysis?.pros || "",
+    cons: candidate.extractedData?.transcriptAnalysis?.cons || ""
+  });
+
+  const handleSaveEdits = async () => {
+    try {
+      const supabase = createClient();
+      
+      const payload = {
+        name: editedData.name,
+        email: editedData.email,
+        jobApplied: editedData.jobApplied,
+        resumeScore: parseInt(editedData.resumeScore) || 0,
+        videoScore: parseInt(editedData.videoScore) || 0,
+        techScore: parseInt(editedData.techScore) || 0,
+        finalRecommendation: editedData.finalRecommendation
+      };
+
+      const { data: existing } = await supabase.from('candidates').select('extracted_data').eq('id', candidate.id).single();
+      const extracted_data = existing?.extracted_data || {};
+      if (!extracted_data.transcriptAnalysis) extracted_data.transcriptAnalysis = {};
+      extracted_data.transcriptAnalysis.summary = editedData.summary;
+      extracted_data.transcriptAnalysis.pros = editedData.pros;
+      extracted_data.transcriptAnalysis.cons = editedData.cons;
+
+      await supabase.from('candidates').update({ ...payload, extracted_data }).eq('id', candidate.id);
+      setIsEditing(false);
+      if (refreshCandidates) refreshCandidates();
+    } catch (e) {
+      console.error("Save failed", e);
+    }
+  };
+
+
+  useEffect(() => {
+    const fetchInterviewData = async () => {
+      try {
+        if (!apiFetch) return;
+        const res = await apiFetch(`/api/interviews/list?t=${Date.now()}`);
+        if (res.ok) {
+          const list = await res.json();
+          const targetEmail = (candidate.email || candidate.extractedData?.personalInformation?.email || "").trim().toLowerCase();
+          const cleanName = (n: string) => (n || "").toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+          const candName = cleanName(candidate.name || "");
+          
+          if (Array.isArray(list)) {
+            const match = list.find((i: any) => {
+              const matchesEmail = targetEmail && (i.candidate_email || "").trim().toLowerCase() === targetEmail;
+              const matchesName = candName && cleanName(i.candidate_name || "") === candName;
+              return (matchesEmail || matchesName) && i.status === 'completed';
+            });
+            if (match) {
+              setMatchedInterview(match);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch interview details in modal:", err);
+      }
+    };
+    fetchInterviewData();
+  }, [candidate, apiFetch]);
+
+  // Bug 1: Experience always static
+  const dynamicExperience = React.useMemo(() => {
+    console.log("Extracted Experience:", data);
+    
+    // Check all possible database experience fields
+    const directExp = data.experience || data.totalExperience;
+    if (directExp && String(directExp).trim() && String(directExp).trim() !== "—" && String(directExp).trim() !== "null") {
+      const val = String(directExp).trim();
+      return val.toLowerCase().includes("fresher") ? "Fresher" : (val.toLowerCase().includes("exp") ? val : `${val} Exp`);
+    }
+
+    const expAnalysis = data.totalExperienceAnalysis;
+    if (expAnalysis) {
+      if (expAnalysis.totalExperience && String(expAnalysis.totalExperience).trim() && String(expAnalysis.totalExperience).trim() !== "—" && String(expAnalysis.totalExperience).trim() !== "null") {
+        const val = String(expAnalysis.totalExperience).trim();
+        return val.toLowerCase().includes("fresher") ? "Fresher" : (val.toLowerCase().includes("exp") ? val : `${val} Exp`);
+      }
+      if (typeof expAnalysis.domainExperience === 'number' && expAnalysis.domainExperience > 0) {
+        return `${expAnalysis.domainExperience} Years Exp`;
+      }
+    }
+
+    return "Fresher";
+  }, [data]);
   const skills = candidate.skills || [];
   const edu = data.educationDetails || [];
   const projs = data.projectAnalysis || [];
-  const transcript = candidate.transcript || data.transcript || [];
+  
+  // Use DB Whisper transcript if available, fallback to candidate transcript
+  const transcript = React.useMemo(() => {
+    if (matchedInterview?.transcript && Array.isArray(matchedInterview.transcript) && matchedInterview.transcript.length > 0) {
+      return matchedInterview.transcript.map((t: any) => ({
+        question: t.question || "",
+        answer: t.text || t.answer || "",
+        timestamp_start: t.timestamp_start,
+        timestamp_end: t.timestamp_end
+      }));
+    }
+    return candidate.transcript || data.transcript || [];
+  }, [matchedInterview, candidate, data]);
+
   const { strengths, weaknesses } = deriveStrengthsWeaknesses(candidate);
 
   // Analyze transcript dynamically for bottom KPI bar metrics
@@ -349,18 +563,40 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
     return null;
   }, [transcript]);
 
-  const commScore = analysis ? analysis.communication : 85;
-  const confLabel = analysis ? (analysis.confidence >= 75 ? 'High' : analysis.confidence >= 55 ? 'Medium' : 'Low') : 'High';
-  const recLabel = candidate.finalRecommendation || (analysis ? (analysis.recommendation === 'Strongly Recommend' || analysis.recommendation === 'Recommend' ? 'Yes' : 'No') : 'Yes');
+  // Compute scores perfectly consistent with the real database records
+  const resolvedScores = React.useMemo(() => {
+    const s = matchedInterview?.scores || {};
+    const resumeScoreVal = candidate.resumeScore || 0;
+    const videoScoreVal = candidate.videoScore || 0;
+    const techScoreVal = candidate.techScore || 0;
+    const recLabelVal = candidate.finalRecommendation || 'Under Review';
+
+    const commScoreVal = s.Communication !== undefined ? s.Communication * 20 : videoScoreVal;
+    const confidenceVal = s.Confidence !== undefined ? s.Confidence * 20 : videoScoreVal;
+    const confLabelVal = confidenceVal >= 75 ? 'High' : confidenceVal >= 55 ? 'Medium' : 'Low';
+
+    const scoresList = [resumeScoreVal, videoScoreVal, techScoreVal].filter((v) => v !== null && v !== undefined);
+    const avgScoreVal = scoresList.length ? Math.round(scoresList.reduce((a, b) => a + b, 0) / scoresList.length) : 75;
+
+    return {
+      commScore: commScoreVal,
+      confLabel: confLabelVal,
+      recLabel: recLabelVal,
+      resumeScore: resumeScoreVal,
+      videoScore: videoScoreVal,
+      techScore: techScoreVal,
+      avgScore: avgScoreVal
+    };
+  }, [matchedInterview, candidate]);
+
+  const commScore = resolvedScores.commScore;
+  const confLabel = resolvedScores.confLabel;
+  const recLabel = resolvedScores.recLabel;
+  const avgScore = resolvedScores.avgScore;
 
   // Find matching job to get required skills
   const matchedJob = jobs.find((j) => j.title === candidate.jobApplied);
   const jobSkills = matchedJob?.required_skills || matchedJob?.skills || [];
-
-  const avgScore = (() => {
-    const vals = [candidate.resumeScore, candidate.videoScore, candidate.techScore].filter(Boolean);
-    return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null;
-  })();
 
   return (
     <div
@@ -383,10 +619,21 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
                 {getInitials(candidate.name)}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                <h2 style={{ color: '#fff', fontWeight: '800', fontSize: '1.3rem', margin: 0, letterSpacing: '-0.02em' }}>{candidate.name}</h2>
-                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', margin: 0, fontWeight: '500' }}>
-                  {candidate.jobApplied} • {candidate.extractedData?.totalExperienceAnalysis?.totalExperience || '3 Years'} Exp {candidate.extractedData?.education?.[0]?.degree ? `• ${candidate.extractedData.education[0].degree}` : '• MCA'}
-                </p>
+                {isEditing ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <input type="text" value={editedData.name} onChange={e => setEditedData({...editedData, name: e.target.value})} style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '4px', padding: '4px 8px', fontSize: '1.1rem', fontWeight: '700' }} />
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <input type="text" value={editedData.jobApplied} onChange={e => setEditedData({...editedData, jobApplied: e.target.value})} style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '4px', padding: '2px 6px', fontSize: '0.75rem' }} />
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <h2 style={{ color: '#fff', fontWeight: '800', fontSize: '1.3rem', margin: 0, letterSpacing: '-0.02em' }}>{candidate.name}</h2>
+                    <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', margin: 0, fontWeight: '500' }}>
+                      {candidate.jobApplied} • {dynamicExperience === "Fresher" ? "Fresher" : dynamicExperience} {candidate.extractedData?.educationDetails?.[0]?.degree ? `• ${candidate.extractedData.educationDetails[0].degree}` : '• MCA'}
+                    </p>
+                  </>
+                )}
               </div>
             </div>
 
@@ -427,15 +674,6 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flexShrink: 0, justifyContent: 'center' }}>
               <div style={{
                 padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700',
-                backgroundColor: 'rgba(245,158,11,0.1)',
-                border: candidate.finalRecommendation === 'Selected' ? '1px solid #10b981' : candidate.finalRecommendation === 'Rejected' ? '1px solid #ef4444' : '1px solid #f59e0b',
-                color: candidate.finalRecommendation === 'Selected' ? '#10b981' : candidate.finalRecommendation === 'Rejected' ? '#ef4444' : '#f59e0b',
-                display: 'flex', alignItems: 'center', gap: '6px'
-              }}>
-                <span style={{ fontSize: '10px' }}>●</span> {candidate.finalRecommendation || 'Under Review'}
-              </div>
-              <div style={{
-                padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '700',
                 backgroundColor: 'rgba(16,185,129,0.05)',
                 border: '1px solid #10b981',
                 color: '#10b981',
@@ -448,15 +686,42 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
             {/* SEPARATOR */}
             <div style={{ width: '1px', height: '32px', backgroundColor: 'rgba(255,255,255,0.15)', margin: '0 16px' }} />
 
-            {/* RIGHT SECTION: Logo & Close Button */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {/* RIGHT SECTION: Logo, Upload & Close Button */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '4px' }}>
                 <img 
                   src="/kadellabs-logo.png" 
                   alt="Company Logo" 
                   style={{ height: '48px', objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.9 }} 
                 />
               </div>
+              
+              <button
+                onClick={() => setIsEditingReport(!isEditingReport)}
+                style={{ background: isEditingReport ? '#64748b' : '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '700', transition: 'all 0.2s' }}
+              >
+                {isEditingReport ? 'Cancel' : 'Edit Report'}
+              </button>
+
+              {isEditingReport && (
+                <button
+                  onClick={handleSaveReport}
+                  style={{ background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '700', transition: 'all 0.2s' }}
+                >
+                  Save Changes
+                </button>
+              )}
+
+              <button
+                onClick={handleGenerateLink}
+                disabled={generatingLink}
+                style={{ background: '#8b5cf6', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '700', transition: 'all 0.2s', opacity: generatingLink ? 0.7 : 1 }}
+              >
+                {generatingLink ? 'Generating...' : 'Generate Link'}
+              </button>
+
+              {uploadStatusMessage ? <span style={{ color: '#10b981', fontSize: '0.75rem', marginLeft: '4px' }}>{uploadStatusMessage}</span> : null}
+              
               <button 
                 onClick={onClose} 
                 style={{ 
@@ -471,84 +736,98 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
             </div>
           </div>
 
-          {/* BOTTOM KPI BAR */}
-          <div style={{ padding: '0 32px 12px 32px', backgroundColor: 'transparent' }}>
-            <div style={{ 
-              maxWidth: '1440px', 
-              margin: '0 auto', 
-              backgroundColor: '#0A2D82', 
-              borderRadius: '12px', 
-              border: '1px solid rgba(255,255,255,0.1)', 
-              padding: '12px 24px', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between', 
-              width: '100%',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
-            }}>
-              
-              {/* KPI 1: Resume Match */}
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                <FileText size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Resume Match</span>
-                  <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{candidate.resumeScore || 0}%</span>
-                </div>
-              </div>
-              <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
+        </div>
 
-              {/* KPI 2: Video Score */}
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                <Video size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Video Score</span>
-                  <span style={{ color: '#3b82f6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{candidate.videoScore || 0}%</span>
-                </div>
-              </div>
-              <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
-
-              {/* KPI 3: Technical Score */}
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                <Code2 size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Technical Score</span>
-                  <span style={{ color: '#8b5cf6', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{candidate.techScore || 0}%</span>
-                </div>
-              </div>
-              <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
-
-              {/* KPI 4: Communication */}
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                <MessageSquare size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Communication</span>
-                  <span style={{ color: '#f59e0b', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{commScore}%</span>
-                </div>
-              </div>
-              <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
-
-              {/* KPI 5: Confidence */}
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                <Activity size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Confidence</span>
-                  <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{confLabel}</span>
-                </div>
-              </div>
-              <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
-
-              {/* KPI 6: Recommendation */}
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                <Award size={24} color="#fff" style={{ opacity: 0.9 }} strokeWidth={1.5} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ color: '#fff', fontSize: '0.65rem', fontWeight: '500' }}>Recommendation</span>
-                  <span style={{ color: '#10b981', fontSize: '1.15rem', fontWeight: '800', lineHeight: '1.1' }}>{recLabel}</span>
-                </div>
-              </div>
-
+        {/* If editing, show the edit controls directly below the header */}
+        {isEditingReport && (
+          <div style={{ 
+            padding: '16px 32px', 
+            backgroundColor: '#f8fafc', 
+            borderBottom: '1px solid var(--border)', 
+            display: 'flex', 
+            gap: '24px', 
+            alignItems: 'center', 
+            flexWrap: 'wrap' 
+          }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.75rem', color: 'var(--brand-navy)', fontWeight: 'bold' }}>Resume Match (%)</label>
+              <input 
+                type="number" 
+                min="0" 
+                max="100" 
+                value={editForm.resumeScore} 
+                onChange={(e) => setEditForm({ ...editForm, resumeScore: Number(e.target.value) })} 
+                style={{ 
+                  padding: '6px 10px', 
+                  borderRadius: '6px', 
+                  border: '1px solid var(--border)', 
+                  backgroundColor: '#fff', 
+                  color: '#000', 
+                  fontSize: '0.85rem',
+                  outline: 'none'
+                }} 
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.75rem', color: 'var(--brand-navy)', fontWeight: 'bold' }}>Screening Video (%)</label>
+              <input 
+                type="number" 
+                min="0" 
+                max="100" 
+                value={editForm.videoScore} 
+                onChange={(e) => setEditForm({ ...editForm, videoScore: Number(e.target.value) })} 
+                style={{ 
+                  padding: '6px 10px', 
+                  borderRadius: '6px', 
+                  border: '1px solid var(--border)', 
+                  backgroundColor: '#fff', 
+                  color: '#000', 
+                  fontSize: '0.85rem',
+                  outline: 'none'
+                }} 
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.75rem', color: 'var(--brand-navy)', fontWeight: 'bold' }}>Tech Interview (%)</label>
+              <input 
+                type="number" 
+                min="0" 
+                max="100" 
+                value={editForm.techScore} 
+                onChange={(e) => setEditForm({ ...editForm, techScore: Number(e.target.value) })} 
+                style={{ 
+                  padding: '6px 10px', 
+                  borderRadius: '6px', 
+                  border: '1px solid var(--border)', 
+                  backgroundColor: '#fff', 
+                  color: '#000', 
+                  fontSize: '0.85rem',
+                  outline: 'none'
+                }} 
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.75rem', color: 'var(--brand-navy)', fontWeight: 'bold' }}>Recommendation</label>
+              <select 
+                value={editForm.finalRecommendation} 
+                onChange={(e) => setEditForm({ ...editForm, finalRecommendation: e.target.value })} 
+                style={{ 
+                  padding: '6px 10px', 
+                  borderRadius: '6px', 
+                  border: '1px solid var(--border)', 
+                  backgroundColor: '#fff', 
+                  color: '#000', 
+                  fontSize: '0.85rem',
+                  outline: 'none'
+                }}
+              >
+                <option value="Under Review">Under Review</option>
+                <option value="Selected">Selected</option>
+                <option value="Rejected">Rejected</option>
+              </select>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Custom Styles for Hover Zoom / Expansion */}
         <style dangerouslySetInnerHTML={{__html: `
@@ -574,7 +853,7 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
 
         {/* Dashboard Main Grid Area — no scroll */}
         <div style={{ flex: 1, display: 'flex', gap: '1.5rem', padding: '1.5rem 2rem 1.5rem', overflow: 'hidden', backgroundColor: '#f8fafc' }}>
-          <ReportDashboardGrid candidate={candidate} NEXT_JS_URL={NEXT_JS_URL} />
+          <ReportDashboardGrid candidate={candidate} NEXT_JS_URL={NEXT_JS_URL} matchedInterviewFromDb={matchedInterview} />
         </div>
 
       </div>
@@ -603,6 +882,155 @@ const DetailModal = ({ candidate, jobs, onClose }) => {
           </div>
         </div>
       )}
+
+      {generatedLink && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(15, 23, 42, 0.75)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2100,
+          padding: '2rem'
+        }} onClick={() => setGeneratedLink('')}>
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '520px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            padding: '24px',
+            position: 'relative',
+            border: '1px solid rgba(226, 232, 240, 0.8)'
+          }} onClick={(e) => e.stopPropagation()}>
+            {/* Close Button */}
+            <button 
+              onClick={() => setGeneratedLink('')}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: '#f1f5f9',
+                border: 'none',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: '#64748b',
+                transition: 'all 0.2s'
+              }}
+            >
+              <X size={16} />
+            </button>
+
+            {/* Icon & Title */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '10px',
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#8b5cf6'
+              }}>
+                <Share2 size={20} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '850', color: '#0f172a', margin: 0 }}>Report Link Generated</h3>
+                <span style={{ fontSize: '0.72rem', color: '#ef4444', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Expires in 24 Hours</span>
+              </div>
+            </div>
+
+            {/* Description */}
+            <p style={{ fontSize: '0.82rem', color: '#475569', lineHeight: '1.5', margin: '0 0 16px 0' }}>
+              This link is secure and will automatically expire exactly 24 hours from now. After expiration, access to this report will be locked.
+            </p>
+
+            {/* Link Box */}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+              backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '10px',
+              padding: '12px',
+              marginBottom: '20px'
+            }}>
+              <span style={{ fontSize: '0.7rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>Generated URL</span>
+              <a 
+                href={generatedLink} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                style={{ 
+                  fontSize: '0.8rem', 
+                  color: '#8b5cf6', 
+                  fontWeight: '600', 
+                  wordBreak: 'break-all',
+                  textDecoration: 'underline'
+                }}
+              >
+                {generatedLink}
+              </a>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(generatedLink);
+                  setCopiedLink(true);
+                  setTimeout(() => setCopiedLink(false), 2000);
+                }}
+                style={{
+                  flex: 1,
+                  background: copiedLink ? '#10b981' : '#8b5cf6',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '10px 16px',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                  fontWeight: '700',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                {copiedLink ? 'Copied!' : 'Copy Link'}
+              </button>
+              <button
+                onClick={() => setGeneratedLink('')}
+                style={{
+                  background: '#f1f5f9',
+                  color: '#475569',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '10px 16px',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                  fontWeight: '700',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -625,6 +1053,17 @@ const Reports = () => {
   const [uploadingCandidate, setUploadingCandidate] = useState(null);
   const [uploadingId, setUploadingId] = useState(null);
   const fileInputRef = useRef(null);
+  const [uploadingVideoId, setUploadingVideoId] = useState(null);
+  const [videoUploadCandidate, setVideoUploadCandidate] = useState(null);
+  const videoFileInputRef = useRef(null);
+  const [uploadStatusMessage, setUploadStatusMessage] = useState('');
+  const ffmpegRef = useRef(null);
+
+  // Remark state
+  const [remarkPopover, setRemarkPopover] = useState<{ candidateId: string; name: string } | null>(null);
+  const [remarkText, setRemarkText] = useState('');
+  const [remarkSaving, setRemarkSaving] = useState(false);
+  const [filterStage, setFilterStage] = useState('All');
 
   // Auto-sync selectedCandidate when candidates context refreshes (fixes stale modal after re-upload)
   useEffect(() => {
@@ -806,6 +1245,326 @@ const Reports = () => {
     }
   };
 
+  const triggerVideoUpload = (candidate) => {
+    setVideoUploadCandidate(candidate);
+    if (videoFileInputRef.current) {
+      videoFileInputRef.current.value = '';
+      videoFileInputRef.current.click();
+    }
+  };
+
+  const handleVideoFileChange = async (e) => {
+    // Kept for backward compatibility, though not used anymore
+    const file = e.target.files?.[0];
+    if (!file || !videoUploadCandidate) return;
+
+    const candidateId = videoUploadCandidate.id;
+    const candidateExtractedData = videoUploadCandidate.extractedData || videoUploadCandidate.extracted_data || {};
+
+    setUploadingVideoId(candidateId);
+    setUploadStatusMessage("Initializing...");
+
+    let finalFileToUpload: File = file;
+    let isCompressed = false;
+
+    // ─── Helper: upload via direct Supabase signed URL or local fallback ───────
+    const uploadToSupabase = async (uploadFile: File): Promise<string> => {
+      // Guard: ensure file is non-empty
+      if (!uploadFile || uploadFile.size === 0) {
+        throw new Error("Upload file is missing or empty (size = 0)");
+      }
+
+      console.log("=== UPLOAD INITIALIZING ===");
+      console.log("File:", uploadFile.name, "Size:", uploadFile.size, "Type:", uploadFile.type);
+
+      try {
+        // Step A: Request signed upload URL or fallback info
+        const directUrlRes = await apiFetch(`/api/upload-video?candidateId=${candidateId}&filename=${encodeURIComponent(uploadFile.name)}`);
+        if (!directUrlRes.ok) {
+          throw new Error(`Failed to get upload URL: ${directUrlRes.status}`);
+        }
+        const directUrlData = await directUrlRes.json();
+
+        if (directUrlData.success && directUrlData.directUpload) {
+          console.log("=== DIRECT SUPABASE UPLOAD ===");
+          console.log("Upload URL:", directUrlData.uploadUrl);
+          console.log("Public URL:", directUrlData.publicUrl);
+
+          const publicUrl = await new Promise<string>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open("PUT", directUrlData.uploadUrl, true);
+            xhr.setRequestHeader("Content-Type", uploadFile.type || "video/mp4");
+
+            xhr.upload.onprogress = (event) => {
+              if (event.lengthComputable) {
+                const pct = Math.round((event.loaded / event.total) * 100);
+                setUploadStatusMessage(`Uploading... ${pct}%`);
+              }
+            };
+
+            xhr.onload = () => {
+              console.log("=== DIRECT UPLOAD RESPONSE ===");
+              console.log("Status:", xhr.status);
+              if (xhr.status >= 200 && xhr.status < 300) {
+                resolve(directUrlData.publicUrl);
+              } else {
+                reject(new Error(`Direct upload failed: ${xhr.status} - ${xhr.responseText || 'No response'}`));
+              }
+            };
+
+            xhr.onerror = () => reject(new Error("Network error during direct upload to storage"));
+            xhr.send(uploadFile);
+          });
+
+          return publicUrl;
+        } else {
+          console.log("=== FALLBACK LOCAL FORM DATA UPLOAD ===");
+          // Build FormData for the local fallback server API route
+          const form = new FormData();
+          form.append('file', uploadFile, uploadFile.name);
+          form.append('candidateId', candidateId);
+
+          const publicUrl = await new Promise<string>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "/api/upload-video", true);
+
+            xhr.upload.onprogress = (event) => {
+              if (event.lengthComputable) {
+                const pct = Math.round((event.loaded / event.total) * 100);
+                setUploadStatusMessage(`Uploading... ${pct}%`);
+              }
+            };
+
+            xhr.onload = () => {
+              console.log("=== FALLBACK UPLOAD RESPONSE ===");
+              console.log("Status:", xhr.status);
+              if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                  const json = JSON.parse(xhr.responseText);
+                  resolve(json.publicUrl);
+                } catch {
+                  reject(new Error("Invalid JSON in fallback upload response: " + xhr.responseText));
+                }
+              } else {
+                reject(new Error(`Fallback upload failed: ${xhr.status} - ${xhr.responseText}`));
+              }
+            };
+
+            xhr.onerror = () => reject(new Error("Network error — local fallback upload API unreachable"));
+            xhr.send(form);
+          });
+
+          return publicUrl;
+        }
+      } catch (err) {
+        console.error("uploadToSupabase error:", err);
+        throw err;
+      }
+    };
+    // ─────────────────────────────────────────────────────────────────────────
+
+    try {
+      console.log(`=== VIDEO UPLOAD START ===`);
+      console.log(`Candidate: ${candidateId}, Original file: ${file.name}, Size: ${(file.size / (1024 * 1024)).toFixed(2)} MB`);
+
+      // ── Step 1: FFmpeg compression (two-pass if needed) ───────────────────
+      const MAX_UPLOAD_MB = 48; // Supabase free tier hard limit is ~50MB per object
+
+      const runCompression = async (ffmpeg: any, inputName: string, outputName: string, pass: number) => {
+        const isPass2 = pass === 2;
+        const args = [
+          '-i', inputName,
+          '-c:v',    'libx264',
+          '-preset', 'ultrafast',
+          '-crf',    isPass2 ? '36' : '32',          // Pass2: crf 36 (more aggressive)
+          '-r',      '24',
+          '-vf',     isPass2
+            ? "scale='min(640,iw)':-2"               // Pass2: 360p max
+            : "scale='min(960,iw)':-2",              // Pass1: 480-540p max
+          '-b:v',    isPass2 ? '500k' : '700k',      // Pass2: 500k, Pass1: 700k
+          '-c:a',    'aac',
+          '-b:a',    '96k',
+          '-movflags', '+faststart',                 // Optimise for streaming
+          outputName,
+        ];
+        console.log(`[FFmpeg] Pass ${pass} args:`, args.join(' '));
+        await ffmpeg.exec(args);
+      };
+
+      try {
+        setUploadStatusMessage("Loading FFmpeg...");
+        const { FFmpeg } = await import('@ffmpeg/ffmpeg');
+        const { fetchFile, toBlobURL } = await import('@ffmpeg/util');
+
+        let ffmpeg = ffmpegRef.current;
+        if (!ffmpeg) {
+          ffmpeg = new FFmpeg();
+          (ffmpegRef as any).current = ffmpeg;
+        }
+
+        ffmpeg.on('log', ({ message }: { message: string }) => {
+          console.log("FFmpeg:", message);
+        });
+
+        ffmpeg.on('progress', ({ progress }: { progress: number }) => {
+          const percent = Math.round(progress * 100);
+          setUploadStatusMessage(`Compressing... ${percent}%`);
+        });
+
+        if (!(ffmpeg as any).loaded) {
+          const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+          await ffmpeg.load({
+            coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+            wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+          });
+        }
+
+        const inputExt  = file.name.split('.').pop() || 'mp4';
+        const ts        = Date.now();
+        const inputName = `input_${ts}.${inputExt}`;
+        const out1Name  = `out1_${ts}.mp4`;
+        const out2Name  = `out2_${ts}.mp4`;
+
+        const originalMB = file.size / 1024 / 1024;
+        console.log("=== COMPRESSION START ===");
+        console.log("Original Size:", originalMB.toFixed(2), "MB");
+
+        await ffmpeg.writeFile(inputName, await fetchFile(file));
+        setUploadStatusMessage("Compressing... 0%");
+
+        // ── Pass 1: crf32, 480p, 700k ───────────────────────────────────────
+        await runCompression(ffmpeg, inputName, out1Name, 1);
+
+        const pass1Data = await ffmpeg.readFile(out1Name);
+        const pass1Blob = new Blob([pass1Data], { type: 'video/mp4' });
+        const pass1MB   = pass1Blob.size / 1024 / 1024;
+
+        console.log("Compressed Size (Pass 1):", pass1MB.toFixed(2), "MB");
+        console.log("Reduction %:", (((file.size - pass1Blob.size) / file.size) * 100).toFixed(1) + "%");
+
+        let compressedBlob = pass1Blob;
+
+        // ── Pass 2 (emergency): crf36, 360p, 500k — only if still too large ─
+        if (pass1MB > MAX_UPLOAD_MB) {
+          console.warn(`Pass 1 output (${pass1MB.toFixed(2)}MB) exceeds ${MAX_UPLOAD_MB}MB limit — running emergency Pass 2...`);
+          setUploadStatusMessage("Extra compression... 0%");
+
+          await runCompression(ffmpeg, inputName, out2Name, 2);
+
+          const pass2Data = await ffmpeg.readFile(out2Name);
+          const pass2Blob = new Blob([pass2Data], { type: 'video/mp4' });
+          const pass2MB   = pass2Blob.size / 1024 / 1024;
+
+          console.log("Compressed Size (Pass 2):", pass2MB.toFixed(2), "MB");
+          console.log("Reduction %:", (((file.size - pass2Blob.size) / file.size) * 100).toFixed(1) + "%");
+
+          if (pass2Blob.size === 0) {
+            throw new Error("Emergency compression produced an empty file");
+          }
+
+          if (pass2MB > MAX_UPLOAD_MB) {
+            throw new Error(
+              `Video still too large after compression (${pass2MB.toFixed(1)} MB). ` +
+              `Maximum allowed is ${MAX_UPLOAD_MB} MB. Please use a shorter clip.`
+            );
+          }
+
+          compressedBlob = pass2Blob;
+          try { await ffmpeg.deleteFile(out2Name); } catch { /* ignore */ }
+        }
+
+        if (compressedBlob.size === 0) {
+          throw new Error("Compressed file missing or empty after FFmpeg");
+        }
+
+        const compressedMB = compressedBlob.size / 1024 / 1024;
+        console.log("=== COMPRESSION RESULT ===");
+        console.log("Original Size:", originalMB.toFixed(2), "MB");
+        console.log("Compressed Size:", compressedMB.toFixed(2), "MB");
+        console.log("Reduction %:", (((file.size - compressedBlob.size) / file.size) * 100).toFixed(1) + "%");
+
+        const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+        finalFileToUpload = new File([compressedBlob], `${baseName}_compressed.mp4`, { type: 'video/mp4' });
+        isCompressed = true;
+
+        try { await ffmpeg.deleteFile(inputName); } catch { /* ignore */ }
+        try { await ffmpeg.deleteFile(out1Name); } catch { /* ignore */ }
+
+      } catch (compressErr: any) {
+        // If this is a user-facing size error, rethrow — don't fall back to original
+        if (compressErr.message?.includes('too large after compression') ||
+            compressErr.message?.includes('Maximum allowed')) {
+          throw compressErr;
+        }
+        console.warn("FFmpeg compression failed — falling back to original file:", compressErr);
+        finalFileToUpload = file;
+        isCompressed = false;
+
+        // Still enforce the 50MB limit on the original file
+        const originalMB = file.size / 1024 / 1024;
+        if (originalMB > MAX_UPLOAD_MB) {
+          throw new Error(
+            `File is ${originalMB.toFixed(1)} MB and compression failed. ` +
+            `Maximum allowed upload is ${MAX_UPLOAD_MB} MB. Please use a shorter/smaller video.`
+          );
+        }
+      }
+
+      // ── Step 2: Upload (compressed or original) ─────────────────────────────
+      setUploadStatusMessage("Uploading... 0%");
+      const publicVideoUrl = await uploadToSupabase(finalFileToUpload);
+      console.log("Upload success — public URL:", publicVideoUrl);
+
+      // ── Step 3: Save URL to DB ────────────────────────────────────────────
+      const objectUrl = URL.createObjectURL(finalFileToUpload);
+      const updatedExtractedData = {
+        ...candidateExtractedData,
+        video:                       publicVideoUrl,
+        videoUrl:                    publicVideoUrl,
+        video_url:                   publicVideoUrl,
+        video_path:                  publicVideoUrl,
+        localVideoBlobUrl:           objectUrl,
+        videoUploadedAt:             new Date().toISOString(),
+        videoCompressionOptimized:   isCompressed,
+        originalSize:                file.size,
+        compressedSize:              finalFileToUpload.size,
+      };
+
+      console.log("Saving to DB — videoUrl:", publicVideoUrl);
+
+      const payload = {
+        id: candidateId,
+        extracted_data: updatedExtractedData,
+        video_status: 'Completed',
+        video_score: 90
+      };
+
+      const response = await apiFetch('/api/candidates', {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const saved = await response.json();
+        console.log("DB saved — videoUrl in DB:", saved?.extracted_data?.videoUrl);
+        setUploadStatusMessage("✅ Upload complete!");
+        alert(`✅ Video ${isCompressed ? 'compressed & ' : ''}uploaded successfully!\n\nURL: ${publicVideoUrl}`);
+        await refreshCandidates();
+      } else {
+        const errData = await response.json();
+        throw new Error(errData.error || 'Failed to save video URL to database');
+      }
+    } catch (err: any) {
+      console.error("=== VIDEO UPLOAD ERROR ===", err);
+      setUploadStatusMessage(`❌ ${err.message || 'Upload failed'}`);
+      alert('Video upload error:\n\n' + (err.message || String(err)));
+    } finally {
+      setUploadingVideoId(null);
+      setVideoUploadCandidate(null);
+      setTimeout(() => setUploadStatusMessage(''), 4000);
+    }
+  };
+
   const copyToClipboard = (text, id) => {
     const textArea = document.createElement("textarea");
     textArea.value = text;
@@ -914,20 +1673,23 @@ const Reports = () => {
 
   useEffect(() => { refreshCandidates(); }, []);
 
-  // All parseed candidates as reports candidates
-  const allCandidates = candidates.filter((c) =>
-    c.resumeStatus === 'Parsed' ||
-    c.videoStatus === 'Completed' ||
-    c.techStatus === 'Scheduled' ||
-    c.techStatus === 'Completed'
-  );
+  // Return ALL candidates for full HR visibility (pending, in-progress, rejected, completed)
+  const allCandidates = candidates;
+
+  const stageOptions = [
+    'All', 'Resume Screening', 'Video Screening',
+    'Technical Scheduler', 'Technical Evaluation',
+    'Rejected at Resume Stage', 'Rejected at Video Stage',
+    'Rejected at Technical Stage', 'Report Generation', 'Completed',
+  ];
 
   const filtered = allCandidates.filter((c) => {
     const q = search.toLowerCase();
     const matchQ = !q || c.name?.toLowerCase().includes(q) || c.email?.toLowerCase().includes(q) || c.jobApplied?.toLowerCase().includes(q);
     const matchJ = filterJob === 'All' || c.jobApplied === filterJob;
     const matchR = filterRec === 'All' || (c.finalRecommendation || 'Under Review') === filterRec;
-    return matchQ && matchJ && matchR;
+    const matchS = filterStage === 'All' || (c.current_stage ?? c.currentStage ?? c.stage ?? 'Resume Screening') === filterStage;
+    return matchQ && matchJ && matchR && matchS;
   });
 
   const jobOptions = ['All', ...new Set(allCandidates.map((c) => c.jobApplied).filter(Boolean))];
@@ -1003,6 +1765,10 @@ const Reports = () => {
             <select className="form-select" value={filterRec} onChange={(e) => setFilterRec(e.target.value)} style={{ fontSize: '0.8rem', width: 'auto' }}>
               {recOptions.map((r) => <option key={r}>{r}</option>)}
             </select>
+            {/* Stage filter */}
+            <select className="form-select" value={filterStage} onChange={(e) => setFilterStage(e.target.value)} style={{ fontSize: '0.8rem', width: 'auto' }}>
+              {stageOptions.map((s) => <option key={s}>{s}</option>)}
+            </select>
             {/* View toggle */}
             <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border)' }}>
               {[{ id: 'table', Icon: List }, { id: 'cards', Icon: LayoutGrid }].map(({ id, Icon }) => (
@@ -1024,18 +1790,19 @@ const Reports = () => {
             <p style={{ fontStyle: 'italic' }}>No candidates match your filters.</p>
           </div>
         ) : viewMode === 'table' ? (
-          <div className="table-container">
+          <>
+            <div className="table-container">
             <table className="table" style={{ width: '100%', tableLayout: 'fixed' }}>
               <thead>
                 <tr>
-                  <th style={{ width: '23%', padding: '12px 10px', verticalAlign: 'middle' }}>Candidate</th>
-                  <th style={{ width: '13%', padding: '12px 10px', verticalAlign: 'middle' }}>Sub Department</th>
-                  <th style={{ width: '7%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Resume</th>
-                  <th style={{ width: '7%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Video</th>
-                  <th style={{ width: '7%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Tech Video Int.</th>
-                  <th style={{ width: '9%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Transcript</th>
-                  <th style={{ width: '16%', padding: '12px 10px', verticalAlign: 'middle' }}>Recommendation</th>
-                  <th style={{ width: '18%', padding: '12px 10px', verticalAlign: 'middle' }}>Actions</th>
+                  <th style={{ width: '25%', padding: '12px 10px', verticalAlign: 'middle' }}>Candidate Name</th>
+                  <th style={{ width: '15%', padding: '12px 10px', verticalAlign: 'middle' }}>Candidate ID</th>
+                  <th style={{ width: '11%', padding: '12px 10px', verticalAlign: 'middle' }}>Role</th>
+                  <th style={{ width: '7%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Transcript</th>
+                  <th style={{ width: '8%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Tech Video Int.</th>
+                  <th style={{ width: '17%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Stage</th>
+                  <th style={{ width: '6%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Remark</th>
+                  <th style={{ width: '11%', padding: '12px 10px', verticalAlign: 'middle' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -1047,22 +1814,20 @@ const Reports = () => {
                           {getInitials(c.name)}
                         </div>
                         <div style={{ minWidth: 0, overflow: 'hidden' }}>
-                          <div style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
+                          <div style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {c.name}
+                          </div>
                           <div style={{ fontSize: '0.68rem', color: 'var(--gray-500)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</div>
                         </div>
                       </div>
                     </td>
                     <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--brand-green)', backgroundColor: 'rgba(125, 186, 0, 0.1)', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
+                        #{c.display_id || c.unique_id || String(c.id).substring(0,6)}
+                      </span>
+                    </td>
+                    <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
                       <span className="badge badge-info" style={{ fontSize: '0.68rem', whiteSpace: 'nowrap' }}>{c.jobApplied || '—'}</span>
-                    </td>
-                    <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
-                      <span style={{ fontWeight: '700', color: scoreColor(c.resumeScore), fontSize: '0.82rem' }}>{c.resumeScore || '—'}</span>
-                    </td>
-                    <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
-                      <span style={{ fontWeight: '700', color: scoreColor(c.videoScore), fontSize: '0.82rem' }}>{c.videoScore || '—'}</span>
-                    </td>
-                    <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
-                      <span style={{ fontWeight: '700', color: scoreColor(c.techScore), fontSize: '0.82rem' }}>{c.techScore || '—'}</span>
                     </td>
                     <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
                       <button
@@ -1090,23 +1855,82 @@ const Reports = () => {
                         )}
                       </button>
                     </td>
-                    <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
-                      <span style={{
-                        padding: '3px 8px', borderRadius: '999px', fontSize: '0.7rem', fontWeight: '700',
-                        backgroundColor:
-                          c.finalRecommendation === 'Selected' ? 'rgba(16,185,129,0.1)' :
-                          c.finalRecommendation === 'Rejected' ? 'rgba(239,68,68,0.1)' : 'rgba(59,130,246,0.1)',
-                        color:
-                          c.finalRecommendation === 'Selected' ? '#065f46' :
-                          c.finalRecommendation === 'Rejected' ? '#7f1d1d' : '#1e40af',
-                        border: `1px solid ${
-                          c.finalRecommendation === 'Selected' ? 'rgba(16,185,129,0.25)' :
-                          c.finalRecommendation === 'Rejected' ? 'rgba(239,68,68,0.25)' : 'rgba(59,130,246,0.25)'
-                        }`
-                      }}>
-                        {c.finalRecommendation || 'Under Review'}
-                      </span>
+                    <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
+                      {uploadingVideoId === c.id ? (
+                        <div style={{ fontSize: '0.68rem', fontWeight: 'bold', color: 'var(--brand-navy)', whiteSpace: 'nowrap' }} title={uploadStatusMessage}>
+                          {uploadStatusMessage || "⏳ ..."}
+                        </div>
+                      ) : (
+                        <button
+                          className="btn btn-outline"
+                          style={{
+                            padding: '6px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: '8px',
+                            backgroundColor: (c.extractedData?.videoUrl || c.extractedData?.video_url || c.video_url) ? 'rgba(16,185,129,0.1)' : '#fff',
+                            color: (c.extractedData?.videoUrl || c.extractedData?.video_url || c.video_url) ? '#065f46' : 'var(--gray-700)',
+                            borderColor: (c.extractedData?.videoUrl || c.extractedData?.video_url || c.video_url) ? 'rgba(16,185,129,0.3)' : 'var(--border)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }}
+                          onClick={() => triggerVideoUpload(c)}
+                          title={(c.extractedData?.videoUrl || c.extractedData?.video_url || c.video_url) ? "Video Uploaded" : "Upload Video"}
+                        >
+                          <Video size={15} />
+                        </button>
+                      )}
                     </td>
+                    {/* Remark cell */}
+                    <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
+                      <WorkflowBadge status={c.current_stage ?? c.currentStage ?? c.stage ?? 'Resume Screening'} size="sm" />
+                    </td>
+                    <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
+                      {(() => {
+                        const candidateRemark = c.remark_reports;
+                        const hasRemark = !!candidateRemark;
+                        return (
+                          <button
+                            onClick={() => {
+                              setRemarkPopover({ candidateId: c.id, name: c.name });
+                              setRemarkText(candidateRemark || '');
+                            }}
+                            title={hasRemark ? `Remark: ${candidateRemark}` : 'Add Remark'}
+                            style={{
+                              width: '30px',
+                              height: '30px',
+                              borderRadius: '8px',
+                              border: hasRemark ? '1.5px solid #d97706' : '1.5px solid #e2e8f0',
+                              background: hasRemark ? '#f59e0b' : '#f8fafc',
+                              color: hasRemark ? '#fff' : '#94a3b8',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              position: 'relative',
+                              transition: 'all 0.2s',
+                              boxShadow: hasRemark ? '0 2px 5px rgba(245,158,11,0.3)' : 'none',
+                            }}
+                          >
+                            <MessageSquare size={13} />
+                            {hasRemark && (
+                              <span style={{
+                                position: 'absolute',
+                                top: '-4px',
+                                right: '-4px',
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                background: '#10b981',
+                                border: '1.5px solid #fff',
+                              }} />
+                            )}
+                          </button>
+                        );
+                      })()}
+                    </td>
+
                     <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
                       <div style={{ display: 'flex', gap: '4px' }}>
                         <button
@@ -1116,19 +1940,6 @@ const Reports = () => {
                         >
                           <Eye size={11} /> View
                         </button>
-                        <button
-                          className="btn btn-outline"
-                          style={{ padding: '4px 6px', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '3px', minWidth: '76px', justifyContent: 'center', whiteSpace: 'nowrap' }}
-                          onClick={() => handleCopyShareLink(c)}
-                          disabled={generatingId === c.id}
-                        >
-                          <Share2 size={11} />
-                          {generatingId === c.id 
-                            ? "Gen..." 
-                            : copiedId === c.id 
-                              ? "Copied!" 
-                              : "Copy"}
-                        </button>
                       </div>
                     </td>
                   </tr>
@@ -1136,6 +1947,106 @@ const Reports = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Remark Popover Modal */}
+          {remarkPopover && (
+            <div
+              style={{
+                position: 'fixed', inset: 0,
+                backgroundColor: 'rgba(15,23,42,0.5)',
+                backdropFilter: 'blur(4px)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                zIndex: 9999, padding: '1.5rem',
+              }}
+              onClick={() => setRemarkPopover(null)}
+            >
+              <div
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  background: '#fff', borderRadius: '16px', padding: '24px 28px',
+                  width: '100%', maxWidth: '400px',
+                  boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+                  animation: 'slideInRemark 0.18s ease',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(245,158,11,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <MessageSquare size={16} color="#d97706" />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#0f172a' }}>Remark of Reports</div>
+                    <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{remarkPopover.name}</div>
+                  </div>
+                </div>
+
+                <textarea
+                  value={remarkText}
+                  onChange={(e) => setRemarkText(e.target.value)}
+                  placeholder="Write your remark about this candidate..."
+                  rows={4}
+                  autoFocus
+                  style={{
+                    width: '100%', boxSizing: 'border-box',
+                    border: '1.5px solid #e2e8f0', borderRadius: '10px',
+                    padding: '10px 12px', fontSize: '0.85rem', color: '#1e293b',
+                    resize: 'vertical', outline: 'none', fontFamily: 'inherit',
+                    transition: 'border-color 0.2s', marginBottom: '16px',
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = '#f59e0b')}
+                  onBlur={(e) => (e.target.style.borderColor = '#e2e8f0')}
+                />
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    onClick={() => setRemarkPopover(null)}
+                    disabled={remarkSaving}
+                    style={{
+                      flex: 1, padding: '9px', border: '1.5px solid #e2e8f0',
+                      borderRadius: '8px', background: '#f8fafc', color: '#475569',
+                      fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      setRemarkSaving(true);
+                      try {
+                        await apiFetch('/api/candidates', {
+                          method: 'PATCH',
+                          body: JSON.stringify({ id: remarkPopover.candidateId, remark_reports: remarkText }),
+                        });
+                        await refreshCandidates();
+                        setRemarkPopover(null);
+                      } catch (e) {
+                        console.error('Remark save error:', e);
+                      } finally {
+                        setRemarkSaving(false);
+                      }
+                    }}
+                    disabled={remarkSaving}
+                    style={{
+                      flex: 1, padding: '9px', border: 'none',
+                      borderRadius: '8px',
+                      background: remarkSaving ? '#fde68a' : '#f59e0b',
+                      color: '#fff', fontSize: '0.85rem', fontWeight: 700,
+                      cursor: remarkSaving ? 'not-allowed' : 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                    }}
+                  >
+                    {remarkSaving ? 'Saving...' : '💾 Save Remark'}
+                  </button>
+                </div>
+              </div>
+              <style>{`
+                @keyframes slideInRemark {
+                  from { opacity: 0; transform: scale(0.95) translateY(-8px); }
+                  to   { opacity: 1; transform: scale(1) translateY(0); }
+                }
+              `}</style>
+            </div>
+          )}
+          </>
         ) : (
           /* Card view */
           <div style={{ padding: '1.25rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: '1rem' }}>
@@ -1152,7 +2063,12 @@ const Reports = () => {
                       {getInitials(c.name)}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.87rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.87rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--brand-green)', backgroundColor: 'rgba(125, 186, 0, 0.1)', padding: '2px 6px', borderRadius: '10px', flexShrink: 0 }}>
+                          #{c.display_id || c.unique_id || String(c.id).substring(0,6)}
+                        </span>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
+                      </div>
                       <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.jobApplied}</div>
                     </div>
                     {avgScore !== null && (
@@ -1192,33 +2108,8 @@ const Reports = () => {
                       {generatingId === c.id 
                         ? "Generating..." 
                         : copiedId === c.id 
-                          ? "Copied!" 
-                          : "Copy Link"}
-                    </button>
-                    <button
-                      className="btn btn-outline"
-                      style={{
-                        padding: '5px 10px',
-                        fontSize: '0.72rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        justifyContent: 'center',
-                        backgroundColor: (c.extractedData?.transcript?.length || c.transcript?.length) ? 'rgba(16,185,129,0.1)' : '#fff',
-                        color: (c.extractedData?.transcript?.length || c.transcript?.length) ? '#065f46' : 'var(--gray-700)',
-                        borderColor: (c.extractedData?.transcript?.length || c.transcript?.length) ? 'rgba(16,185,129,0.3)' : 'var(--border)',
-                      }}
-                      onClick={() => triggerTranscriptUpload(c)}
-                      disabled={uploadingId === c.id}
-                    >
-                      {uploadingId === c.id ? (
-                        <>⏳ Uploading...</>
-                      ) : (
-                        <>
-                          <Upload size={12} />
-                          <span>{(c.extractedData?.transcript?.length || c.transcript?.length) ? "Re-upload" : "Upload"}</span>
-                        </>
-                      )}
+                          ? "Link Copied!" 
+                          : "Generate Link"}
                     </button>
                   </div>
                 </div>
@@ -1234,6 +2125,9 @@ const Reports = () => {
           candidate={selectedCandidate}
           jobs={jobs || []}
           onClose={() => setSelectedCandidate(null)}
+          onUploadVideo={triggerVideoUpload}
+          uploadStatusMessage={uploadStatusMessage}
+          onCopyShareLink={handleCopyShareLink}
         />
       )}
 
@@ -1244,6 +2138,15 @@ const Reports = () => {
         style={{ display: 'none' }}
         accept=".txt,.pdf,.docx"
         onChange={handleFileChange}
+      />
+
+      {/* Hidden file input for video upload */}
+      <input
+        type="file"
+        ref={videoFileInputRef}
+        style={{ display: 'none' }}
+        accept="video/*"
+        onChange={handleVideoFileChange}
       />
     </div>
   );

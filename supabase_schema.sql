@@ -58,7 +58,8 @@ CREATE TABLE IF NOT EXISTS public.interviews (
   transcript jsonb,
   summary text,
   scores jsonb,
-  share_token text
+  sender_email text,
+  share_token uuid default gen_random_uuid() not null unique
 );
 
 -- Add simple Row Level Security (RLS) policies if needed

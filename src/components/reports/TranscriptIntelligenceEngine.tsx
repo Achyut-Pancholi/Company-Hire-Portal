@@ -7,6 +7,7 @@ import {
   Activity, Users, Shield, BarChart2
 } from 'lucide-react';
 import { analyzeTranscript, TranscriptEntry, TranscriptAnalysisResult } from '@/utils/transcriptAnalyzer';
+import { StructuredAnalysisView } from '@/components/StructuredAnalysisView';
 
 /* ─────────────────── SVG Radar Chart ─────────────────────────── */
 const RadarChart = ({ data }: { data: { label: string; value: number; color: string }[] }) => {
@@ -315,7 +316,7 @@ export function TranscriptIntelligenceEngine({ transcript, storedAnalysis }: Tra
         </div>
         <div>
           <p style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--brand-navy)', margin: '0 0 4px' }}>
-            Transcript Intelligence Dashboard
+            Technical Interview Dashboard
           </p>
           <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0 }}>
             Upload a transcript file to activate AI-powered intelligence analysis
@@ -327,7 +328,7 @@ export function TranscriptIntelligenceEngine({ transcript, storedAnalysis }: Tra
 
   const radarData = [
     { label: 'Communication', value: analysis.communication, color: '#3b82f6' },
-    { label: 'Technical', value: analysis.technical, color: '#8b5cf6' },
+    { label: 'Tech Interview', value: analysis.technical, color: '#8b5cf6' },
     { label: 'Problem Solving', value: analysis.problemSolving, color: '#f59e0b' },
     { label: 'Leadership', value: analysis.leadership, color: '#10b981' },
     { label: 'Confidence', value: analysis.confidence, color: '#ef4444' },
@@ -414,7 +415,7 @@ export function TranscriptIntelligenceEngine({ transcript, storedAnalysis }: Tra
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
             {[
               { label: 'Communication',   value: analysis.communication,        color: '#3b82f6',  icon: MessageSquare },
-              { label: 'Technical',       value: analysis.technical,            color: '#8b5cf6',  icon: BarChart2 },
+              { label: 'Tech Interview',  value: analysis.technical,            color: '#8b5cf6',  icon: BarChart2 },
               { label: 'Problem Solving', value: analysis.problemSolving,       color: '#f59e0b',  icon: Target },
               { label: 'Leadership',      value: analysis.leadership,           color: '#10b981',  icon: Users },
               { label: 'Confidence',      value: analysis.confidence,           color: '#ef4444',  icon: Star },
@@ -467,9 +468,9 @@ export function TranscriptIntelligenceEngine({ transcript, storedAnalysis }: Tra
             <p style={{ margin: 0, fontSize: '0.78rem', fontWeight: '700', color: recStyle.color, marginBottom: '8px' }}>
               {analysis.recommendation}
             </p>
-            <p style={{ margin: 0, fontSize: '0.74rem', color: 'var(--gray-700)', lineHeight: 1.6 }}>
-              {analysis.recommendationReason}
-            </p>
+            <div style={{ margin: 0, fontSize: '0.74rem', color: 'var(--gray-700)', lineHeight: 1.6 }}>
+              <StructuredAnalysisView text={analysis.recommendationReason} />
+            </div>
           </div>
         </div>
 

@@ -7,6 +7,12 @@ if (typeof globalThis !== 'undefined' && 'localStorage' in globalThis) {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   serverExternalPackages: ["nodemailer", "pdf2json"],
+  // Allow large video file uploads through API routes (default is 4MB)
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '200mb',
+    },
+  },
   async redirects() {
     return [
       {

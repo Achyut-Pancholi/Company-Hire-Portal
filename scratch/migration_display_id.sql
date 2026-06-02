@@ -1,0 +1,2 @@
+ALTER TABLE candidates ADD COLUMN IF NOT EXISTS display_id SERIAL;
+ALTER TABLE interviews ADD COLUMN IF NOT EXISTS display_id SERIAL;

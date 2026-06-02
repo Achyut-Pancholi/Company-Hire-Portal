@@ -10,28 +10,48 @@ const QuestionBankModal = ({ onClose }) => {
   const [loading, setLoading] = useState(true);
   
   const [newDepartment, setNewDepartment] = useState('Technology and Delivery');
-  const [newSubDepartment, setNewSubDepartment] = useState('PHP');
+  const [newSubDepartment, setNewSubDepartment] = useState('Development');
+  const [newRole, setNewRole] = useState('Senior Dev');
   const [newQuestionText, setNewQuestionText] = useState('');
   
   // Unique departments combined from existing questions
   const allDepartments = [...new Set(questions.map(q => q.department || 'General'))].filter(Boolean);
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedSubDepartment, setSelectedSubDepartment] = useState('');
+  const [selectedRole, setSelectedRole] = useState('');
   // Dynamic Departments from jobs
-  const dynamicDepartments = Array.from(new Set(jobs.map(j => j.department).filter(Boolean)));
-  const availableDepartments = dynamicDepartments.length > 0 ? dynamicDepartments : ['Technology and Delivery', 'Engineering', 'HR', 'Marketing'];
+  const dynamicDepartments = Array.from(new Set(jobs.map((j: any) => j.department).filter(Boolean)));
+  const availableDepartments = dynamicDepartments.length > 0 ? dynamicDepartments : ['Technology and Delivery', 'Operations', 'Engineering', 'HR', 'Marketing'];
   
-  const getAvailableSubDepartments = (dept) => {
-    const subDepts = Array.from(new Set(jobs.filter(j => j.department === dept).map(j => j.title)));
-    if (subDepts.length > 0) return subDepts;
+  const getAvailableSubDepartments = (dept: string) => {
+    // Collect unique sub_departments from jobs
+    const subDepts = Array.from(new Set(jobs.filter((j: any) => j.department === dept && j.sub_department).map((j: any) => j.sub_department)));
+    if (subDepts.length > 0) return subDepts as string[];
     
-    const defaults = {
-      'Technology and Delivery': ['PHP', 'QA', 'Frontend', 'Backend'],
+    const defaults: Record<string, string[]> = {
+      'Technology and Delivery': ['Development', 'Testing'],
+      'Operations': ['LnD'],
       'Engineering': ['DevOps', 'Data Science', 'SRE'],
       'HR': ['Recruitment', 'Operations'],
       'Marketing': ['SEO', 'Content', 'Social Media']
     };
     return defaults[dept] || ['General'];
+  };
+
+  const getAvailableRoles = (dept: string, subDept: string) => {
+    const roles = Array.from(new Set(jobs.filter((j: any) => j.department === dept && (j.sub_department === subDept || !j.sub_department)).map((j: any) => j.title)));
+    if (roles.length > 0) return roles as string[];
+
+    const defaults: Record<string, Record<string, string[]>> = {
+      'Technology and Delivery': {
+        'Development': ['Senior Dev', 'TSE Intern', 'PHP Developer', 'Frontend', 'Backend'],
+        'Testing': ['Senior QA', 'QA Intern']
+      },
+      'Operations': {
+        'LnD': ['Manager', 'Associate Manager']
+      }
+    };
+    return (defaults[dept] && defaults[dept][subDept]) || ['General Role'];
   };
 
   useEffect(() => {
@@ -43,7 +63,9 @@ const QuestionBankModal = ({ onClose }) => {
       if (!newDepartment || !dynamicDepartments.includes(newDepartment)) {
         const firstDept = availableDepartments[0];
         setNewDepartment(firstDept);
-        setNewSubDepartment(getAvailableSubDepartments(firstDept)[0]);
+        const firstSubDept = getAvailableSubDepartments(firstDept)[0];
+        setNewSubDepartment(firstSubDept);
+        setNewRole(getAvailableRoles(firstDept, firstSubDept)[0]);
       }
     }
   }, [jobs]);
@@ -77,6 +99,7 @@ const QuestionBankModal = ({ onClose }) => {
           job_role: 'Common',
           department: newDepartment,
           sub_department: newSubDepartment,
+          role: newRole,
           question_text: newQuestionText.trim(),
           is_mandatory: false
         })
@@ -107,9 +130,10 @@ const QuestionBankModal = ({ onClose }) => {
     }
   };
 
-  const filteredQuestions = questions.filter(q => {
+  const filteredQuestions = questions.filter((q: any) => {
     if (selectedDepartment && q.department !== selectedDepartment) return false;
     if (selectedSubDepartment && q.sub_department !== selectedSubDepartment) return false;
+    if (selectedRole && q.role !== selectedRole) return false;
     return true;
   });
 
@@ -127,8 +151,7 @@ const QuestionBankModal = ({ onClose }) => {
           {/* Add Question Form */}
           <div style={{ background: 'var(--gray-50)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
             <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '1rem' }}>Add New Question</h4>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
               <div>
                 <label className="form-label">Department</label>
                 <select 
@@ -138,7 +161,9 @@ const QuestionBankModal = ({ onClose }) => {
                     const newDept = e.target.value;
                     setNewDepartment(newDept);
                     const subs = getAvailableSubDepartments(newDept);
-                    setNewSubDepartment(subs[0] || '');
+                    const firstSub = subs[0] || '';
+                    setNewSubDepartment(firstSub);
+                    setNewRole(getAvailableRoles(newDept, firstSub)[0] || '');
                   }}
                 >
                   {availableDepartments.map(d => (
@@ -152,10 +177,27 @@ const QuestionBankModal = ({ onClose }) => {
                 <select 
                   className="form-select"
                   value={newSubDepartment}
-                  onChange={e => setNewSubDepartment(e.target.value)}
+                  onChange={e => {
+                    const newSub = e.target.value;
+                    setNewSubDepartment(newSub);
+                    setNewRole(getAvailableRoles(newDepartment, newSub)[0] || '');
+                  }}
                 >
                   {(getAvailableSubDepartments(newDepartment)).map(sd => (
                     <option key={sd} value={sd}>{sd}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="form-label">Role</label>
+                <select 
+                  className="form-select"
+                  value={newRole}
+                  onChange={e => setNewRole(e.target.value)}
+                >
+                  {(getAvailableRoles(newDepartment, newSubDepartment)).map(r => (
+                    <option key={r} value={r}>{r}</option>
                   ))}
                 </select>
               </div>
@@ -189,25 +231,45 @@ const QuestionBankModal = ({ onClose }) => {
                 onChange={e => {
                   setSelectedDepartment(e.target.value);
                   setSelectedSubDepartment('');
+                  setSelectedRole('');
                 }}
               >
                 <option value="">All Departments</option>
-                {allDepartments.map(r => (
+                {allDepartments.map((r: any) => (
                   <option key={r} value={r}>{r}</option>
                 ))}
               </select>
               {selectedDepartment && (
-                <select 
-                  className="form-select" 
-                  style={{ width: 'auto', padding: '0.25rem 2rem 0.25rem 0.75rem', fontSize: '0.875rem' }}
-                  value={selectedSubDepartment}
-                  onChange={e => setSelectedSubDepartment(e.target.value)}
-                >
-                  <option value="">All Sub-Departments</option>
-                  {(getAvailableSubDepartments(selectedDepartment)).map(sd => (
-                    <option key={sd} value={sd}>{sd}</option>
-                  ))}
-                </select>
+                <>
+                  <select 
+                    className="form-select" 
+                    style={{ width: 'auto', padding: '0.25rem 2rem 0.25rem 0.75rem', fontSize: '0.875rem' }}
+                    value={selectedSubDepartment}
+                    onChange={e => {
+                      setSelectedSubDepartment(e.target.value);
+                      setSelectedRole('');
+                    }}
+                  >
+                    <option value="">All Sub-Departments</option>
+                    {(getAvailableSubDepartments(selectedDepartment)).map(sd => (
+                      <option key={sd} value={sd}>{sd}</option>
+                    ))}
+                  </select>
+                  
+                  {selectedSubDepartment && (
+                    <select 
+                      className="form-select" 
+                      style={{ width: 'auto', padding: '0.25rem 2rem 0.25rem 0.75rem', fontSize: '0.875rem' }}
+                      value={selectedRole}
+                      onChange={e => setSelectedRole(e.target.value)}
+                    >
+                      <option value="">All Roles</option>
+                      {(getAvailableRoles(selectedDepartment, selectedSubDepartment)).map(r => (
+                        <option key={r} value={r}>{r}</option>
+                      ))}
+                    </select>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -227,6 +289,7 @@ const QuestionBankModal = ({ onClose }) => {
                     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
                       <span className="badge badge-gray" style={{ fontSize: '0.7rem' }}>{q.department || 'General'}</span>
                       <span className="badge badge-gray" style={{ fontSize: '0.7rem' }}>{q.sub_department || 'General'}</span>
+                      <span className="badge badge-gray" style={{ fontSize: '0.7rem' }}>{q.role || 'General'}</span>
                     </div>
                   </div>
                   <button 

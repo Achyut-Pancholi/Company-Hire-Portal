@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
   if (authError) return authError;
   try {
     const body = await request.json();
-    const { job_role, question_text, is_mandatory, department, sub_department } = body;
+    const { job_role, question_text, is_mandatory, department, sub_department, role } = body;
 
     if (!job_role || !question_text) {
       return NextResponse.json(
@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
         is_mandatory: is_mandatory || false,
         department: department || null,
         sub_department: sub_department || null,
+        role: role || null,
       })
       .select()
       .single();
