@@ -130,47 +130,8 @@ export default function Dashboard() {
     });
   }, [candidates, jobs, searchQuery, selectedDept, selectedJob, selectedStage, scoreFilter, activeChartFilter]);
 
-  // If database is clean or contains very few metrics, inject premium realistic mock candidates
-  // to populate full-fidelity visual charts instantly (transparently overlaid to keep aesthetics clean)
-  const populatedCandidates = useMemo(() => {
-    if (filteredCandidates.length >= 5) return filteredCandidates;
-
-    // Create seed candidate templates matching standard formatting
-    const demoCandidates = [
-      { id: 'd1', name: 'Tanay Chourasiya', stage: 'Completed', jobApplied: 'AI Research Scientist', resumeScore: 84, videoScore: 89, techScore: 92, finalRecommendation: 'Hire', created_at: '2026-05-24T10:00:00Z', skills: ['Python', 'SQL', 'PySpark', 'PowerBI'] },
-      { id: 'd2', name: 'Aarav Mehta', stage: 'Technical Interview', jobApplied: 'Senior Frontend Engineer', resumeScore: 89, videoScore: 78, techScore: 85, finalRecommendation: 'Under Review', created_at: '2026-05-25T11:00:00Z', skills: ['React', 'Next.js', 'Tailwind', 'Framer'] },
-      { id: 'd3', name: 'Priya Sharma', stage: 'Video Screening', jobApplied: 'Product Designer', resumeScore: 92, videoScore: 82, techScore: 74, finalRecommendation: 'Hire', created_at: '2026-05-26T12:00:00Z', skills: ['Figma', 'UI/UX', 'Design Systems'] },
-      { id: 'd4', name: 'Rohan Gupta', stage: 'Resume Upload', jobApplied: 'Devops', resumeScore: 68, videoScore: 55, techScore: 62, finalRecommendation: 'Reject', created_at: '2026-05-27T08:00:00Z', skills: ['AWS', 'Docker', 'CI/CD'] },
-      { id: 'd5', name: 'Sneha Patel', stage: 'Completed', jobApplied: 'Senior Frontend Engineer', resumeScore: 80, videoScore: 75, techScore: 78, finalRecommendation: 'Hold', created_at: '2026-05-28T09:00:00Z', skills: ['TypeScript', 'Jest', 'Redux'] },
-      { id: 'd6', name: 'Kabir Singh', stage: 'Technical Interview', jobApplied: 'AI Research Scientist', resumeScore: 76, videoScore: 70, techScore: 80, finalRecommendation: 'Under Review', created_at: '2026-05-29T10:30:00Z', skills: ['PyTorch', 'FastAPI', 'NLP'] },
-      { id: 'd7', name: 'Neha Verma', stage: 'Video Screening', jobApplied: 'Product Designer', resumeScore: 85, videoScore: 88, techScore: 81, finalRecommendation: 'Hire', created_at: '2026-05-29T14:15:00Z', skills: ['Research', 'Wireframing', 'Prototyping'] }
-    ];
-
-    // Filter dynamic templates to match currently active filters
-    return demoCandidates.filter(c => {
-      const matchesSearch = searchQuery === '' || c.name.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesJob = selectedJob === 'All' || c.jobApplied === selectedJob;
-      const matchesStage = selectedStage === 'All' || c.stage === selectedStage;
-      let matchesScore = true;
-      const avg = (c.resumeScore + c.videoScore + c.techScore) / 3;
-      if (scoreFilter === 'High') matchesScore = avg >= 80;
-      else if (scoreFilter === 'Mid') matchesScore = avg >= 60 && avg < 80;
-      else if (scoreFilter === 'Low') matchesScore = avg < 60;
-
-      let matchesDept = true;
-      if (selectedDept !== 'All') {
-        const deptMap: Record<string, string> = {
-          'AI Research Scientist': 'Research',
-          'Senior Frontend Engineer': 'Engineering',
-          'Product Designer': 'Design',
-          'Devops': 'TechOps'
-        };
-        matchesDept = deptMap[c.jobApplied] === selectedDept;
-      }
-
-      return matchesSearch && matchesJob && matchesStage && matchesScore && matchesDept;
-    });
-  }, [filteredCandidates, searchQuery, selectedJob, selectedStage, scoreFilter, selectedDept]);
+  // Make all dashboard graphs fully dynamic by directly referencing the candidates fetched from the database
+  const populatedCandidates = filteredCandidates;
 
   // 2. Data Transformation & Aggregation helpers
   const kpiData = useMemo(() => {
