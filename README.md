@@ -14,8 +14,10 @@ A modern, lightning-fast platform for conducting **One-Way Video Interviews**. B
 
 - **🗣️ One-Way Video Interviews**: Candidates receive a secure magic link, read the customized questions, and record their answers directly in the browser.
 - **⚡ Insanely Fast Transcription**: As soon as an interview finishes, the video is instantly transcribed using **Groq Whisper** (`whisper-large-v3`), mapping candidate answers to the exact questions asked.
-- **✨ AI Interview Summaries**: Leveraging **Groq LLaMA 3.1 (8B)**, the platform automatically generates a 3-4 bullet point summary of the candidate's soft skills, qualifications, and communication style, displayed prominently on the dashboard.
-- **⏱️ Live Transcript Playback**: A beautiful, auto-scrolling side-panel accompanies the video player during review. Click any sentence in the transcript to instantly jump the video to that exact timestamp!
+- **🚀 Optimized Uploads**: Video clips are uploaded independently for maximum speed, reducing server load and bypassing heavy client-side merging.
+- **✨ Strict AI Interview Summaries**: Leveraging **Groq LLaMA 3.1 (8B)**, the platform automatically generates a 3-4 bullet point summary of the candidate's soft skills and scores them. The AI is strictly trained to detect and penalize silent/non-responsive candidates.
+- **⏱️ Live Transcript Playback**: A beautiful, auto-scrolling side-panel accompanies the video player during review. Click any sentence in the transcript to instantly jump the video to that exact timestamp! 
+- **📹 Visual Clip List**: The dashboard features visual video thumbnails for each recorded clip for seamless navigation.
 - **🎨 Premium UI/UX**: Designed with dark mode, glassmorphism, smooth animations, and tailored layout grids for the best viewing experience across all devices.
 - **🔗 Secure Sharing**: Generate read-only, time-expiring shareable links to effortlessly share specific candidate interviews with hiring managers.
 
@@ -23,10 +25,13 @@ A modern, lightning-fast platform for conducting **One-Way Video Interviews**. B
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: [Next.js 15](https://nextjs.org/) (App Router), React, Tailwind CSS, Lucide Icons
+A comprehensive, detailed breakdown of the entire technology stack used in this project is available in the [tech_stack.txt](./tech_stack.txt) file. 
+
+At a high level:
+- **Frontend**: [Next.js 15](https://nextjs.org/) (App Router), React 19, Tailwind CSS, Radix UI, Framer Motion
 - **Backend & Storage**: [Supabase](https://supabase.com/) (PostgreSQL & Storage Buckets)
-- **AI & Transcription**: [Groq API](https://groq.com/) (Whisper & LLaMA 3.1)
-- **Emails**: Nodemailer for sending magic links securely.
+- **AI & Transcription**: [Groq API](https://groq.com/) (Whisper & LLaMA 3 models)
+- **Emails & Media**: Nodemailer, FFmpeg, HTML2PDF
 
 ---
 

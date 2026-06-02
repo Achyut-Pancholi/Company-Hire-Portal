@@ -1,0 +1,41 @@
+# KL HIRE Unified - Technology Stack & Architecture Report
+Generated for Production Approval
+
+## 1. Core Framework & Environment
+- **Next.js (App Router) v15.3.6:** The foundational React framework for the entire application, handling both the frontend UI and the backend API routes (serverless functions). Used across the entire `src/app` directory.
+- **React v19 (RC):** The core UI library used for building interactive components throughout `src/components` and page files.
+- **TypeScript:** The primary programming language used across the entire codebase to provide static typing, improving reliability and reducing runtime errors.
+- **Node.js (v20+):** The underlying JavaScript runtime environment.
+
+## 2. Backend, Database & Storage
+- **Supabase (PostgreSQL):** Used as the primary relational database, authentication provider, and object storage solution (for video clips and resumes).
+  - *Usage:* Database queries and storage buckets are accessed via `@supabase/supabase-js` and `@supabase/ssr` across all API routes (`src/app/api/...`) and server components.
+  - *Features utilized:* Row Level Security (RLS), Supabase Storage (for `.webm` and `.pdf` files), and Database Functions (RPC).
+
+## 3. Artificial Intelligence & Machine Learning
+- **Groq API:** The primary AI provider powering the platform's intelligence.
+  - **Whisper-Large-V3 (via Groq):** Used for lightning-fast speech-to-text transcription of candidate video responses (located in `src/app/api/interviews/[id]/route.ts`).
+  - **Llama 3.1 8B / Llama 3.3 70B (via Groq):** Used as the core LLM for analyzing interview transcripts, generating AI summaries, scoring candidates on specific metrics (Clarity, Confidence, etc.), and parsing uploaded resumes into structured data.
+- **OpenAI SDK:** Utilized as the API client structure to communicate with Groq's OpenAI-compatible endpoints (`src/app/api/interviews/[id]/route.ts`).
+
+## 4. Frontend Styling & UI Components
+- **Tailwind CSS v3.4:** The utility-first CSS framework used for all styling across the platform (`src/app/globals.css` and inline component classes).
+- **Radix UI:** A library of unstyled, accessible UI primitives used to build robust custom components (Tabs, Dialogs, Dropdowns, Select menus, Tooltips). Located in `src/components/ui`.
+- **Framer Motion:** Used for smooth, modern micro-animations and page transitions across the candidate and admin dashboards.
+- **Lucide React:** The primary icon library used throughout the application for clean, scalable SVG icons.
+- **Class Variance Authority (CVA) & clsx:** Utility libraries used to conditionally construct complex Tailwind CSS class strings (often in `src/lib/utils.ts` and UI components).
+
+## 5. Media & Document Processing
+- **FFmpeg (WebAssembly):** `@ffmpeg/ffmpeg` is utilized for client-side video/audio processing and handling webm chunks recorded by the candidate's browser during the video bot interview.
+- **PDF2JSON:** Used on the backend API side to parse and extract text from uploaded PDF resumes for AI processing.
+- **HTML2PDF.js:** Used on the frontend to allow admins and users to download AI evaluation reports and scorecards as generated PDF documents.
+
+## 6. Integrations & Utilities
+- **Nodemailer:** The backend email client used for sending automated candidate invitations, test completion notifications, and report sharing. Currently configured via Gmail SMTP (`src/app/api/emails/send/route.ts`).
+- **Zod:** A TypeScript-first schema declaration and validation library used for validating API request bodies and environment variables.
+- **Recharts:** A composable charting library used to render the "Skill Radar" and bar charts on the AI Interview Report dashboards.
+- **Date-fns:** A utility library used for formatting, parsing, and calculating interview expiration dates and timestamps across the platform.
+
+## 7. Build Tools & Deployment
+- **Vercel:** The target deployment platform (as seen in active deployments), which natively supports Next.js Serverless Functions, Edge routing, and static asset delivery.
+- **ESLint & PostCSS:** Standard linting and CSS transformation tools used in the build pipeline to enforce code quality.
