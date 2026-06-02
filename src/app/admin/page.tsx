@@ -627,9 +627,9 @@ export default function Dashboard() {
           </div>
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stageVolumeData} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
+              <BarChart data={stageVolumeData} margin={{ top: 5, right: 10, left: -25, bottom: 35 }}>
                 <CartesianGrid stroke="#F1F5F9" strokeDasharray="3 3" />
-                <XAxis dataKey="stage" stroke="#94A3B8" fontSize={10} tickLine={false} />
+                <XAxis dataKey="stage" stroke="#94A3B8" fontSize={9} tickLine={false} angle={-15} textAnchor="end" height={50} />
                 <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} allowDecimals={false} />
                 <Tooltip />
                 <Bar dataKey="Candidates" fill={PALETTE.teal} radius={[6, 6, 0, 0]} barSize={26}>
@@ -680,9 +680,9 @@ export default function Dashboard() {
           </div>
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={performanceDeviations} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
+              <BarChart data={performanceDeviations} margin={{ top: 5, right: 10, left: -25, bottom: 25 }}>
                 <CartesianGrid stroke="#F1F5F9" strokeDasharray="3 3" />
-                <XAxis dataKey="name" stroke="#94A3B8" fontSize={10} tickLine={false} />
+                <XAxis dataKey="name" stroke="#94A3B8" fontSize={9.5} tickLine={false} angle={-25} textAnchor="end" height={45} />
                 <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} />
                 <Tooltip />
                 <ReferenceLine y={0} stroke="#94A3B8" strokeWidth={1.5} />
