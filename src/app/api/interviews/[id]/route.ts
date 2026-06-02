@@ -117,6 +117,8 @@ export async function PATCH(
                     content: `You are an expert HR recruiter. Analyze the following interview transcript and return a JSON object with two keys:
 1. "summary": A concise 3-4 bullet point summary highlighting the candidate's key qualifications, experience, and communication style. Use markdown bullet points.
 2. "scores": An object containing ratings out of 5 for "Communication", "Clarity", "Confidence", and "Relevance". Example: {"Communication": 4, "Clarity": 5, "Confidence": 3, "Relevance": 4}.
+
+CRITICAL INSTRUCTION: If the transcript is mostly empty, shows only background noise (like 'you', 'um', 'thank you'), or the candidate is effectively silent, you MUST give a score of 1 out of 5 for all metrics. The summary must clearly state that the candidate was silent and did not provide substantive answers.
 Respond ONLY with the JSON object.` 
                   },
                   { role: "user", content: fullText }
