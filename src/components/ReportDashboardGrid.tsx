@@ -1049,7 +1049,6 @@ function TranscriptCompactView({ transcript, storedAnalysis, onViewMore }: { tra
           { label: 'Tone',        value: analysis.tone,           color: toneColor },
           { label: 'Sentiment',   value: analysis.sentiment,      color: sentColor },
           { label: 'Fillers',     value: `${analysis.fillerWordCount}`,  color: fillerColor },
-          { label: 'Recommend',   value: analysis.recommendation.split(' ')[0], color: recColor },
         ].map((b, i) => (
           <div key={i} style={{
             flex: 1,
