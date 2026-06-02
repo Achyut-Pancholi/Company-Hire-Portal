@@ -778,6 +778,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
                                 screeningVideoRef.current.currentTime = transcript[prevIndex].timestamp_start || 0;
                                 screeningVideoRef.current.play().catch(console.error);
                                 setActiveClipIndex(prevIndex);
+                                document.getElementById(`clip-btn-${prevIndex}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                               }
                             }
                           }}
@@ -794,11 +795,13 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
                           {transcript.map((t: any, i: number) => (
                             <button
                               key={i}
+                              id={`clip-btn-${i}`}
                               onClick={() => {
                                 if (screeningVideoRef.current) {
                                   screeningVideoRef.current.currentTime = t.timestamp_start || 0;
                                   screeningVideoRef.current.play().catch(console.error);
                                   setActiveClipIndex(i);
+                                  document.getElementById(`clip-btn-${i}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                                 }
                               }}
                               style={{
@@ -828,6 +831,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
                                 screeningVideoRef.current.currentTime = transcript[nextIndex].timestamp_start || 0;
                                 screeningVideoRef.current.play().catch(console.error);
                                 setActiveClipIndex(nextIndex);
+                                document.getElementById(`clip-btn-${nextIndex}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                               }
                             }
                           }}

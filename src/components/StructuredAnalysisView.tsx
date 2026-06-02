@@ -132,7 +132,7 @@ export function StructuredAnalysisView({ text }: { text: string | any }) {
       )}
       
       <BulletList title="Pros / Strengths" items={pros} color="#10b981" />
-      <BulletList title="Neutral / OkOk" items={okok} color="#f59e0b" />
+      <BulletList title="Neutral points" items={okok} color="#f59e0b" />
       <BulletList title="Cons / Weaknesses" items={cons} color="#ef4444" />
     </div>
   );
