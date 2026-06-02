@@ -194,9 +194,9 @@ export default function Dashboard() {
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([date, val]) => {
         runningTotal += val.count;
-        const avgR = val.resumeCount > 0 ? Math.round(val.totalResume / val.resumeCount) : 75;
-        const avgV = val.videoCount > 0 ? Math.round(val.totalVideo / val.videoCount) : 70;
-        const avgT = val.techCount > 0 ? Math.round(val.totalTech / val.techCount) : 78;
+        const avgR = val.resumeCount > 0 ? Math.round(val.totalResume / val.resumeCount) : 0;
+        const avgV = val.videoCount > 0 ? Math.round(val.totalVideo / val.videoCount) : 0;
+        const avgT = val.techCount > 0 ? Math.round(val.totalTech / val.techCount) : 0;
         return {
           date: date.substring(5), // mm-dd formatting
           applications: val.count,
@@ -272,9 +272,9 @@ export default function Dashboard() {
 
       return {
         department: d,
-        Resume: rN > 0 ? Math.round(rSum / rN) : 75,
-        Video: vN > 0 ? Math.round(vSum / vN) : 70,
-        Technical: tN > 0 ? Math.round(tSum / tN) : 75
+        Resume: rN > 0 ? Math.round(rSum / rN) : 0,
+        Video: vN > 0 ? Math.round(vSum / vN) : 0,
+        Technical: tN > 0 ? Math.round(tSum / tN) : 0
       };
     });
   }, [populatedCandidates, jobs]);
@@ -297,24 +297,36 @@ export default function Dashboard() {
   const radarCompetencyData = useMemo(() => {
     const list = populatedCandidates;
     let comm = 0, tech = 0, analytical = 0, leadership = 0, design = 0, stability = 0;
+    let commN = 0, techN = 0, analyticalN = 0, leadershipN = 0, designN = 0, stabilityN = 0;
     
     list.forEach(c => {
-      comm += (c.videoScore || 75);
-      tech += (c.techScore || 78);
-      analytical += ((c.resumeScore || 70) + (c.techScore || 78)) / 2;
-      leadership += c.skills?.length > 8 ? 85 : 70;
-      design += c.jobApplied?.toLowerCase().includes('design') ? 90 : 60;
-      stability += c.resumeScore > 80 ? 88 : 74;
+      if (c.videoScore) { comm += c.videoScore; commN++; }
+      if (c.techScore) { tech += c.techScore; techN++; }
+      if (c.resumeScore || c.techScore) {
+        analytical += ((c.resumeScore || 0) + (c.techScore || 0)) / ((c.resumeScore ? 1 : 0) + (c.techScore ? 1 : 0) || 1);
+        analyticalN++;
+      }
+      if (c.skills && c.skills.length > 0) {
+        leadership += c.skills.length > 8 ? 85 : 70;
+        leadershipN++;
+      }
+      if (c.jobApplied) {
+        design += c.jobApplied.toLowerCase().includes('design') ? 90 : 60;
+        designN++;
+      }
+      if (c.resumeScore) {
+        stability += c.resumeScore > 80 ? 88 : 74;
+        stabilityN++;
+      }
     });
 
-    const N = list.length || 1;
     return [
-      { subject: 'Communication', A: Math.round(comm / N), B: 75, fullMark: 100 },
-      { subject: 'Technical skills', A: Math.round(tech / N), B: 80, fullMark: 100 },
-      { subject: 'Problem Solving', A: Math.round(analytical / N), B: 70, fullMark: 100 },
-      { subject: 'Leadership', A: Math.round(leadership / N), B: 65, fullMark: 100 },
-      { subject: 'Design Thinking', A: Math.round(design / N), B: 60, fullMark: 100 },
-      { subject: 'Parsed Match', A: Math.round(stability / N), B: 75, fullMark: 100 }
+      { subject: 'Communication', A: commN > 0 ? Math.round(comm / commN) : 0, B: 75, fullMark: 100 },
+      { subject: 'Technical skills', A: techN > 0 ? Math.round(tech / techN) : 0, B: 80, fullMark: 100 },
+      { subject: 'Problem Solving', A: analyticalN > 0 ? Math.round(analytical / analyticalN) : 0, B: 70, fullMark: 100 },
+      { subject: 'Leadership', A: leadershipN > 0 ? Math.round(leadership / leadershipN) : 0, B: 65, fullMark: 100 },
+      { subject: 'Design Thinking', A: designN > 0 ? Math.round(design / designN) : 0, B: 60, fullMark: 100 },
+      { subject: 'Parsed Match', A: stabilityN > 0 ? Math.round(stability / stabilityN) : 0, B: 75, fullMark: 100 }
     ];
   }, [populatedCandidates]);
 
@@ -327,11 +339,11 @@ export default function Dashboard() {
         .map(c => Math.round(((c.resumeScore || 0) + (c.videoScore || 0) + (c.techScore || 0)) / 
           ((c.resumeScore ? 1 : 0) + (c.videoScore ? 1 : 0) + (c.techScore ? 1 : 0) || 1)));
 
-      const sorted = scores.length > 0 ? scores.sort((a, b) => a - b) : [60, 70, 80];
-      const min = sorted[0] || 50;
-      const max = sorted[sorted.length - 1] || 95;
-      const median = sorted[Math.floor(sorted.length / 2)] || 75;
-      const avg = Math.round(scores.reduce((a, b) => a + b, 0) / (scores.length || 1)) || 72;
+      const sorted = scores.length > 0 ? scores.sort((a, b) => a - b) : [0, 0, 0];
+      const min = sorted[0] || 0;
+      const max = sorted[sorted.length - 1] || 0;
+      const median = sorted[Math.floor(sorted.length / 2)] || 0;
+      const avg = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
 
       // Map to candlestick structure
       // Low is lower wick, High is upper wick. Open/Close coordinates represent the thick body (box range)
@@ -356,9 +368,9 @@ export default function Dashboard() {
   const bubbleData = useMemo(() => {
     return populatedCandidates.map(c => ({
       name: c.name,
-      'Resume Score': c.resumeScore || 70,
-      'Video Score': c.videoScore || 75,
-      'Tech Score': c.techScore || 80,
+      'Resume Score': c.resumeScore || 0,
+      'Video Score': c.videoScore || 0,
+      'Tech Score': c.techScore || 0,
       dept: getDept(c.jobApplied)
     }));
   }, [populatedCandidates, jobs]);
@@ -380,8 +392,8 @@ export default function Dashboard() {
   // Chart 12: Scatter Chart (Tech vs Video correlation scatter matrix)
   const scatterCorrelationData = useMemo(() => {
     return populatedCandidates.map(c => ({
-      x: c.techScore || 70,
-      y: c.videoScore || 75,
+      x: c.techScore || 0,
+      y: c.videoScore || 0,
       name: c.name?.split(' ')[0] || 'Candidate'
     }));
   }, [populatedCandidates]);
