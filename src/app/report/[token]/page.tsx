@@ -457,19 +457,32 @@ export default async function CandidateReportPage({ params }: { params: Promise<
       <style dangerouslySetInnerHTML={{__html: `
         .zoom-box {
           position: relative;
-          overflow: hidden !important;
+          overflow: hidden;
           border: 1px solid var(--border);
           border-radius: 20px;
           background-color: #fff;
         }
-        .zoom-box, .zoom-box *, .zoom-box::-webkit-scrollbar, .zoom-box *::-webkit-scrollbar {
-          scrollbar-width: none !important;
-          -ms-overflow-style: none !important;
+        
+        /* Elegant custom scrollbar for any scrollable container */
+        .custom-scroll {
+          overflow-y: auto !important;
+          scrollbar-width: thin !important;
+          scrollbar-color: rgba(14, 45, 123, 0.2) transparent !important;
         }
-        .zoom-box::-webkit-scrollbar, .zoom-box *::-webkit-scrollbar {
-          display: none !important;
-          width: 0 !important;
-          height: 0 !important;
+        .custom-scroll::-webkit-scrollbar {
+          width: 6px !important;
+          height: 6px !important;
+          display: block !important;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+          background: transparent !important;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+          background: rgba(14, 45, 123, 0.2) !important;
+          border-radius: 99px !important;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+          background: rgba(14, 45, 123, 0.35) !important;
         }
         .ti-scroll::-webkit-scrollbar { display: none; }
       `}} />

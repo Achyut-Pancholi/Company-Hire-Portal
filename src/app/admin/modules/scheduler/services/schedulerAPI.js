@@ -14,6 +14,10 @@
  *  - Graceful API failure → localStorage fallback
  */
 
+import { createClient } from '@/lib/supabase/client';
+
+const supabase = createClient();
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const STORAGE_KEY   = 'kl_scheduler_interviews';
@@ -241,5 +245,172 @@ export const checkAPIHealth = async () => {
     return true;
   } catch {
     return false;
+  }
+};
+
+/**
+ * Fetch all panelists from Supabase.
+ * Falls back to localStorage if database query fails.
+ */
+export const fetchPanelists = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('panelists')
+      .select('*')
+      .order('name', { ascending: true });
+
+    if (error) throw error;
+
+    return data.map(p => ({
+      id: p.id,
+      name: p.name,
+      role: p.role,
+      email: p.email,
+      avatar: p.avatar,
+      color: p.color,
+      daysAvailable: p.days_available || [1, 2, 3, 4, 5]
+    }));
+  } catch (err) {
+    console.error('[SchedulerAPI] fetchPanelists failed, using localStorage fallback:', err);
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('kl_scheduler_panelists');
+        if (raw) return JSON.parse(raw);
+      } catch (e) {}
+    }
+    return [];
+  }
+};
+
+/**
+ * Create a new panelist in Supabase.
+ * Falls back to localStorage on failure.
+ */
+export const createPanelist = async (panelistData) => {
+  const payload = {
+    name: panelistData.name,
+    role: panelistData.role,
+    email: panelistData.email,
+    avatar: panelistData.avatar,
+    color: panelistData.color,
+    days_available: panelistData.daysAvailable || [1, 2, 3, 4, 5]
+  };
+
+  try {
+    const { data, error } = await supabase
+      .from('panelists')
+      .insert([payload])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      id: data.id,
+      name: data.name,
+      role: data.role,
+      email: data.email,
+      avatar: data.avatar,
+      color: data.color,
+      daysAvailable: data.days_available
+    };
+  } catch (err) {
+    console.error('[SchedulerAPI] createPanelist failed, using localStorage fallback:', err);
+    const localRecord = { ...panelistData, id: 'p_' + Date.now() };
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('kl_scheduler_panelists');
+        const list = raw ? JSON.parse(raw) : [];
+        list.push(localRecord);
+        localStorage.setItem('kl_scheduler_panelists', JSON.stringify(list));
+      } catch (e) {}
+    }
+    return localRecord;
+  }
+};
+
+/**
+ * Update an existing panelist in Supabase.
+ * Falls back to localStorage on failure.
+ */
+export const updatePanelist = async (id, panelistData) => {
+  const payload = {
+    name: panelistData.name,
+    role: panelistData.role,
+    email: panelistData.email,
+    days_available: panelistData.daysAvailable
+  };
+
+  if (panelistData.avatar) payload.avatar = panelistData.avatar;
+  if (panelistData.color) payload.color = panelistData.color;
+
+  try {
+    if (String(id).startsWith('p_')) {
+      return await createPanelist(panelistData);
+    }
+
+    const { data, error } = await supabase
+      .from('panelists')
+      .update(payload)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      id: data.id,
+      name: data.name,
+      role: data.role,
+      email: data.email,
+      avatar: data.avatar,
+      color: data.color,
+      daysAvailable: data.days_available
+    };
+  } catch (err) {
+    console.error('[SchedulerAPI] updatePanelist failed, using localStorage fallback:', err);
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('kl_scheduler_panelists');
+        if (raw) {
+          const list = JSON.parse(raw);
+          const updated = list.map(p => p.id === id ? { ...p, ...panelistData } : p);
+          localStorage.setItem('kl_scheduler_panelists', JSON.stringify(updated));
+        }
+      } catch (e) {}
+    }
+    return { id, ...panelistData };
+  }
+};
+
+/**
+ * Delete a panelist from Supabase.
+ * Falls back to localStorage on failure.
+ */
+export const deletePanelist = async (id) => {
+  try {
+    if (String(id).startsWith('p_')) {
+      throw new Error('Local panelist');
+    }
+
+    const { error } = await supabase
+      .from('panelists')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+    return true;
+  } catch (err) {
+    console.error('[SchedulerAPI] deletePanelist failed, using localStorage fallback:', err);
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('kl_scheduler_panelists');
+        if (raw) {
+          const list = JSON.parse(raw).filter(p => p.id !== id);
+          localStorage.setItem('kl_scheduler_panelists', JSON.stringify(list));
+        }
+      } catch (e) {}
+    }
+    return true;
   }
 };

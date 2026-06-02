@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Mail, Plus, Trash2, KeyRound, ShieldCheck, Loader2 } from 'lucide-react';
+import { Mail, Plus, Trash2, KeyRound, ShieldCheck, Loader2, Video } from 'lucide-react';
 import { useAppContext } from '@/components/admin/context/AppContext';
 
 export default function SettingsPage() {
@@ -16,10 +16,87 @@ export default function SettingsPage() {
   
   const [mounted, setMounted] = useState(false);
 
+  // Microsoft Teams integration state
+  const [teamsConnected, setTeamsConnected] = useState(false);
+  const [isSandbox, setIsSandbox] = useState(false);
+  const [checkingTeams, setCheckingTeams] = useState(true);
+  const [togglingTeams, setTogglingTeams] = useState(false);
+
   useEffect(() => {
     setMounted(true);
     fetchEmails();
+    fetchTeamsStatus();
+
+    // Check for oauth redirect query parameter
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('teams') === 'connected') {
+      alert('Microsoft Teams live account connected successfully!');
+      // Clear query parameter
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   }, []);
+
+  const fetchTeamsStatus = async () => {
+    try {
+      const res = await apiFetch('/api/teams/simulate');
+      if (res.ok) {
+        const data = await res.json();
+        setTeamsConnected(data.connected);
+        setIsSandbox(data.isSandbox || false);
+      }
+    } catch (e) {
+      console.error("Error fetching Teams connection status:", e);
+    } finally {
+      setCheckingTeams(false);
+    }
+  };
+
+  const handleConnectSandbox = async () => {
+    setTogglingTeams(true);
+    try {
+      const res = await apiFetch('/api/teams/simulate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'connect' })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTeamsConnected(data.connected);
+        setIsSandbox(data.isSandbox || false);
+        alert('Demo Microsoft Sandbox connected successfully! You can now test Microsoft Teams scheduling and review high-fidelity mock interview video recordings and automated LLaMA 3.3 transcripts without needing live Azure account authorization.');
+      } else {
+        alert('Failed to connect sandbox mode.');
+      }
+    } catch (e) {
+      alert('Error toggling sandbox mode.');
+    } finally {
+      setTogglingTeams(false);
+    }
+  };
+
+  const handleDisconnectTeams = async () => {
+    if (!window.confirm("Are you sure you want to disconnect Microsoft Teams?")) return;
+    setTogglingTeams(true);
+    try {
+      const res = await apiFetch('/api/teams/simulate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'disconnect' })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTeamsConnected(data.connected);
+        setIsSandbox(data.isSandbox || false);
+        alert('Microsoft Teams disconnected successfully.');
+      } else {
+        alert('Failed to disconnect Microsoft Teams.');
+      }
+    } catch (e) {
+      alert('Error disconnecting Teams.');
+    } finally {
+      setTogglingTeams(false);
+    }
+  };
 
   const fetchEmails = async () => {
     try {
@@ -213,6 +290,191 @@ export default function SettingsPage() {
             )}
           </div>
           
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card-header" style={{ borderBottom: '1px solid var(--gray-200)', paddingBottom: '1.5rem', marginBottom: '1.5rem' }}>
+          <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Video size={20} color="#6264A7" />
+            Microsoft Teams & Video Bot Integration
+          </h3>
+          <p style={{ color: 'var(--gray-500)', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+            Integrate Microsoft Teams to automatically generate live interview meeting links, capture high-fidelity video recordings, and invoke Groq LLaMA 3.3 AI transcription insights.
+          </p>
+        </div>
+
+        <div className="card-body">
+          {checkingTeams ? (
+            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--gray-500)' }}>
+              <Loader2 size={24} className="animate-spin" style={{ margin: '0 auto', marginBottom: '0.5rem' }} />
+              Verifying Microsoft integration status...
+            </div>
+          ) : teamsConnected ? (
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '1.25rem', 
+              padding: '1.5rem', 
+              borderRadius: 'var(--radius-md)', 
+              border: isSandbox ? '1px solid rgba(98, 100, 167, 0.2)' : '1px solid #10b981',
+              backgroundColor: isSandbox ? 'rgba(98, 100, 167, 0.04)' : 'rgba(16, 185, 129, 0.04)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ 
+                  width: '40px', 
+                  height: '40px', 
+                  borderRadius: '50%', 
+                  backgroundColor: isSandbox ? '#6264A7' : '#10b981', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  color: '#fff',
+                  fontWeight: 'bold',
+                  boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
+                }}>
+                  ✓
+                </div>
+                <div>
+                  <h4 style={{ fontSize: '1.05rem', fontWeight: '700', color: 'var(--brand-navy)', margin: 0 }}>
+                    {isSandbox ? 'Connected in Sandbox Demo Mode' : 'Connected to Microsoft Teams Live'}
+                  </h4>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--gray-500)', margin: '4px 0 0 0' }}>
+                    {isSandbox ? 'Bypassing live Azure AD authentication using static simulation.' : 'All system modules are linked with active Graph API access tokens.'}
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ 
+                fontSize: '0.85rem', 
+                lineHeight: '1.5', 
+                color: '#334155', 
+                backgroundColor: '#fff', 
+                padding: '1rem', 
+                borderRadius: '8px', 
+                border: '1px solid var(--gray-200)' 
+              }}>
+                {isSandbox ? (
+                  <>
+                    <strong style={{ color: 'var(--brand-navy)' }}>Sandbox Mode Features Enabled:</strong>
+                    <ul style={{ margin: '0.5rem 0 0 0', paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <li>Generates custom visual mock Teams join links instantly upon candidate assignment.</li>
+                      <li>Returns active HTML5 video recording assets (e.g. BigBuckBunny MP4) inside the interview view dashboard.</li>
+                      <li>Provides pre-loaded React/Next.js developer interview transcripts instantly.</li>
+                      <li>Fully triggers LLaMA 3.3 AI analysis models to generate candidate skill reports using your active Groq API Key!</li>
+                    </ul>
+                  </>
+                ) : (
+                  <>
+                    <strong style={{ color: 'var(--brand-navy)' }}>Live Mode Features Enabled:</strong>
+                    <ul style={{ margin: '0.5rem 0 0 0', paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <li>Connects directly to Microsoft Graph to schedule corporate events.</li>
+                      <li>Stores active Microsoft Teams meeting join details.</li>
+                      <li>Automates recording retrievals and transcript downloads directly from Microsoft organizational tenants.</li>
+                    </ul>
+                  </>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                <button 
+                  onClick={handleDisconnectTeams} 
+                  className="btn" 
+                  disabled={togglingTeams}
+                  style={{ 
+                    backgroundColor: '#fff', 
+                    color: 'var(--danger)', 
+                    border: '1px solid var(--danger)',
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '0.5rem',
+                    cursor: 'pointer',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '6px',
+                    fontWeight: '600'
+                  }}
+                >
+                  {togglingTeams ? <Loader2 size={16} className="animate-spin" /> : 'Disconnect Integration'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '1.25rem', 
+              padding: '1.5rem', 
+              borderRadius: 'var(--radius-md)', 
+              border: '1px dashed var(--gray-300)',
+              backgroundColor: 'var(--gray-50)',
+              textAlign: 'center',
+              alignItems: 'center'
+            }}>
+              <div style={{ 
+                width: '60px', 
+                height: '60px', 
+                borderRadius: '50%', 
+                backgroundColor: 'rgba(98, 100, 167, 0.08)', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                color: '#6264A7',
+                marginBottom: '0.5rem'
+              }}>
+                <Video size={30} />
+              </div>
+              
+              <div style={{ maxWidth: '500px' }}>
+                <h4 style={{ fontSize: '1.05rem', fontWeight: '700', color: 'var(--brand-navy)', marginBottom: '0.5rem' }}>
+                  Choose Your Integration Mode
+                </h4>
+                <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)', lineHeight: '1.4' }}>
+                  If you have a corporate Azure account with tenant permissions to create OnlineMeetings and access transcripts, choose **Connect Real Account**. 
+                  Otherwise, select **Connect Demo Sandbox** for an instant pre-configured simulation that tests the full AI analysis dashboard in one click.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', width: '100%', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button 
+                  onClick={() => {
+                    window.location.href = '/auth/microsoft';
+                  }}
+                  className="btn" 
+                  style={{ 
+                    backgroundColor: '#6264A7', 
+                    color: '#fff', 
+                    border: 'none',
+                    fontWeight: '700',
+                    padding: '0.75rem 1.5rem',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 6px rgba(98, 100, 167, 0.15)'
+                  }}
+                >
+                  Connect Real Account
+                </button>
+                <button 
+                  onClick={handleConnectSandbox} 
+                  disabled={togglingTeams}
+                  className="btn" 
+                  style={{ 
+                    backgroundColor: '#fff', 
+                    color: '#6264A7', 
+                    border: '2px solid #6264A7',
+                    fontWeight: '700',
+                    padding: '0.75rem 1.5rem',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  {togglingTeams ? <Loader2 size={16} className="animate-spin" /> : 'Connect Demo Sandbox'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

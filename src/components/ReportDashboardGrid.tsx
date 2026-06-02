@@ -203,13 +203,20 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
           const candName = cleanName(candidate.name || "");
           
           if (Array.isArray(data)) {
-            const match = data.find((i: any) => {
+            const matches = data.filter((i: any) => {
               const matchesEmail = candidateEmail && (i.candidate_email || "").trim().toLowerCase() === candidateEmail;
               const matchesName = candName && cleanName(i.candidate_name || "") === candName;
-              return (matchesEmail || matchesName) && i.status === 'completed';
+              return matchesEmail || matchesName;
             });
-            if (match) {
-              setMatchedInterview(match);
+            const bestMatch = matches.sort((a, b) => {
+              if (a.status === 'completed' && b.status !== 'completed') return -1;
+              if (a.status !== 'completed' && b.status === 'completed') return 1;
+              if (a.video_url && !b.video_url) return -1;
+              if (!a.video_url && b.video_url) return 1;
+              return 0;
+            })[0];
+            if (bestMatch) {
+              setMatchedInterview(bestMatch);
             }
           }
         }
@@ -599,7 +606,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
     <div style={{ flex: 1, display: 'flex', gap: '1.5rem', width: '100%', height: '100%', overflow: 'hidden' }}>
       
       {/* COLUMN 1: Scores & Skill Match (width: 32%) */}
-      <div style={{ width: '32%', display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%', overflow: 'hidden' }}>
+      <div className="custom-scroll" style={{ width: '32%', display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%' }}>
         
         {/* Overview / Score Radial Circles with Toggle Options */}
         <div className="zoom-box" style={{ backgroundColor: '#fff', padding: '1.25rem', borderRadius: '20px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '1rem', flexShrink: 0 }}>
@@ -727,7 +734,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
       </div>
 
       {/* COLUMN 2: Video Screening & Transcript (width: 38%) */}
-      <div style={{ width: '38%', display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%', overflow: 'hidden' }}>
+      <div className="custom-scroll" style={{ width: '38%', display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%' }}>
         
         {/* Video Screening Summary Card */}
         <div className="zoom-box" style={{ backgroundColor: '#fff', padding: '1rem', borderRadius: '20px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1, overflow: 'hidden' }}>
@@ -905,7 +912,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
       </div>
 
       {/* COLUMN 3: Transcript Intelligence (width: 30%) */}
-      <div className="zoom-box" style={{ width: '30%', backgroundColor: '#fff', borderRadius: '20px', border: '1px solid var(--border)', padding: '0.65rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.45rem', height: '100%', overflow: 'hidden' }}>
+      <div className="zoom-box custom-scroll" style={{ width: '30%', backgroundColor: '#fff', borderRadius: '20px', border: '1px solid var(--border)', padding: '0.65rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.45rem', height: '100%' }}>
         
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>

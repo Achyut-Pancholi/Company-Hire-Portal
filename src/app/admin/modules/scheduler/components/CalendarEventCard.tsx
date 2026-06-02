@@ -123,6 +123,21 @@ const CalendarEventCard = memo(({
     opacity: isGhost ? 0.3 : isDragging ? 0.85 : 1,
   };
 
+  const handleJoinClick = (e, link) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!link || link === '—' || link === 'null' || link === 'undefined' || String(link).trim() === '') {
+      alert("Teams meeting link unavailable.");
+      return;
+    }
+    const isMock = link.includes('mock-meeting-') || link.includes('mock-');
+    if (isMock) {
+      alert("Note: This is a simulated/mock Teams meeting link generated in mock mode.\n\nTo schedule and join real meetings, please link a real Microsoft account first! (Mock links cannot be opened in the Microsoft Teams application.)");
+      return;
+    }
+    window.open(link, '_blank');
+  };
+
   return (
     <div
       className={`cal-event ${statusClass} ${isDragging ? 'cal-event--dragging' : ''} ${isNow ? 'cal-event--active' : ''}`}
@@ -141,20 +156,42 @@ const CalendarEventCard = memo(({
 
       <div className="cal-event__content">
         {/* Candidate name & brand platform logo */}
-        <div className="cal-event__name" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <div className="cal-event__candidate-avatar" style={{
-            width: '18px', height: '18px', borderRadius: '50%',
-            backgroundColor: 'var(--brand-navy)', color: '#fff',
-            fontSize: '0.62rem', fontWeight: 'bold', display: 'flex',
-            alignItems: 'center', justifyContent: 'center', flexShrink: 0
-          }}>
-            {initials}
+        <div className="cal-event__name" style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'space-between', width: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
+            <div className="cal-event__candidate-avatar" style={{
+              width: '18px', height: '18px', borderRadius: '50%',
+              backgroundColor: 'var(--brand-navy)', color: '#fff',
+              fontSize: '0.62rem', fontWeight: 'bold', display: 'flex',
+              alignItems: 'center', justifyContent: 'center', flexShrink: 0
+            }}>
+              {initials}
+            </div>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 700 }}>
+              {interview.candidate_name}
+            </span>
+            {isNow && (
+              <span className="cal-event__pulse-dot" title="Happening now" />
+            )}
           </div>
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 700 }}>
-            {interview.candidate_name}
-          </span>
-          {isNow && (
-            <span className="cal-event__pulse-dot" title="Happening now" />
+          {interview.platform !== 'inperson' && (
+            <a
+              href="#"
+              style={{
+                fontSize: '0.62rem',
+                fontWeight: 850,
+                color: 'white',
+                backgroundColor: platformColor,
+                padding: '1px 5px',
+                borderRadius: '3px',
+                textDecoration: 'none',
+                flexShrink: 0,
+                lineHeight: '1.2'
+              }}
+              onClick={e => handleJoinClick(e, interview.meeting_link || interview.teams_join_url)}
+              title="Quick Join Meeting"
+            >
+              Join
+            </a>
           )}
         </div>
 
@@ -184,17 +221,35 @@ const CalendarEventCard = memo(({
       {!isCompact && (
         <div className="cal-event__footer">
           <PanelistAvatars panelistIds={interview.panelists} />
-          {interview.meeting_link && interview.platform !== 'inperson' && (
-            <a
-              href={interview.meeting_link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="cal-event__join"
-              title={`Join ${interview.platform === 'teams' ? 'Teams' : interview.platform === 'google' ? 'Meet' : 'Zoom'}`}
-              onClick={e => e.stopPropagation()}
-            >
-              Join
-            </a>
+          {interview.platform !== 'inperson' && (
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <a
+                href="#"
+                className="cal-event__join"
+                title={`Join ${interview.platform === 'teams' ? 'Teams' : interview.platform === 'google' ? 'Meet' : 'Zoom'}`}
+                onClick={e => handleJoinClick(e, interview.meeting_link || interview.teams_join_url)}
+              >
+                Join
+              </a>
+              <button
+                className="cal-event__join"
+                style={{ backgroundColor: '#1e293b', border: 'none', cursor: 'pointer' }}
+                title="Copy meeting link"
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const meetingLink = interview.meeting_link || interview.teams_join_url;
+                  if (!meetingLink || meetingLink === '—' || meetingLink === 'null' || meetingLink === 'undefined' || String(meetingLink).trim() === '') {
+                    alert("Teams meeting link unavailable.");
+                    return;
+                  }
+                  navigator.clipboard.writeText(meetingLink);
+                  alert("Meeting link copied successfully.");
+                }}
+              >
+                Copy
+              </button>
+            </div>
           )}
         </div>
       )}
