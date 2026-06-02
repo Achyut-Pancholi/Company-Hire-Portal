@@ -580,10 +580,10 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col justify-between h-[360px]">
           <div>
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-bold text-slate-800 text-sm tracking-tight">1. Score Development Trends</h3>
-              <Info size={14} className="text-slate-400 cursor-pointer" title="Shows monthly score trajectories by stage" />
+              <h3 className="font-bold text-slate-800 text-sm tracking-tight">1. Historical Evaluation Score Trends</h3>
+              <Info size={14} className="text-slate-400 cursor-pointer" title="Shows monthly average scores by evaluation stage over the active timeline" />
             </div>
-            <p className="text-xs text-slate-400 font-medium mb-3">Score trajectories calculated over time</p>
+            <p className="text-xs text-slate-400 font-medium mb-3">Tracks average resume, video, and technical interview scores over time</p>
           </div>
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
@@ -605,10 +605,10 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col justify-between h-[360px]">
           <div>
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-bold text-slate-800 text-sm tracking-tight">2. TimeSeries Submission Cumulative</h3>
-              <Info size={14} className="text-slate-400 cursor-pointer" title="Cumulative curves over active timeline" />
+              <h3 className="font-bold text-slate-800 text-sm tracking-tight">2. Cumulative and Daily Application Volume</h3>
+              <Info size={14} className="text-slate-400 cursor-pointer" title="Shows daily submissions and the total cumulative growth of applicants over time" />
             </div>
-            <p className="text-xs text-slate-400 font-medium mb-3">Incremental curve of applicant submission logs</p>
+            <p className="text-xs text-slate-400 font-medium mb-3">Visualizes daily application submission counts and cumulative hiring pipeline growth</p>
           </div>
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
@@ -639,10 +639,10 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col justify-between h-[360px]">
           <div>
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-bold text-slate-800 text-sm tracking-tight">3. Applicant Distribution Volume</h3>
-              <Info size={14} className="text-slate-400 cursor-pointer" title="Volume of candidates distributed across status stages" />
+              <h3 className="font-bold text-slate-800 text-sm tracking-tight">3. Candidates by Recruitment Stage</h3>
+              <Info size={14} className="text-slate-400 cursor-pointer" title="Shows total candidates currently active within each hiring stage" />
             </div>
-            <p className="text-xs text-slate-400 font-medium mb-3">Count of applicants clustered by their active stage</p>
+            <p className="text-xs text-slate-400 font-medium mb-3">Aggregates the volume of candidates currently sitting at each phase of the hiring process</p>
           </div>
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
@@ -666,10 +666,10 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col justify-between h-[360px]">
           <div>
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-bold text-slate-800 text-sm tracking-tight">4. Pipeline Stages Stacked</h3>
-              <Info size={14} className="text-slate-400 cursor-pointer" title="Department breakdown showing candidate pipeline ratios" />
+              <h3 className="font-bold text-slate-800 text-sm tracking-tight">4. Hiring Pipeline Breakdown by Department</h3>
+              <Info size={14} className="text-slate-400 cursor-pointer" title="Breaks down candidate stages stacked by department to compare pipeline volumes" />
             </div>
-            <p className="text-xs text-slate-400 font-medium mb-3">Stages distribution stacked by business departments</p>
+            <p className="text-xs text-slate-400 font-medium mb-3">Displays candidate status distribution stacked and categorized by hiring departments</p>
           </div>
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
@@ -692,10 +692,10 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col justify-between h-[360px]">
           <div>
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-bold text-slate-800 text-sm tracking-tight">5. Performance Threshold Deviations</h3>
-              <Info size={14} className="text-slate-400 cursor-pointer" title="Deviation score above or below baseline benchmark" />
+              <h3 className="font-bold text-slate-800 text-sm tracking-tight">5. Candidate Performance Variance vs. Benchmark</h3>
+              <Info size={14} className="text-slate-400 cursor-pointer" title="Calculates candidate average score deviation relative to the target passing score of 70" />
             </div>
-            <p className="text-xs text-slate-400 font-medium mb-3">Individual candidate margins against benchmark (70 passing)</p>
+            <p className="text-xs text-slate-400 font-medium mb-3">Measures individual candidate average evaluation score variance relative to the passing standard (70)</p>
           </div>
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
@@ -720,10 +720,10 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col justify-between h-[360px]">
           <div>
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-bold text-slate-800 text-sm tracking-tight">6. Side-by-Side Assessment Averages</h3>
-              <Info size={14} className="text-slate-400 cursor-pointer" title="Compare score indices across all 3 key parameters" />
+              <h3 className="font-bold text-slate-800 text-sm tracking-tight">6. Departmental Assessment Score Comparison</h3>
+              <Info size={14} className="text-slate-400 cursor-pointer" title="Compares average scores for Resume, Video, and Technical Interview across departments" />
             </div>
-            <p className="text-xs text-slate-400 font-medium mb-3">Detailed score comparison indices categorized by department</p>
+            <p className="text-xs text-slate-400 font-medium mb-3">Compares average resume, video, and technical scores side-by-side across all active departments</p>
           </div>
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
@@ -745,10 +745,10 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col justify-between h-[360px] hover:border-indigo-100 transition-colors">
           <div>
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-bold text-slate-800 text-sm tracking-tight">7. Recommendation Allocation</h3>
-              <Info size={14} className="text-slate-400 cursor-pointer" title="Click a segment below to apply cross-filtering on entire dashboard" />
+              <h3 className="font-bold text-slate-800 text-sm tracking-tight">7. Final Hiring Recommendation Share</h3>
+              <Info size={14} className="text-slate-400 cursor-pointer" title="Proportion of Hire, Hold, Under Review, and Reject recommendations (Click segments to filter candidates)" />
             </div>
-            <p className="text-xs text-slate-400 font-medium mb-3">Recommendation segmentation (Click segments to filter candidates)</p>
+            <p className="text-xs text-slate-400 font-medium mb-3">Distribution of recruiters' hiring decisions and status recommendations</p>
           </div>
           <div className="flex-1 w-full min-h-0 relative flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
@@ -805,10 +805,10 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col justify-between h-[360px]">
           <div>
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-bold text-slate-800 text-sm tracking-tight">8. Competency Radar Matrix</h3>
-              <Info size={14} className="text-slate-400 cursor-pointer" title="Multi-dimensional aggregate candidate skill performance" />
+              <h3 className="font-bold text-slate-800 text-sm tracking-tight">8. Multi-Dimensional Competency Radar</h3>
+              <Info size={14} className="text-slate-400 cursor-pointer" title="Maps candidate averages against target benchmarks across six core evaluation metrics" />
             </div>
-            <p className="text-xs text-slate-400 font-medium mb-3">Unified scoring capabilities indexed on six key elements</p>
+            <p className="text-xs text-slate-400 font-medium mb-3">Displays candidate averages against target benchmarks across six key evaluation categories</p>
           </div>
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
@@ -829,10 +829,10 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col justify-between h-[360px]">
           <div>
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-bold text-slate-800 text-sm tracking-tight">9. Scoring Band Candlestick</h3>
-              <Info size={14} className="text-slate-400 cursor-pointer" title="Min (wick bottom), Max (wick top), Median (solid block transition) bounds per department" />
+              <h3 className="font-bold text-slate-800 text-sm tracking-tight">9. Score Distribution Ranges by Department</h3>
+              <Info size={14} className="text-slate-400 cursor-pointer" title="Shows candidate performance spreads including minimum, median, and maximum scores per department" />
             </div>
-            <p className="text-xs text-slate-400 font-medium mb-3">Min/Max spreads and Median scores stacked per department</p>
+            <p className="text-xs text-slate-400 font-medium mb-3">Showcases the spread of scores within each department from minimum and median to maximum ranges</p>
           </div>
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
@@ -858,10 +858,10 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col justify-between h-[360px]">
           <div>
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-bold text-slate-800 text-sm tracking-tight">10. Performance Density Matrix</h3>
-              <Info size={14} className="text-slate-400 cursor-pointer" title="Bubble coordinates: X=Resume score, Y=Video score. Bubble size=Tech score." />
+              <h3 className="font-bold text-slate-800 text-sm tracking-tight">10. Multi-Dimensional Score Correlation</h3>
+              <Info size={14} className="text-slate-400 cursor-pointer" title="X-axis: Resume Score | Y-axis: Video Score | Bubble Size: Technical Interview Score" />
             </div>
-            <p className="text-xs text-slate-400 font-medium mb-3">X: Resume score | Y: Video score | Bubble size: Tech score</p>
+            <p className="text-xs text-slate-400 font-medium mb-3">Maps candidate performance across three dimensions: Resume Score (X), Video Score (Y), and Tech Score (Size)</p>
           </div>
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
@@ -885,10 +885,10 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col justify-between h-[360px] hover:border-indigo-100 transition-colors">
           <div>
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-bold text-slate-800 text-sm tracking-tight">11. Combined Slot Allocation</h3>
+              <h3 className="font-bold text-slate-800 text-sm tracking-tight">11. Departmental Talent Demand vs. Applicant Volume</h3>
               <Info size={14} className="text-slate-400 cursor-pointer" title="Click a department bar below to filter candidate scores specifically" />
             </div>
-            <p className="text-xs text-slate-400 font-medium mb-3">Job slots capacity compared with candidate applications density</p>
+            <p className="text-xs text-slate-400 font-medium mb-3">Compares target openings capacity against the actual volume of candidates applied within each department</p>
           </div>
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
@@ -937,10 +937,10 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col justify-between h-[360px]">
           <div>
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-bold text-slate-800 text-sm tracking-tight">12. Skill Performance Cluster Map</h3>
-              <Info size={14} className="text-slate-400 cursor-pointer" title="Shows correlations between video-communication and technical score indices" />
+              <h3 className="font-bold text-slate-800 text-sm tracking-tight">12. Tech Skills vs. Communication Correlation</h3>
+              <Info size={14} className="text-slate-400 cursor-pointer" title="Plots candidate technical interview scores against video screening communication scores" />
             </div>
-            <p className="text-xs text-slate-400 font-medium mb-3">Correlation distribution plotting video score (Y) vs tech score (X)</p>
+            <p className="text-xs text-slate-400 font-medium mb-3">Plots candidate technical interview scores against video screening scores to identify alignment</p>
           </div>
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
