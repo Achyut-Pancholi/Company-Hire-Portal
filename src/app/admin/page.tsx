@@ -51,6 +51,7 @@ export default function Dashboard() {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
+    clearFilters();
     await Promise.all([refreshCandidates(), refreshJobs()]);
     setIsRefreshing(false);
   };
@@ -130,47 +131,8 @@ export default function Dashboard() {
     });
   }, [candidates, jobs, searchQuery, selectedDept, selectedJob, selectedStage, scoreFilter, activeChartFilter]);
 
-  // If database is clean or contains very few metrics, inject premium realistic mock candidates
-  // to populate full-fidelity visual charts instantly (transparently overlaid to keep aesthetics clean)
-  const populatedCandidates = useMemo(() => {
-    if (filteredCandidates.length >= 5) return filteredCandidates;
-
-    // Create seed candidate templates matching standard formatting
-    const demoCandidates = [
-      { id: 'd1', name: 'Tanay Chourasiya', stage: 'Completed', jobApplied: 'AI Research Scientist', resumeScore: 84, videoScore: 89, techScore: 92, finalRecommendation: 'Hire', created_at: '2026-05-24T10:00:00Z', skills: ['Python', 'SQL', 'PySpark', 'PowerBI'] },
-      { id: 'd2', name: 'Aarav Mehta', stage: 'Technical Interview', jobApplied: 'Senior Frontend Engineer', resumeScore: 89, videoScore: 78, techScore: 85, finalRecommendation: 'Under Review', created_at: '2026-05-25T11:00:00Z', skills: ['React', 'Next.js', 'Tailwind', 'Framer'] },
-      { id: 'd3', name: 'Priya Sharma', stage: 'Video Screening', jobApplied: 'Product Designer', resumeScore: 92, videoScore: 82, techScore: 74, finalRecommendation: 'Hire', created_at: '2026-05-26T12:00:00Z', skills: ['Figma', 'UI/UX', 'Design Systems'] },
-      { id: 'd4', name: 'Rohan Gupta', stage: 'Resume Upload', jobApplied: 'Devops', resumeScore: 68, videoScore: 55, techScore: 62, finalRecommendation: 'Reject', created_at: '2026-05-27T08:00:00Z', skills: ['AWS', 'Docker', 'CI/CD'] },
-      { id: 'd5', name: 'Sneha Patel', stage: 'Completed', jobApplied: 'Senior Frontend Engineer', resumeScore: 80, videoScore: 75, techScore: 78, finalRecommendation: 'Hold', created_at: '2026-05-28T09:00:00Z', skills: ['TypeScript', 'Jest', 'Redux'] },
-      { id: 'd6', name: 'Kabir Singh', stage: 'Technical Interview', jobApplied: 'AI Research Scientist', resumeScore: 76, videoScore: 70, techScore: 80, finalRecommendation: 'Under Review', created_at: '2026-05-29T10:30:00Z', skills: ['PyTorch', 'FastAPI', 'NLP'] },
-      { id: 'd7', name: 'Neha Verma', stage: 'Video Screening', jobApplied: 'Product Designer', resumeScore: 85, videoScore: 88, techScore: 81, finalRecommendation: 'Hire', created_at: '2026-05-29T14:15:00Z', skills: ['Research', 'Wireframing', 'Prototyping'] }
-    ];
-
-    // Filter dynamic templates to match currently active filters
-    return demoCandidates.filter(c => {
-      const matchesSearch = searchQuery === '' || c.name.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesJob = selectedJob === 'All' || c.jobApplied === selectedJob;
-      const matchesStage = selectedStage === 'All' || c.stage === selectedStage;
-      let matchesScore = true;
-      const avg = (c.resumeScore + c.videoScore + c.techScore) / 3;
-      if (scoreFilter === 'High') matchesScore = avg >= 80;
-      else if (scoreFilter === 'Mid') matchesScore = avg >= 60 && avg < 80;
-      else if (scoreFilter === 'Low') matchesScore = avg < 60;
-
-      let matchesDept = true;
-      if (selectedDept !== 'All') {
-        const deptMap: Record<string, string> = {
-          'AI Research Scientist': 'Research',
-          'Senior Frontend Engineer': 'Engineering',
-          'Product Designer': 'Design',
-          'Devops': 'TechOps'
-        };
-        matchesDept = deptMap[c.jobApplied] === selectedDept;
-      }
-
-      return matchesSearch && matchesJob && matchesStage && matchesScore && matchesDept;
-    });
-  }, [filteredCandidates, searchQuery, selectedJob, selectedStage, scoreFilter, selectedDept]);
+  // Make all dashboard graphs fully dynamic by directly referencing the candidates fetched from the database
+  const populatedCandidates = filteredCandidates;
 
   // 2. Data Transformation & Aggregation helpers
   const kpiData = useMemo(() => {
@@ -200,24 +162,32 @@ export default function Dashboard() {
 
   // Chart 1 & Chart 2: Date and Time series aggregations
   const timeSeriesData = useMemo(() => {
-    const dateMap: Record<string, { count: number; totalResume: number; totalVideo: number; totalTech: number; items: number }> = {};
+    const dateMap: Record<string, { count: number; totalResume: number; resumeCount: number; totalVideo: number; videoCount: number; totalTech: number; techCount: number }> = {};
     
     // Seed standard date categories for visual continuity if needed
     const dates = ['2026-05-24', '2026-05-25', '2026-05-26', '2026-05-27', '2026-05-28', '2026-05-29'];
     dates.forEach(d => {
-      dateMap[d] = { count: 0, totalResume: 0, totalVideo: 0, totalTech: 0, items: 0 };
+      dateMap[d] = { count: 0, totalResume: 0, resumeCount: 0, totalVideo: 0, videoCount: 0, totalTech: 0, techCount: 0 };
     });
 
     populatedCandidates.forEach(c => {
       const dateStr = c.created_at ? c.created_at.split('T')[0] : '2026-05-29';
       if (!dateMap[dateStr]) {
-        dateMap[dateStr] = { count: 0, totalResume: 0, totalVideo: 0, totalTech: 0, items: 0 };
+        dateMap[dateStr] = { count: 0, totalResume: 0, resumeCount: 0, totalVideo: 0, videoCount: 0, totalTech: 0, techCount: 0 };
       }
       dateMap[dateStr].count++;
-      if (c.resumeScore) { dateMap[dateStr].totalResume += c.resumeScore; }
-      if (c.videoScore) { dateMap[dateStr].totalVideo += c.videoScore; }
-      if (c.techScore) { dateMap[dateStr].totalTech += c.techScore; }
-      dateMap[dateStr].items++;
+      if (c.resumeScore) { 
+        dateMap[dateStr].totalResume += c.resumeScore; 
+        dateMap[dateStr].resumeCount++;
+      }
+      if (c.videoScore) { 
+        dateMap[dateStr].totalVideo += c.videoScore; 
+        dateMap[dateStr].videoCount++;
+      }
+      if (c.techScore) { 
+        dateMap[dateStr].totalTech += c.techScore; 
+        dateMap[dateStr].techCount++;
+      }
     });
 
     let runningTotal = 0;
@@ -225,9 +195,9 @@ export default function Dashboard() {
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([date, val]) => {
         runningTotal += val.count;
-        const avgR = val.items > 0 ? Math.round(val.totalResume / val.items) : 75;
-        const avgV = val.items > 0 ? Math.round(val.totalVideo / val.items) : 70;
-        const avgT = val.items > 0 ? Math.round(val.totalTech / val.items) : 78;
+        const avgR = val.resumeCount > 0 ? Math.round(val.totalResume / val.resumeCount) : 0;
+        const avgV = val.videoCount > 0 ? Math.round(val.totalVideo / val.videoCount) : 0;
+        const avgT = val.techCount > 0 ? Math.round(val.totalTech / val.techCount) : 0;
         return {
           date: date.substring(5), // mm-dd formatting
           applications: val.count,
@@ -303,9 +273,9 @@ export default function Dashboard() {
 
       return {
         department: d,
-        Resume: rN > 0 ? Math.round(rSum / rN) : 75,
-        Video: vN > 0 ? Math.round(vSum / vN) : 70,
-        Technical: tN > 0 ? Math.round(tSum / tN) : 75
+        Resume: rN > 0 ? Math.round(rSum / rN) : 0,
+        Video: vN > 0 ? Math.round(vSum / vN) : 0,
+        Technical: tN > 0 ? Math.round(tSum / tN) : 0
       };
     });
   }, [populatedCandidates, jobs]);
@@ -328,24 +298,36 @@ export default function Dashboard() {
   const radarCompetencyData = useMemo(() => {
     const list = populatedCandidates;
     let comm = 0, tech = 0, analytical = 0, leadership = 0, design = 0, stability = 0;
+    let commN = 0, techN = 0, analyticalN = 0, leadershipN = 0, designN = 0, stabilityN = 0;
     
     list.forEach(c => {
-      comm += (c.videoScore || 75);
-      tech += (c.techScore || 78);
-      analytical += ((c.resumeScore || 70) + (c.techScore || 78)) / 2;
-      leadership += c.skills?.length > 8 ? 85 : 70;
-      design += c.jobApplied?.toLowerCase().includes('design') ? 90 : 60;
-      stability += c.resumeScore > 80 ? 88 : 74;
+      if (c.videoScore) { comm += c.videoScore; commN++; }
+      if (c.techScore) { tech += c.techScore; techN++; }
+      if (c.resumeScore || c.techScore) {
+        analytical += ((c.resumeScore || 0) + (c.techScore || 0)) / ((c.resumeScore ? 1 : 0) + (c.techScore ? 1 : 0) || 1);
+        analyticalN++;
+      }
+      if (c.skills && c.skills.length > 0) {
+        leadership += c.skills.length > 8 ? 85 : 70;
+        leadershipN++;
+      }
+      if (c.jobApplied) {
+        design += c.jobApplied.toLowerCase().includes('design') ? 90 : 60;
+        designN++;
+      }
+      if (c.resumeScore) {
+        stability += c.resumeScore > 80 ? 88 : 74;
+        stabilityN++;
+      }
     });
 
-    const N = list.length || 1;
     return [
-      { subject: 'Communication', A: Math.round(comm / N), B: 75, fullMark: 100 },
-      { subject: 'Technical skills', A: Math.round(tech / N), B: 80, fullMark: 100 },
-      { subject: 'Problem Solving', A: Math.round(analytical / N), B: 70, fullMark: 100 },
-      { subject: 'Leadership', A: Math.round(leadership / N), B: 65, fullMark: 100 },
-      { subject: 'Design Thinking', A: Math.round(design / N), B: 60, fullMark: 100 },
-      { subject: 'Parsed Match', A: Math.round(stability / N), B: 75, fullMark: 100 }
+      { subject: 'Communication', A: commN > 0 ? Math.round(comm / commN) : 0, B: 75, fullMark: 100 },
+      { subject: 'Technical skills', A: techN > 0 ? Math.round(tech / techN) : 0, B: 80, fullMark: 100 },
+      { subject: 'Problem Solving', A: analyticalN > 0 ? Math.round(analytical / analyticalN) : 0, B: 70, fullMark: 100 },
+      { subject: 'Leadership', A: leadershipN > 0 ? Math.round(leadership / leadershipN) : 0, B: 65, fullMark: 100 },
+      { subject: 'Design Thinking', A: designN > 0 ? Math.round(design / designN) : 0, B: 60, fullMark: 100 },
+      { subject: 'Parsed Match', A: stabilityN > 0 ? Math.round(stability / stabilityN) : 0, B: 75, fullMark: 100 }
     ];
   }, [populatedCandidates]);
 
@@ -358,11 +340,11 @@ export default function Dashboard() {
         .map(c => Math.round(((c.resumeScore || 0) + (c.videoScore || 0) + (c.techScore || 0)) / 
           ((c.resumeScore ? 1 : 0) + (c.videoScore ? 1 : 0) + (c.techScore ? 1 : 0) || 1)));
 
-      const sorted = scores.length > 0 ? scores.sort((a, b) => a - b) : [60, 70, 80];
-      const min = sorted[0] || 50;
-      const max = sorted[sorted.length - 1] || 95;
-      const median = sorted[Math.floor(sorted.length / 2)] || 75;
-      const avg = Math.round(scores.reduce((a, b) => a + b, 0) / (scores.length || 1)) || 72;
+      const sorted = scores.length > 0 ? scores.sort((a, b) => a - b) : [0, 0, 0];
+      const min = sorted[0] || 0;
+      const max = sorted[sorted.length - 1] || 0;
+      const median = sorted[Math.floor(sorted.length / 2)] || 0;
+      const avg = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
 
       // Map to candlestick structure
       // Low is lower wick, High is upper wick. Open/Close coordinates represent the thick body (box range)
@@ -387,9 +369,9 @@ export default function Dashboard() {
   const bubbleData = useMemo(() => {
     return populatedCandidates.map(c => ({
       name: c.name,
-      'Resume Score': c.resumeScore || 70,
-      'Video Score': c.videoScore || 75,
-      'Tech Score': c.techScore || 80,
+      'Resume Score': c.resumeScore || 0,
+      'Video Score': c.videoScore || 0,
+      'Tech Score': c.techScore || 0,
       dept: getDept(c.jobApplied)
     }));
   }, [populatedCandidates, jobs]);
@@ -411,8 +393,8 @@ export default function Dashboard() {
   // Chart 12: Scatter Chart (Tech vs Video correlation scatter matrix)
   const scatterCorrelationData = useMemo(() => {
     return populatedCandidates.map(c => ({
-      x: c.techScore || 70,
-      y: c.videoScore || 75,
+      x: c.techScore || 0,
+      y: c.videoScore || 0,
       name: c.name?.split(' ')[0] || 'Candidate'
     }));
   }, [populatedCandidates]);
@@ -461,13 +443,6 @@ export default function Dashboard() {
               <RefreshCw className={`${isRefreshing ? 'animate-spin' : ''}`} size={14} />
               Refresh
             </button>
-            <button 
-              onClick={clearFilters}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 border border-rose-100 text-rose-600 hover:bg-rose-100 rounded-lg text-xs font-semibold transition-colors"
-            >
-              <X size={14} />
-              Reset All
-            </button>
           </div>
         </div>
 
@@ -505,7 +480,7 @@ export default function Dashboard() {
 
           {/* 3. Sub-Department (Job applied) */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Job Applied</label>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Role</label>
             <select 
               value={selectedJob}
               onChange={(e) => setSelectedJob(e.target.value)}
@@ -646,9 +621,9 @@ export default function Dashboard() {
           </div>
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stageVolumeData} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
+              <BarChart data={stageVolumeData} margin={{ top: 5, right: 10, left: -25, bottom: 35 }}>
                 <CartesianGrid stroke="#F1F5F9" strokeDasharray="3 3" />
-                <XAxis dataKey="stage" stroke="#94A3B8" fontSize={10} tickLine={false} />
+                <XAxis dataKey="stage" stroke="#94A3B8" fontSize={9} tickLine={false} angle={-15} textAnchor="end" height={50} interval={0} />
                 <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} allowDecimals={false} />
                 <Tooltip />
                 <Bar dataKey="Candidates" fill={PALETTE.teal} radius={[6, 6, 0, 0]} barSize={26}>
@@ -699,9 +674,9 @@ export default function Dashboard() {
           </div>
           <div className="flex-1 w-full min-h-0">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={performanceDeviations} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
+              <BarChart data={performanceDeviations} margin={{ top: 5, right: 10, left: -25, bottom: 35 }}>
                 <CartesianGrid stroke="#F1F5F9" strokeDasharray="3 3" />
-                <XAxis dataKey="name" stroke="#94A3B8" fontSize={10} tickLine={false} />
+                <XAxis dataKey="name" stroke="#94A3B8" fontSize={9} tickLine={false} angle={-35} textAnchor="end" height={55} interval={0} />
                 <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} />
                 <Tooltip />
                 <ReferenceLine y={0} stroke="#94A3B8" strokeWidth={1.5} />

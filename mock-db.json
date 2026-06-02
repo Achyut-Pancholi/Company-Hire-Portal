@@ -2,30 +2,50 @@
   "jobs": [
     {
       "id": "job-1",
-      "title": "Senior Frontend Engineer",
-      "department": "Engineering",
+      "title": "React Developer",
+      "department": "Technology and Delivery",
       "status": "Active",
-      "created_at": "2026-05-20T10:00:00.000Z"
+      "created_at": "2026-05-20T10:00:00.000Z",
+      "sub_department": "Frontend"
     },
     {
       "id": "job-2",
-      "title": "AI Research Scientist",
-      "department": "Research",
+      "title": "React Developer",
+      "department": "Technology and Delivery",
       "status": "Active",
-      "created_at": "2026-05-22T11:00:00.000Z"
+      "created_at": "2026-05-22T11:00:00.000Z",
+      "sub_department": "Frontend"
     },
     {
       "id": "job-3",
-      "title": "Product Designer",
-      "department": "Design",
+      "title": "React Developer",
+      "department": "Technology and Delivery",
       "status": "Active",
-      "created_at": "2026-05-25T09:00:00.000Z"
+      "created_at": "2026-05-25T09:00:00.000Z",
+      "sub_department": "Frontend"
     },
     {
       "id": "job-1780048777375-476",
       "created_at": "2026-05-29T09:59:37.375Z",
-      "title": "Devops",
-      "department": "TechOps",
+      "title": "React Developer",
+      "department": "Technology and Delivery",
+      "status": "Active",
+      "sub_department": "Frontend"
+    },
+    {
+      "id": "job-1780381921092-840",
+      "created_at": "2026-06-02T06:32:01.092Z",
+      "title": "Operations",
+      "department": null,
+      "sub_department": null,
+      "status": "Active"
+    },
+    {
+      "id": "job-1780381983955-611",
+      "created_at": "2026-06-02T06:33:03.955Z",
+      "title": "Operations",
+      "department": null,
+      "sub_department": null,
       "status": "Active"
     }
   ],
