@@ -370,7 +370,6 @@ export function TranscriptIntelligenceEngine({ transcript, storedAnalysis }: Tra
         <Pill label="Tone"        value={analysis.tone}          color={toneStyle.color}   bg={toneStyle.bg}   />
         <Pill label="Sentiment"   value={analysis.sentiment}     color={sentStyle.color}   bg={sentStyle.bg}   />
         <Pill label="Filler Words" value={`${analysis.fillerWordCount} detected`}  color={fillerStyle.color} bg={fillerStyle.bg} />
-        <Pill label="Recommendation" value={analysis.recommendation} color={recStyle.color} bg={recStyle.bg} />
       </div>
 
       {/* ── RADAR CHART + DETAILED SCORE BREAKDOWN ── */}
