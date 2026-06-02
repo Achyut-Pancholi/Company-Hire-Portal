@@ -51,6 +51,7 @@ export default function Dashboard() {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
+    clearFilters();
     await Promise.all([refreshCandidates(), refreshJobs()]);
     setIsRefreshing(false);
   };
@@ -442,13 +443,6 @@ export default function Dashboard() {
               <RefreshCw className={`${isRefreshing ? 'animate-spin' : ''}`} size={14} />
               Refresh
             </button>
-            <button 
-              onClick={clearFilters}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 border border-rose-100 text-rose-600 hover:bg-rose-100 rounded-lg text-xs font-semibold transition-colors"
-            >
-              <X size={14} />
-              Reset All
-            </button>
           </div>
         </div>
 
@@ -486,7 +480,7 @@ export default function Dashboard() {
 
           {/* 3. Sub-Department (Job applied) */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Job Applied</label>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Role</label>
             <select 
               value={selectedJob}
               onChange={(e) => setSelectedJob(e.target.value)}
