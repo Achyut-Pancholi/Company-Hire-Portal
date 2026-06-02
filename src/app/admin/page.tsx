@@ -161,24 +161,32 @@ export default function Dashboard() {
 
   // Chart 1 & Chart 2: Date and Time series aggregations
   const timeSeriesData = useMemo(() => {
-    const dateMap: Record<string, { count: number; totalResume: number; totalVideo: number; totalTech: number; items: number }> = {};
+    const dateMap: Record<string, { count: number; totalResume: number; resumeCount: number; totalVideo: number; videoCount: number; totalTech: number; techCount: number }> = {};
     
     // Seed standard date categories for visual continuity if needed
     const dates = ['2026-05-24', '2026-05-25', '2026-05-26', '2026-05-27', '2026-05-28', '2026-05-29'];
     dates.forEach(d => {
-      dateMap[d] = { count: 0, totalResume: 0, totalVideo: 0, totalTech: 0, items: 0 };
+      dateMap[d] = { count: 0, totalResume: 0, resumeCount: 0, totalVideo: 0, videoCount: 0, totalTech: 0, techCount: 0 };
     });
 
     populatedCandidates.forEach(c => {
       const dateStr = c.created_at ? c.created_at.split('T')[0] : '2026-05-29';
       if (!dateMap[dateStr]) {
-        dateMap[dateStr] = { count: 0, totalResume: 0, totalVideo: 0, totalTech: 0, items: 0 };
+        dateMap[dateStr] = { count: 0, totalResume: 0, resumeCount: 0, totalVideo: 0, videoCount: 0, totalTech: 0, techCount: 0 };
       }
       dateMap[dateStr].count++;
-      if (c.resumeScore) { dateMap[dateStr].totalResume += c.resumeScore; }
-      if (c.videoScore) { dateMap[dateStr].totalVideo += c.videoScore; }
-      if (c.techScore) { dateMap[dateStr].totalTech += c.techScore; }
-      dateMap[dateStr].items++;
+      if (c.resumeScore) { 
+        dateMap[dateStr].totalResume += c.resumeScore; 
+        dateMap[dateStr].resumeCount++;
+      }
+      if (c.videoScore) { 
+        dateMap[dateStr].totalVideo += c.videoScore; 
+        dateMap[dateStr].videoCount++;
+      }
+      if (c.techScore) { 
+        dateMap[dateStr].totalTech += c.techScore; 
+        dateMap[dateStr].techCount++;
+      }
     });
 
     let runningTotal = 0;
@@ -186,9 +194,9 @@ export default function Dashboard() {
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([date, val]) => {
         runningTotal += val.count;
-        const avgR = val.items > 0 ? Math.round(val.totalResume / val.items) : 75;
-        const avgV = val.items > 0 ? Math.round(val.totalVideo / val.items) : 70;
-        const avgT = val.items > 0 ? Math.round(val.totalTech / val.items) : 78;
+        const avgR = val.resumeCount > 0 ? Math.round(val.totalResume / val.resumeCount) : 75;
+        const avgV = val.videoCount > 0 ? Math.round(val.totalVideo / val.videoCount) : 70;
+        const avgT = val.techCount > 0 ? Math.round(val.totalTech / val.techCount) : 78;
         return {
           date: date.substring(5), // mm-dd formatting
           applications: val.count,
