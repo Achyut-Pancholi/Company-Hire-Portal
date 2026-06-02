@@ -73,7 +73,7 @@ export default function InterviewPage() {
         if (!data) { setStage("error"); setError("Interview not found."); return; }
 
         if (data.status === "completed") { setStage("already-completed"); return; }
-        if (data.status === "in_progress") { setStage("in-progress-blocked"); return; }
+        if (data.scores?.in_progress === true) { setStage("in-progress-blocked"); return; }
         if (isExpired(data.expires_at)) { setStage("expired"); return; }
 
         const localBlock = localStorage.getItem(`interview_started_${id}`);
@@ -298,7 +298,7 @@ export default function InterviewPage() {
       const patchRes = await fetch(`/api/interviews/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "in_progress" })
+        body: JSON.stringify({ scores: { in_progress: true } })
       });
       if (!patchRes.ok) {
         alert("Failed to start the interview session. Please check your connection and try again.");
