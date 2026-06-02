@@ -30,11 +30,12 @@ const WorkflowBadge: React.FC<WorkflowBadgeProps> = ({ status, size = 'md' }) =>
           text: s || 'Rejected',
         };
       case 'pending':
+      case 'under review':
         return {
           bg: 'rgba(245, 158, 11, 0.1)',
           color: '#d97706',
           border: '1px solid rgba(245, 158, 11, 0.25)',
-          text: s || 'Pending',
+          text: 'Under Review',
         };
       case 'scheduled':
         return {

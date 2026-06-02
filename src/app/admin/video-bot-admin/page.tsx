@@ -199,6 +199,28 @@ const VideoBot = () => {
     }
   };
 
+  const handleWorkflowActionDirect = async (candidate: any, field: string, value: string) => {
+    setActionLoading(candidate.id);
+    try {
+      const res = await apiFetch('/api/candidates', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: candidate.id, [field]: value }),
+      });
+      if (res.ok) {
+        refreshCandidates();
+        fetchInterviews();
+      } else {
+        alert('Failed to update candidate status.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error.');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const handleSendInvite = async (candidate: any, targetEmail: any, jobRole: any, department: any, subDepartment: any, role: any, subject: any, body: any, senderEmail: any) => {
     if (!candidate || !department || !subDepartment || !role) return;
 
@@ -612,52 +634,39 @@ const VideoBot = () => {
                               <Eye size={14}/> View Interview
                             </a>
                             
-                            {/* Approve / Reject buttons for video screening */}
-                            {matchedCandidate && videoStageStatus === 'Pending' && (
-                              <>
-                                <button
-                                  onClick={() => setConfirmModal({ type: 'approve', candidate: matchedCandidate })}
-                                  disabled={actionLoading === matchedCandidate.id}
-                                  title="Approve Video"
-                                  style={{
-                                    padding: '4px 8px',
-                                    fontSize: '0.72rem',
-                                    fontWeight: 700,
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    background: '#10b981',
-                                    color: '#fff',
-                                    cursor: 'pointer',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '3px',
-                                  }}
-                                >
-                                  <CheckSquare size={12} />
-                                  Approve
-                                </button>
-                                <button
-                                  onClick={() => setConfirmModal({ type: 'reject', candidate: matchedCandidate })}
-                                  disabled={actionLoading === matchedCandidate.id}
-                                  title="Reject Video"
-                                  style={{
-                                    padding: '4px 8px',
-                                    fontSize: '0.72rem',
-                                    fontWeight: 700,
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    background: '#ef4444',
-                                    color: '#fff',
-                                    cursor: 'pointer',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '3px',
-                                  }}
-                                >
-                                  <XSquare size={12} />
-                                  Reject
-                                </button>
-                              </>
+                            {/* Dropdown status select for video screening */}
+                            {matchedCandidate && (
+                              <select
+                                value={(() => {
+                                  const status = matchedCandidate.video_stage_status || matchedCandidate.videoStageStatus || 'Pending';
+                                  return status === 'Pending' ? 'Under Review' : status;
+                                })()}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (val === 'Approved') {
+                                    setConfirmModal({ type: 'approve', candidate: matchedCandidate });
+                                  } else if (val === 'Rejected') {
+                                    setConfirmModal({ type: 'reject', candidate: matchedCandidate });
+                                  } else {
+                                    handleWorkflowActionDirect(matchedCandidate, 'video_stage_status', val);
+                                  }
+                                }}
+                                disabled={actionLoading === matchedCandidate.id}
+                                style={{
+                                  padding: '4px 8px',
+                                  fontSize: '0.75rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid var(--gray-300)',
+                                  background: '#fff',
+                                  fontWeight: '600',
+                                  color: 'var(--brand-navy)',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                <option value="Under Review">Under Review</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Rejected">Rejected</option>
+                              </select>
                             )}
                           </>
                         ) : (

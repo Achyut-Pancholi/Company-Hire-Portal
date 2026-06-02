@@ -52,6 +52,27 @@ const ResumeUpload = () => {
     }
   };
 
+  const handleWorkflowActionDirect = async (candidate: any, field: string, value: string) => {
+    setActionLoading(candidate.id);
+    try {
+      const res = await apiFetch('/api/candidates', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: candidate.id, [field]: value }),
+      });
+      if (res.ok) {
+        refreshCandidates();
+      } else {
+        alert('Failed to update candidate status.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error.');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const dynamicDepartments = Array.from(new Set(jobs.map((j: any) => j.department).filter(Boolean)));
   
   const getAvailableSubDepartments = (dept: string) => {
@@ -506,52 +527,37 @@ const ResumeUpload = () => {
                           View
                         </button>
                         
-                        {(candidate.resume_stage_status || candidate.resumeStageStatus || 'Pending') === 'Pending' && (
-                          <>
-                            <button
-                              onClick={() => setConfirmModal({ type: 'approve', candidate })}
-                              disabled={actionLoading === candidate.id}
-                              title="Approve Resume"
-                              style={{
-                                padding: '4px 8px',
-                                fontSize: '0.72rem',
-                                fontWeight: 700,
-                                border: 'none',
-                                borderRadius: '6px',
-                                background: '#10b981',
-                                color: '#fff',
-                                cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '3px',
-                              }}
-                            >
-                              <CheckSquare size={12} />
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => setConfirmModal({ type: 'reject', candidate })}
-                              disabled={actionLoading === candidate.id}
-                              title="Reject Resume"
-                              style={{
-                                padding: '4px 8px',
-                                fontSize: '0.72rem',
-                                fontWeight: 700,
-                                border: 'none',
-                                borderRadius: '6px',
-                                background: '#ef4444',
-                                color: '#fff',
-                                cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '3px',
-                              }}
-                            >
-                              <XSquare size={12} />
-                              Reject
-                            </button>
-                          </>
-                        )}
+                        <select
+                          value={(() => {
+                            const status = candidate.resume_stage_status || candidate.resumeStageStatus || 'Pending';
+                            return status === 'Pending' ? 'Under Review' : status;
+                          })()}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === 'Approved') {
+                              setConfirmModal({ type: 'approve', candidate });
+                            } else if (val === 'Rejected') {
+                              setConfirmModal({ type: 'reject', candidate });
+                            } else {
+                              handleWorkflowActionDirect(candidate, 'resume_stage_status', val);
+                            }
+                          }}
+                          disabled={actionLoading === candidate.id}
+                          style={{
+                            padding: '4px 8px',
+                            fontSize: '0.75rem',
+                            borderRadius: '6px',
+                            border: '1px solid var(--gray-300)',
+                            background: '#fff',
+                            fontWeight: '600',
+                            color: 'var(--brand-navy)',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <option value="Under Review">Under Review</option>
+                          <option value="Approved">Approved</option>
+                          <option value="Rejected">Rejected</option>
+                        </select>
                         <div style={{ position: 'relative' }}>
                           <button 
                             className="btn btn-ghost dropdown-trigger" 
