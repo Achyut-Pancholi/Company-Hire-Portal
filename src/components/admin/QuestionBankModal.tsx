@@ -9,9 +9,9 @@ const QuestionBankModal = ({ onClose }) => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  const [newDepartment, setNewDepartment] = useState('Technology and Delivery');
-  const [newSubDepartment, setNewSubDepartment] = useState('Development');
-  const [newRole, setNewRole] = useState('Senior Dev');
+  const [newDepartment, setNewDepartment] = useState('');
+  const [newSubDepartment, setNewSubDepartment] = useState('');
+  const [newRole, setNewRole] = useState('');
   const [newQuestionText, setNewQuestionText] = useState('');
   
   // Unique departments combined from existing questions
@@ -59,15 +59,7 @@ const QuestionBankModal = ({ onClose }) => {
   }, []);
 
   useEffect(() => {
-    if (jobs.length > 0 && availableDepartments.length > 0) {
-      if (!newDepartment || !dynamicDepartments.includes(newDepartment)) {
-        const firstDept = availableDepartments[0];
-        setNewDepartment(firstDept);
-        const firstSubDept = getAvailableSubDepartments(firstDept)[0];
-        setNewSubDepartment(firstSubDept);
-        setNewRole(getAvailableRoles(firstDept, firstSubDept)[0]);
-      }
-    }
+    // Disabled auto-selection to allow manual cascading
   }, [jobs]);
 
   useEffect(() => {
@@ -160,12 +152,11 @@ const QuestionBankModal = ({ onClose }) => {
                   onChange={e => {
                     const newDept = e.target.value;
                     setNewDepartment(newDept);
-                    const subs = getAvailableSubDepartments(newDept);
-                    const firstSub = subs[0] || '';
-                    setNewSubDepartment(firstSub);
-                    setNewRole(getAvailableRoles(newDept, firstSub)[0] || '');
+                    setNewSubDepartment('');
+                    setNewRole('');
                   }}
                 >
+                  <option value="">Select Department...</option>
                   {availableDepartments.map(d => (
                     <option key={d} value={d}>{d}</option>
                   ))}
@@ -177,13 +168,15 @@ const QuestionBankModal = ({ onClose }) => {
                 <select 
                   className="form-select"
                   value={newSubDepartment}
+                  disabled={!newDepartment}
                   onChange={e => {
                     const newSub = e.target.value;
                     setNewSubDepartment(newSub);
-                    setNewRole(getAvailableRoles(newDepartment, newSub)[0] || '');
+                    setNewRole('');
                   }}
                 >
-                  {(getAvailableSubDepartments(newDepartment)).map(sd => (
+                  <option value="">Select Sub-Department...</option>
+                  {newDepartment && (getAvailableSubDepartments(newDepartment)).map(sd => (
                     <option key={sd} value={sd}>{sd}</option>
                   ))}
                 </select>
@@ -194,9 +187,11 @@ const QuestionBankModal = ({ onClose }) => {
                 <select 
                   className="form-select"
                   value={newRole}
+                  disabled={!newSubDepartment}
                   onChange={e => setNewRole(e.target.value)}
                 >
-                  {(getAvailableRoles(newDepartment, newSubDepartment)).map(r => (
+                  <option value="">Select Role...</option>
+                  {newSubDepartment && (getAvailableRoles(newDepartment, newSubDepartment)).map(r => (
                     <option key={r} value={r}>{r}</option>
                   ))}
                 </select>
@@ -221,9 +216,9 @@ const QuestionBankModal = ({ onClose }) => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
             <h4 style={{ fontSize: '0.875rem', fontWeight: 600 }}>Existing Questions</h4>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               <select 
                 className="form-select" 
                 style={{ width: 'auto', padding: '0.25rem 2rem 0.25rem 0.75rem', fontSize: '0.875rem' }}

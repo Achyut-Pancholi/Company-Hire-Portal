@@ -29,9 +29,9 @@ const VideoBot = () => {
   // Invite Form state
   const [inviteCandidateId, setInviteCandidateId] = useState('');
   const [inviteJobRole, setInviteJobRole] = useState('');
-  const [inviteDepartment, setInviteDepartment] = useState('Technology and Delivery');
-  const [inviteSubDepartment, setInviteSubDepartment] = useState('Development');
-  const [inviteRole, setInviteRole] = useState('Senior Dev');
+  const [inviteDepartment, setInviteDepartment] = useState('');
+  const [inviteSubDepartment, setInviteSubDepartment] = useState('');
+  const [inviteRole, setInviteRole] = useState('');
   const [sending, setSending] = useState(false);
   const [inviteSubject, setInviteSubject] = useState('');
   const [inviteBody, setInviteBody] = useState('');
@@ -100,15 +100,7 @@ const VideoBot = () => {
   
   // Set default selected department/sub-department once jobs load
   useEffect(() => {
-    if (jobs.length > 0) {
-      if (!inviteDepartment || !dynamicDepartments.includes(inviteDepartment)) {
-        const firstDept = availableDepartments[0] as string;
-        setInviteDepartment(firstDept);
-        const firstSubDept = getAvailableSubDepartments(firstDept)[0] as string;
-        setInviteSubDepartment(firstSubDept);
-        setInviteRole(getAvailableRoles(firstDept, firstSubDept)[0] as string);
-      }
-    }
+    // Disabled auto-selection to allow manual cascading
   }, [jobs]);
 
   useEffect(() => {
@@ -351,13 +343,12 @@ const VideoBot = () => {
                 onChange={e => {
                   const newDept = e.target.value;
                   setInviteDepartment(newDept);
-                  const subs = getAvailableSubDepartments(newDept);
-                  const firstSub = subs[0];
-                  setInviteSubDepartment(firstSub);
-                  setInviteRole(getAvailableRoles(newDept, firstSub)[0]);
+                  setInviteSubDepartment('');
+                  setInviteRole('');
                   setInviteCandidateId('');
                 }}
               >
+                <option value="">Select Department...</option>
                 {availableDepartments.map((d: any) => (
                   <option key={d} value={d}>{d}</option>
                 ))}
@@ -369,14 +360,16 @@ const VideoBot = () => {
               <select 
                 className="form-select"
                 value={inviteSubDepartment}
+                disabled={!inviteDepartment}
                 onChange={e => {
                   const newSub = e.target.value;
                   setInviteSubDepartment(newSub);
-                  setInviteRole(getAvailableRoles(inviteDepartment, newSub)[0]);
+                  setInviteRole('');
                   setInviteCandidateId('');
                 }}
               >
-                {(getAvailableSubDepartments(inviteDepartment)).map((sd: any) => (
+                <option value="">Select Sub-Department...</option>
+                {inviteDepartment && (getAvailableSubDepartments(inviteDepartment)).map((sd: any) => (
                   <option key={sd} value={sd}>{sd}</option>
                 ))}
               </select>
@@ -387,12 +380,14 @@ const VideoBot = () => {
               <select 
                 className="form-select"
                 value={inviteRole}
+                disabled={!inviteSubDepartment}
                 onChange={e => {
                   setInviteRole(e.target.value);
                   setInviteCandidateId('');
                 }}
               >
-                {(getAvailableRoles(inviteDepartment, inviteSubDepartment)).map((r: any) => (
+                <option value="">Select Role...</option>
+                {inviteSubDepartment && (getAvailableRoles(inviteDepartment, inviteSubDepartment)).map((r: any) => (
                   <option key={r} value={r}>{r}</option>
                 ))}
               </select>
