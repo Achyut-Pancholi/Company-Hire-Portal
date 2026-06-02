@@ -20,6 +20,13 @@
       "department": "Design",
       "status": "Active",
       "created_at": "2026-05-25T09:00:00.000Z"
+    },
+    {
+      "id": "job-1780048777375-476",
+      "created_at": "2026-05-29T09:59:37.375Z",
+      "title": "Devops",
+      "department": "TechOps",
+      "status": "Active"
     }
   ],
   "candidates": [
@@ -613,6 +620,326 @@
         "transcriptUpdatedAt": "2026-05-29T11:20:15.802Z",
         "sourceTranscriptLength": 604,
         "analysisVersion": "2.0.0"
+      }
+    },
+    {
+      "id": "candidate-1780048040029-733",
+      "created_at": "2026-05-29T09:47:20.029Z",
+      "name": "TANAY CHOURASIYA",
+      "email": "chourasiyatanay@gmail.com",
+      "phone": "+91 99775 41732",
+      "skills": [
+        "Python",
+        "SQL",
+        "PySpark",
+        "Azure Data Lake",
+        "Azure Data Factory",
+        "REST API",
+        "Spark Data Flows",
+        "Databricks",
+        "Auto Loader",
+        "Azure Databricks",
+        "Pandas",
+        "NumPy",
+        "Matplotlib",
+        "Power BI",
+        "Microsoft SQL Server",
+        "Snowflake",
+        "Apache Airflow",
+        "C++",
+        "GitHub",
+        "Jupyter Notebook",
+        "VS Code",
+        "PyCharm",
+        "Google Colab",
+        "Azure",
+        "AWS"
+      ],
+      "job_applied": "AI Research Scientist",
+      "resume_status": "Parsed",
+      "form_status": "N/A",
+      "video_status": "Pending",
+      "tech_status": "Pending",
+      "report_status": "Not Shared",
+      "stage": "Resume Upload",
+      "resume_score": 75,
+      "final_recommendation": "Under Review",
+      "extracted_data": {
+        "isResume": true,
+        "personalInformation": {
+          "fullName": "TANAY CHOURASIYA",
+          "email": "chourasiyatanay@gmail.com",
+          "phoneNumber": "+91 99775 41732"
+        },
+        "totalExperienceAnalysis": {
+          "totalExperience": null,
+          "domainExperience": 0,
+          "leadershipExperience": "0.0 years"
+        },
+        "skillExtraction": {
+          "extractedSkills": [
+            "Python",
+            "SQL",
+            "PySpark",
+            "Azure Data Lake",
+            "Azure Data Factory",
+            "REST API",
+            "Spark Data Flows",
+            "Databricks",
+            "Auto Loader",
+            "Azure Databricks",
+            "Pandas",
+            "NumPy",
+            "Matplotlib",
+            "Power BI",
+            "Microsoft SQL Server",
+            "Snowflake",
+            "Apache Airflow",
+            "C++",
+            "GitHub",
+            "Jupyter Notebook",
+            "VS Code",
+            "PyCharm",
+            "Google Colab",
+            "Azure",
+            "AWS"
+          ]
+        },
+        "educationDetails": [
+          {
+            "degree": "Bachelor of Technology",
+            "college": "Geetanjali Institute of Technical Studies",
+            "passingYear": "2026",
+            "cgpaOrPercentage": "8.39"
+          },
+          {
+            "degree": "Senior Secondary",
+            "college": "Saint Paul Convent School",
+            "passingYear": "2022",
+            "cgpaOrPercentage": "7.30"
+          }
+        ],
+        "projectAnalysis": [
+          {
+            "projectName": "School Performance Data Engineering Pipeline",
+            "role": null,
+            "duration": null,
+            "projectDescription": null,
+            "responsibilities": [
+              "Generated meaningful insights for performance evaluation.",
+              "Built a data quality framework with validation rules.",
+              "Applied PySpark transformations like NULL handling and performance banding.",
+              "Performed SQL analysis using window functions for insights.",
+              "Designed a Star Schema for structured data analysis."
+            ],
+            "technologiesUsed": [
+              "PySpark",
+              "SQL",
+              "Python",
+              "Azure Data Lake"
+            ]
+          },
+          {
+            "projectName": "Automated Data Pipeline using Azure Data Factory",
+            "role": null,
+            "duration": null,
+            "projectDescription": null,
+            "responsibilities": [
+              "Automated the pipeline using event-based triggers for zero manual intervention.",
+              "Applied transformations using Spark-based Data Flows based on file type.",
+              "Implemented logic to filter and store files based on their extensions (file types) using Copy Activity.",
+              "Used Get Metadata and ForEach activities to dynamically process multiple files.",
+              "Built a production-grade pipeline to ingest data from Azure Data Lake and REST APIs."
+            ],
+            "technologiesUsed": [
+              "Azure Data Factory",
+              "Azure Data Lake",
+              "REST API",
+              "Spark Data Flows"
+            ]
+          },
+          {
+            "projectName": "Azure Databricks Medallion Architecture Pipeline",
+            "role": null,
+            "duration": null,
+            "projectDescription": null,
+            "responsibilities": [
+              "Orchestrated workflows using Databricks Workflows.",
+              "Implemented SCD Type 1 & Type 2 for efficient data modeling.",
+              "Performed data transformations using PySpark and window functions.",
+              "Implemented incremental data ingestion using Auto Loader.",
+              "Designed an end-to-end pipeline using Medallion Architecture (Bronze, Silver, Gold layers)."
+            ],
+            "technologiesUsed": [
+              "Azure Databricks",
+              "PySpark",
+              "SQL",
+              "Auto Loader",
+              "Azure Data Lake"
+            ]
+          }
+        ],
+        "_reportShareToken": "63b730326e43409995bfdacc5c0b1e407602b5505a594107b206633f640ba606",
+        "_reportShareExpiresAt": "2026-06-28T09:47:19.948Z"
+      }
+    },
+    {
+      "id": "candidate-1780048710027-687",
+      "created_at": "2026-05-29T09:58:30.027Z",
+      "name": "TANAY CHOURASIYA",
+      "email": "chourasiyatanay@gmail.com",
+      "phone": "+91 99775 41732",
+      "skills": [
+        "Python",
+        "SQL",
+        "PySpark",
+        "Azure Data Lake",
+        "Azure Data Factory",
+        "REST API",
+        "Spark Data Flows",
+        "Databricks",
+        "Auto Loader",
+        "Azure Databricks",
+        "Pandas",
+        "NumPy",
+        "Matplotlib",
+        "Power BI",
+        "Microsoft SQL Server",
+        "Snowflake",
+        "Apache Airflow",
+        "C++",
+        "AWS",
+        "GitHub",
+        "Jupyter Notebook",
+        "VS Code",
+        "PyCharm",
+        "Google Colab"
+      ],
+      "job_applied": "Product Designer",
+      "resume_status": "Parsed",
+      "form_status": "N/A",
+      "video_status": "Pending",
+      "tech_status": "Pending",
+      "report_status": "Not Shared",
+      "stage": "Resume Upload",
+      "resume_score": 80,
+      "final_recommendation": "Under Review",
+      "extracted_data": {
+        "isResume": true,
+        "personalInformation": {
+          "fullName": "TANAY CHOURASIYA",
+          "email": "chourasiyatanay@gmail.com",
+          "phoneNumber": "+91 99775 41732"
+        },
+        "totalExperienceAnalysis": {
+          "totalExperience": null,
+          "domainExperience": 0,
+          "leadershipExperience": "0.0 years"
+        },
+        "skillExtraction": {
+          "extractedSkills": [
+            "Python",
+            "SQL",
+            "PySpark",
+            "Azure Data Lake",
+            "Azure Data Factory",
+            "REST API",
+            "Spark Data Flows",
+            "Databricks",
+            "Auto Loader",
+            "Azure Databricks",
+            "Pandas",
+            "NumPy",
+            "Matplotlib",
+            "Power BI",
+            "Microsoft SQL Server",
+            "Snowflake",
+            "Apache Airflow",
+            "C++",
+            "AWS",
+            "GitHub",
+            "Jupyter Notebook",
+            "VS Code",
+            "PyCharm",
+            "Google Colab"
+          ]
+        },
+        "educationDetails": [
+          {
+            "degree": "Senior Secondary - Mathematics",
+            "college": "Saint Paul Convent School Jaora, India",
+            "passingYear": "2020-2022",
+            "cgpaOrPercentage": "7.30"
+          },
+          {
+            "degree": "Bachelor of Technology - CSE",
+            "college": "Geetanjali Institute of Technical Studies Udaipur, India",
+            "passingYear": "2022-2026",
+            "cgpaOrPercentage": "8.39"
+          }
+        ],
+        "projectAnalysis": [
+          {
+            "projectName": "School Performance Data Engineering Pipeline",
+            "role": null,
+            "duration": null,
+            "projectDescription": null,
+            "responsibilities": [
+              "Generated meaningful insights for performance evaluation.",
+              "Built a data quality framework with validation rules.",
+              "Applied PySpark transformations like NULL handling and performance banding.",
+              "Performed SQL analysis using window functions for insights.",
+              "Designed a Star Schema for structured data analysis."
+            ],
+            "technologiesUsed": [
+              "PySpark",
+              "SQL",
+              "Python",
+              "Azure Data Lake"
+            ]
+          },
+          {
+            "projectName": "Automated Data Pipeline using Azure Data Factory",
+            "role": null,
+            "duration": null,
+            "projectDescription": null,
+            "responsibilities": [
+              "Automated the pipeline using event-based triggers for zero manual intervention.",
+              "Applied transformations using Spark-based Data Flows based on file type.",
+              "Implemented logic to filter and store files based on their extensions (file types) using Copy Activity.",
+              "Used Get Metadata and ForEach activities to dynamically process multiple files.",
+              "Built a production-grade pipeline to ingest data from Azure Data Lake and REST APIs."
+            ],
+            "technologiesUsed": [
+              "Azure Data Factory",
+              "Azure Data Lake",
+              "REST API",
+              "Spark Data Flows"
+            ]
+          },
+          {
+            "projectName": "Azure Databricks Medallion Architecture Pipeline",
+            "role": null,
+            "duration": null,
+            "projectDescription": null,
+            "responsibilities": [
+              "Orchestrated workflows using Databricks Workflows.",
+              "Implemented SCD Type 1 & Type 2 for efficient data modeling.",
+              "Performed data transformations using PySpark and window functions.",
+              "Implemented incremental data ingestion using Auto Loader.",
+              "Designed an end-to-end pipeline using Medallion Architecture (Bronze, Silver, Gold layers)."
+            ],
+            "technologiesUsed": [
+              "Azure Databricks",
+              "PySpark",
+              "SQL",
+              "Auto Loader",
+              "Azure Data Lake"
+            ]
+          }
+        ],
+        "_reportShareToken": "6385893a325341fb8262aa3e9d552e96fe5106c5796749dd9dab12f48db84986",
+        "_reportShareExpiresAt": "2026-06-28T09:58:29.441Z"
       }
     }
   ],
