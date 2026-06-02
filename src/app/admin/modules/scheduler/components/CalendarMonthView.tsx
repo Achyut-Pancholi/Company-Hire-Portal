@@ -19,17 +19,55 @@ const StatusDot = memo(({ status }) => (
 ));
 StatusDot.displayName = 'StatusDot';
 
-const MonthEventChip = memo(({ interview, onClick }) => (
-  <button
-    className="cal-month-chip"
-    onClick={(e) => { e.stopPropagation(); onClick?.(interview.id); }}
-    title={`${interview.candidate_name} — ${formatTime(interview.time)}`}
-  >
-    <StatusDot status={interview.status} />
-    <span className="cal-month-chip__name">{interview.candidate_name}</span>
-    <span className="cal-month-chip__time">{formatTime(interview.time)}</span>
-  </button>
-));
+const MonthEventChip = memo(({ interview, onClick }) => {
+  const handleJoinClick = (e, link) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!link || link === '—' || link === 'null' || link === 'undefined' || String(link).trim() === '') {
+      alert("Teams meeting link unavailable.");
+      return;
+    }
+    const isMock = link.includes('mock-meeting-') || link.includes('mock-');
+    if (isMock) {
+      alert("Note: This is a simulated/mock Teams meeting link generated in mock mode.\n\nTo schedule and join real meetings, please link a real Microsoft account first! (Mock links cannot be opened in the Microsoft Teams application.)");
+      return;
+    }
+    window.open(link, '_blank');
+  };
+
+  return (
+    <button
+      className="cal-month-chip"
+      onClick={(e) => { e.stopPropagation(); onClick?.(interview.id); }}
+      title={`${interview.candidate_name} — ${formatTime(interview.time)}`}
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', paddingRight: '4px' }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', overflow: 'hidden' }}>
+        <StatusDot status={interview.status} />
+        <span className="cal-month-chip__name">{interview.candidate_name}</span>
+        <span className="cal-month-chip__time">{formatTime(interview.time)}</span>
+      </div>
+      {interview.platform !== 'inperson' && (
+        <span
+          style={{
+            fontSize: '0.6rem',
+            fontWeight: 700,
+            color: '#fff',
+            backgroundColor: interview.platform === 'teams' ? '#6264A7' : '#1A73E8',
+            padding: '1px 3px',
+            borderRadius: '2px',
+            marginLeft: '4px',
+            flexShrink: 0,
+            lineHeight: '1.2'
+          }}
+          onClick={(e) => handleJoinClick(e, interview.meeting_link || interview.teams_join_url)}
+        >
+          Join
+        </span>
+      )}
+    </button>
+  );
+});
 MonthEventChip.displayName = 'MonthEventChip';
 
 export default function CalendarMonthView({ onEventClick }) {

@@ -13,6 +13,7 @@ import { useScheduler } from '../hooks/useScheduler.js';
 import { useAppContext } from '@/components/admin/context/AppContext';
 import { formatTime, formatDuration, formatDateLong } from '../utils/calendarUtils.js';
 import { PLATFORM_OPTIONS } from '../services/calendarProviders/index.js';
+import { TeamsInterviewPanel } from '@/components/TeamsInterviewPanel';
 
 const getInitials = (name) => {
   if (!name) return '?';
@@ -214,17 +215,57 @@ export default function CandidateDrawer() {
                 <Briefcase size={13} />
                 <span>{interview.template} interview</span>
               </div>
-              {interview.meeting_link && (
-                <a
-                  href={interview.meeting_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="drawer-info-item drawer-join-link"
-                  style={{ color: platform?.color }}
-                >
-                  <ExternalLink size={13} />
-                  Join on {platform?.label}
-                </a>
+              {(interview.meeting_link || interview.teams_join_url) && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <a
+                    href="#"
+                    className="drawer-info-item drawer-join-link"
+                    style={{ color: platform?.color, display: 'inline-flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const link = interview.meeting_link || interview.teams_join_url;
+                      if (!link || link === '—' || link === 'null' || link === 'undefined' || String(link).trim() === '') {
+                        alert("Teams meeting link unavailable.");
+                        return;
+                      }
+                      const isMock = link.includes('mock-meeting-') || link.includes('mock-');
+                      if (isMock) {
+                        alert("Note: This is a simulated/mock Teams meeting link generated in mock mode.\n\nTo schedule and join real meetings, please link a real Microsoft account first! (Mock links cannot be opened in the Microsoft Teams application.)");
+                        return;
+                      }
+                      window.open(link, '_blank');
+                    }}
+                  >
+                    <ExternalLink size={13} />
+                    Join on {platform?.label}
+                  </a>
+                  {interview.platform === 'teams' && (
+                    <button
+                      onClick={() => {
+                        const link = interview.meeting_link || interview.teams_join_url;
+                        if (link) {
+                          navigator.clipboard.writeText(link);
+                          alert("Meeting link copied successfully.");
+                        }
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--brand-navy)',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        textDecoration: 'underline',
+                        padding: '0 4px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '2px'
+                      }}
+                    >
+                      Copy Link
+                    </button>
+                  )}
+                </div>
               )}
             </div>
 
@@ -275,6 +316,9 @@ export default function CandidateDrawer() {
               </div>
             )}
           </div>
+
+          {/* Teams Interview Status, Recording and Claude AI Analysis */}
+          <TeamsInterviewPanel interviewId={interview.id} interview={interview} />
 
           {/* Stage Timeline */}
           <div className="drawer-section drawer-section--card">

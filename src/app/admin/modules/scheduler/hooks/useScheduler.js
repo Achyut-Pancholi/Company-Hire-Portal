@@ -9,7 +9,7 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import { useSchedulerContext, ACTIONS } from '../store/schedulerReducer.js';
-import { fetchInterviews, createInterview, updateInterview, deleteInterview } from '../services/schedulerAPI.js';
+import { fetchInterviews, createInterview, updateInterview, deleteInterview, fetchPanelists, createPanelist, updatePanelist, deletePanelist } from '../services/schedulerAPI.js';
 import { createMeeting, cancelMeeting } from '../services/calendarProviders/index.js';
 
 export const INTERVIEW_TEMPLATES = [
@@ -58,10 +58,21 @@ export const useScheduler = () => {
     }
   }, [dispatch, notify]);
 
+  const loadPanelists = useCallback(async () => {
+    try {
+      const data = await fetchPanelists();
+      dispatch({ type: ACTIONS.SET_PANELISTS, payload: data });
+    } catch (err) {
+      console.error('[Scheduler] Failed to load panelists:', err);
+      notify('error', 'Failed to load panelists.');
+    }
+  }, [dispatch, notify]);
+
   // Initial load
   useEffect(() => {
     loadInterviews();
-  }, [loadInterviews]);
+    loadPanelists();
+  }, [loadInterviews, loadPanelists]);
 
   // Polling (real-time readiness: swap for socket.on('interview:*') later)
   useEffect(() => {
@@ -200,6 +211,42 @@ Teams Meeting Link: ${meeting.link}`);
     }
   }, [state.interviews, dispatch, notify]);
 
+  // ── Panelist CRUD Actions ──────────────────────────────────────────────────
+
+  const addPanelist = useCallback(async (panelistData) => {
+    try {
+      const created = await createPanelist(panelistData);
+      dispatch({ type: ACTIONS.ADD_PANELIST, payload: created });
+      notify('success', `Panelist ${created.name} added successfully.`);
+      return created;
+    } catch (err) {
+      notify('error', `Failed to add panelist. ${err?.message || ''}`);
+      throw err;
+    }
+  }, [dispatch, notify]);
+
+  const editPanelist = useCallback(async (id, panelistData) => {
+    try {
+      const updated = await updatePanelist(id, panelistData);
+      dispatch({ type: ACTIONS.EDIT_PANELIST, payload: updated });
+      notify('success', `Panelist ${updated.name} updated successfully.`);
+      return updated;
+    } catch (err) {
+      notify('error', `Failed to update panelist. ${err?.message || ''}`);
+      throw err;
+    }
+  }, [dispatch, notify]);
+
+  const removePanelist = useCallback(async (id, name) => {
+    try {
+      await deletePanelist(id);
+      dispatch({ type: ACTIONS.REMOVE_PANELIST, payload: id });
+      notify('success', `Panelist ${name} removed successfully.`);
+    } catch (err) {
+      notify('error', `Failed to remove panelist.`);
+    }
+  }, [dispatch, notify]);
+
   // ── Modal Actions ──────────────────────────────────────────────────────────
 
   const openModal = useCallback((prefill = {}) => {
@@ -223,9 +270,13 @@ Teams Meeting Link: ${meeting.link}`);
     dispatch,
     // Actions
     loadInterviews,
+    loadPanelists,
     scheduleInterview,
     rescheduleInterview,
     cancelScheduledInterview,
+    addPanelist,
+    editPanelist,
+    removePanelist,
     openModal,
     closeModal,
     openDrawer,

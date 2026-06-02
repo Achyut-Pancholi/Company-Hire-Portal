@@ -35,10 +35,22 @@ export const AVAILABILITY_STATUS = {
  * @param {Array}  panelistInterviews - filtered to this panelist
  * @returns {Object} { "09:00": 'busy', "09:15": 'soft-busy', ... }
  */
-const getPanelistDaySlots = (date, panelistInterviews) => {
+const getPanelistDaySlots = (date, panelistInterviews, panelist) => {
   const slots = {};
   const isWeekend = [0, 6].includes(date.getDay());
   const totalSlots = (END_HOUR - START_HOUR) * (60 / SLOT_MINUTES);
+
+  if (panelist && panelist.daysAvailable) {
+    const dayOfWeek = date.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+    if (!panelist.daysAvailable.includes(dayOfWeek)) {
+      for (let i = 0; i < totalSlots; i++) {
+        const slotMins = START_HOUR * 60 + i * SLOT_MINUTES;
+        const time = minutesToTime(slotMins);
+        slots[time] = AVAILABILITY_STATUS.BLOCKED;
+      }
+      return slots;
+    }
+  }
 
   for (let i = 0; i < totalSlots; i++) {
     const slotMins = START_HOUR * 60 + i * SLOT_MINUTES;
@@ -124,7 +136,7 @@ export const generateAvailabilityMatrix = (panelists, interviews, weekDate) => {
         iv.status !== 'cancelled'
       );
 
-      matrix[panelist.id][dateKey] = getPanelistDaySlots(day, dayInterviews);
+      matrix[panelist.id][dateKey] = getPanelistDaySlots(day, dayInterviews, panelist);
     });
   });
 

@@ -149,28 +149,41 @@ function StepPanel({ formData, update, getPanelistStatus, currentDate, panelists
       <p className="modal-step__hint">Select one or more panelists. Availability shown for today.</p>
       <div className="modal-panelist-grid">
         {panelists.map(p => {
+          const isValidEmail = p.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email.trim());
           const selected  = (formData.panelistIds || []).includes(p.id);
           const avStatus  = getPanelistStatus(p.id, currentDate);
-          const dotColor  = statusColors[avStatus] || statusColors.free;
+          const dotColor  = isValidEmail ? (statusColors[avStatus] || statusColors.free) : '#cbd5e1';
           return (
             <button
               key={p.id}
               className={`modal-panelist-btn ${selected ? 'modal-panelist-btn--selected' : ''}`}
-              onClick={() => toggle(p.id)}
+              onClick={() => isValidEmail && toggle(p.id)}
+              disabled={!isValidEmail}
+              style={{
+                opacity: isValidEmail ? 1 : 0.55,
+                cursor: isValidEmail ? 'pointer' : 'not-allowed',
+                borderColor: !isValidEmail ? '#fee2e2' : undefined,
+                backgroundColor: !isValidEmail ? '#fef2f2' : undefined,
+              }}
+              title={!isValidEmail ? "This panelist does not have a registered email address and cannot be assigned." : undefined}
               aria-pressed={selected}
             >
-              <div className="modal-panelist-btn__avatar" style={{ backgroundColor: p.color }}>
+              <div className="modal-panelist-btn__avatar" style={{ backgroundColor: isValidEmail ? p.color : '#94a3b8' }}>
                 {p.avatar}
-                <div className="modal-panelist-btn__status-dot" style={{ backgroundColor: dotColor }} />
+                {isValidEmail && <div className="modal-panelist-btn__status-dot" style={{ backgroundColor: dotColor }} />}
               </div>
               <div className="modal-panelist-btn__info">
-                <span className="modal-panelist-btn__name">{p.name}</span>
+                <span className="modal-panelist-btn__name" style={{ color: !isValidEmail ? '#991b1b' : undefined }}>{p.name}</span>
                 <span className="modal-panelist-btn__role">{p.role}</span>
-                <span className="modal-panelist-btn__avail" style={{ color: dotColor }}>
-                  {avStatus === 'free' ? 'Available' : avStatus === 'limited' ? 'Limited' : avStatus === 'busy' ? 'Busy today' : 'Off today'}
+                <span className="modal-panelist-btn__avail" style={{ color: isValidEmail ? dotColor : '#ef4444', fontWeight: !isValidEmail ? 600 : undefined }}>
+                  {isValidEmail ? (
+                    avStatus === 'free' ? 'Available' : avStatus === 'limited' ? 'Limited' : avStatus === 'busy' ? 'Busy today' : 'Off today'
+                  ) : (
+                    'No registered email'
+                  )}
                 </span>
               </div>
-              {selected && <div className="modal-panelist-btn__check"><Check size={14} /></div>}
+              {selected && isValidEmail && <div className="modal-panelist-btn__check"><Check size={14} /></div>}
             </button>
           );
         })}

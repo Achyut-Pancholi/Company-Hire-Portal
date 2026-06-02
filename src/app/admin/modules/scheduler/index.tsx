@@ -93,16 +93,48 @@ function UpcomingList({ onEventClick }) {
                   </td>
                   <td onClick={e => e.stopPropagation()}>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      {iv.meeting_link && iv.platform !== 'inperson' && (
-                        <a
-                          href={iv.meeting_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn btn-primary"
-                          style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }}
-                        >
-                          Join
-                        </a>
+                      {iv.platform !== 'inperson' && (
+                        <>
+                          <a
+                            href="#"
+                            className="btn btn-primary"
+                            style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem', cursor: 'pointer' }}
+                           onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const meetingLink = iv.meeting_link || iv.teams_join_url;
+                              if (!meetingLink || meetingLink === '—' || meetingLink === 'null' || meetingLink === 'undefined' || String(meetingLink).trim() === '') {
+                                alert("Teams meeting link unavailable.");
+                                return;
+                              }
+                              const isMock = meetingLink.includes('mock-meeting-') || meetingLink.includes('mock-');
+                              if (isMock) {
+                                alert("Note: This is a simulated/mock Teams meeting link generated in mock mode.\n\nTo schedule and join real meetings, please link a real Microsoft account first! (Mock links cannot be opened in the Microsoft Teams application.)");
+                                return;
+                              }
+                              window.open(meetingLink, '_blank');
+                            }}
+                          >
+                            Join
+                          </a>
+                          <button
+                            className="btn btn-outline"
+                            style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem', cursor: 'pointer' }}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const meetingLink = iv.meeting_link || iv.teams_join_url;
+                              if (!meetingLink || meetingLink === '—' || meetingLink === 'null' || meetingLink === 'undefined' || String(meetingLink).trim() === '') {
+                                alert("Teams meeting link unavailable.");
+                                return;
+                              }
+                              navigator.clipboard.writeText(meetingLink);
+                              alert("Meeting link copied successfully.");
+                            }}
+                          >
+                            Copy Link
+                          </button>
+                        </>
                       )}
                       <button
                         className="btn btn-outline"

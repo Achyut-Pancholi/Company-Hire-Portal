@@ -25,28 +25,30 @@ export async function uploadVideoToSupabase(
     return "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
   }
 
-  const filename = `interviews/${interviewId}/final-interview.webm`;
+  try {
+    const formData = new FormData();
+    // Convert blob to File object so next.js request can parse it as a file
+    const file = new File([blob], "final-interview.webm", { type: "video/webm" });
+    formData.append("video", file);
+    formData.append("interviewId", interviewId);
 
-  const response = await fetch(
-    `${supabaseUrl}/storage/v1/object/interview-recordings/${filename}`,
-    {
+    const response = await fetch("/api/interviews/upload", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${anonKey}`,
-        "Content-Type": "video/webm",
-        "x-upsert": "true",
-      },
-      body: blob,
+      body: formData
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || "Upload failed");
     }
-  );
 
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`Upload failed: ${err}`);
+    const data = await response.json();
+    return data.videoUrl;
+  } catch (error: any) {
+    console.error("Failed to upload video to API route:", error);
+    // If it fails, fallback to direct upload just in case, or throw
+    throw error;
   }
-
-  // Return the public URL
-  return `${supabaseUrl}/storage/v1/object/public/interview-recordings/${filename}`;
 }
 
 /**

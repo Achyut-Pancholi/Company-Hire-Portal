@@ -1059,6 +1059,11 @@ const Reports = () => {
   const [uploadStatusMessage, setUploadStatusMessage] = useState('');
   const ffmpegRef = useRef(null);
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Remark state
   const [remarkPopover, setRemarkPopover] = useState<{ candidateId: string; name: string } | null>(null);
   const [remarkText, setRemarkText] = useState('');
@@ -1714,6 +1719,16 @@ const Reports = () => {
     allCandidates.forEach((c) => (c.skills || []).forEach((s) => { freq[s] = (freq[s] || 0) + 1; }));
     return Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([label, value]) => ({ label, value: Math.round((value / Math.max(total, 1)) * 100) }));
   })();
+
+  if (!mounted) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh', color: 'var(--text-muted)' }}>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ fontSize: '1rem', fontWeight: '600' }}>Loading Reports...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>

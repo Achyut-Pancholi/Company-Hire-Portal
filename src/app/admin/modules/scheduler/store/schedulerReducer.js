@@ -10,8 +10,8 @@ import React, { createContext, useContext, useReducer, useCallback } from 'react
 
 // ─── Initial Panelists Constant ───────────────────────────────────────────────
 export const INITIAL_PANELISTS = [
-  { id: 'p1', name: 'John Doe',     role: 'Engineering Lead',  avatar: 'JD', color: '#0E2D7B' },
-  { id: 'p2', name: 'Sarah Smith',  role: 'Product Manager',   avatar: 'SS', color: '#7DBA00' }
+  { id: 'p1', name: 'John Doe',     role: 'Engineering Lead',  avatar: 'JD', color: '#0E2D7B', email: 'john.doe@kadellabs.com', daysAvailable: [1, 2, 3, 4, 5] },
+  { id: 'p2', name: 'Sarah Smith',  role: 'Product Manager',   avatar: 'SS', color: '#7DBA00', email: 'sarah.smith@kadellabs.com', daysAvailable: [1, 2, 3, 4, 5] }
 ];
 
 // ─── Action Constants ─────────────────────────────────────────────────────────
@@ -23,7 +23,9 @@ export const ACTIONS = {
   GO_TO_TODAY:           'GO_TO_TODAY',
 
   // Panelists management
+  SET_PANELISTS:         'SET_PANELISTS',
   ADD_PANELIST:          'ADD_PANELIST',
+  EDIT_PANELIST:         'EDIT_PANELIST',
   REMOVE_PANELIST:       'REMOVE_PANELIST',
 
   // Interviews (server state)
@@ -107,7 +109,14 @@ const getInitialState = () => {
   if (hasLocalStorage) {
     try {
       const raw = localStorage.getItem('kl_scheduler_panelists');
-      if (raw) storedPanelists = JSON.parse(raw);
+      if (raw) {
+        storedPanelists = JSON.parse(raw).map(p => {
+          if (p.id === 'p1' && !p.email) return { ...p, email: 'john.doe@kadellabs.com', daysAvailable: p.daysAvailable || [1, 2, 3, 4, 5] };
+          if (p.id === 'p2' && !p.email) return { ...p, email: 'sarah.smith@kadellabs.com', daysAvailable: p.daysAvailable || [1, 2, 3, 4, 5] };
+          if (!p.daysAvailable) return { ...p, daysAvailable: [1, 2, 3, 4, 5] };
+          return p;
+        });
+      }
     } catch (e) {
       console.error('Failed to load panelists', e);
     }
@@ -384,8 +393,28 @@ function schedulerReducer(state, action) {
       return { ...state, darkMode: nextMode };
     }
 
+    case 'SET_PANELISTS':
+    case ACTIONS.SET_PANELISTS:
+      return {
+        ...state,
+        panelists: action.payload
+      };
+
     case ACTIONS.ADD_PANELIST: {
       const nextPanelists = [...state.panelists, action.payload];
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && typeof localStorage.setItem === 'function') {
+        try {
+          localStorage.setItem('kl_scheduler_panelists', JSON.stringify(nextPanelists));
+        } catch {}
+      }
+      return {
+        ...state,
+        panelists: nextPanelists
+      };
+    }
+
+    case 'EDIT_PANELIST': {
+      const nextPanelists = state.panelists.map(p => p.id === action.payload.id ? { ...p, ...action.payload } : p);
       if (typeof window !== 'undefined' && typeof localStorage !== 'undefined' && typeof localStorage.setItem === 'function') {
         try {
           localStorage.setItem('kl_scheduler_panelists', JSON.stringify(nextPanelists));
