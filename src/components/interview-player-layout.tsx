@@ -340,15 +340,32 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
                       }`}
                     >
                       <div className="flex items-start gap-3 p-3">
-                        {/* Q# badge */}
-                        <div
-                          className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5 transition-all ${
-                            isActive
-                              ? "bg-indigo-600 text-white"
-                              : "bg-slate-200 text-slate-600 group-hover:bg-indigo-100 group-hover:text-indigo-700"
-                          }`}
-                        >
-                          {i + 1}
+                        {/* Thumbnail / Q# badge */}
+                        <div className="relative flex-shrink-0 mt-0.5">
+                          {entry.clip_url ? (
+                            <div className={`w-16 h-10 md:w-20 md:h-12 rounded-lg overflow-hidden border-2 transition-all ${isActive ? "border-indigo-500 shadow-md" : "border-slate-200 group-hover:border-indigo-300"}`}>
+                              <video 
+                                src={`${entry.clip_url}#t=0.1`} 
+                                preload="metadata"
+                                muted 
+                                playsInline
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute top-1 left-1 w-4 h-4 rounded-full bg-black/60 text-white flex items-center justify-center text-[9px] font-bold shadow-sm">
+                                {i + 1}
+                              </div>
+                            </div>
+                          ) : (
+                            <div
+                              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                                isActive
+                                  ? "bg-indigo-600 text-white"
+                                  : "bg-slate-200 text-slate-600 group-hover:bg-indigo-100 group-hover:text-indigo-700"
+                              }`}
+                            >
+                              {i + 1}
+                            </div>
+                          )}
                         </div>
 
                         {/* Question text */}

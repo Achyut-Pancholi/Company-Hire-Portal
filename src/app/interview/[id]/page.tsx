@@ -459,14 +459,9 @@ export default function InterviewPage() {
         setProcessingProgress(10 + Math.round((i + 1) * progressPerClip));
       }
 
-      // 2. Upload merged/concatenated video for backward compatibility
-      const mergedBlob = new Blob(sorted.map(c => c.blob), { type: "video/webm" });
-      const videoUrl = await uploadVideoToSupabase(
-        mergedBlob,
-        id,
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
+      // We no longer merge and upload the final video to save time and storage.
+      // Use the first clip as a fallback videoUrl if needed by older clients.
+      const videoUrl = clipUrls[0] || "";
       setProcessingProgress(80);
 
       // 3. Build transcript entries with clip_url + cumulative timestamps

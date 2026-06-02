@@ -54,102 +54,94 @@ export async function PATCH(
 
 
     // Perform Groq Whisper transcription on completed interviews
-    if (body.status === "completed" && body.video_url && process.env.GROQ_API_KEY) {
+    if (body.status === "completed" && body.transcript && Array.isArray(body.transcript) && process.env.GROQ_API_KEY) {
       try {
-        console.log(`Starting Groq Whisper transcription for interview: ${id}`);
-        const videoRes = await fetch(body.video_url);
-        if (videoRes.ok) {
-          const arrayBuffer = await videoRes.arrayBuffer();
-          const buffer = Buffer.from(arrayBuffer);
-          
-          const formData = new FormData();
-          const blob = new Blob([buffer], { type: "video/webm" });
-          formData.append("file", blob, "video.webm");
-          formData.append("model", "whisper-large-v3");
-          formData.append("response_format", "verbose_json");
-          
-          const groqRes = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
-            },
-            body: formData
-          });
-          
-          if (groqRes.ok) {
-            const groqData = await groqRes.json();
-            const segments = groqData.segments || [];
-            console.log(`Successfully retrieved Whisper transcription with ${segments.length} segments`);
-            
-            if (body.transcript && Array.isArray(body.transcript)) {
-              body.transcript = body.transcript.map((entry: any) => {
-                const start = entry.timestamp_start ?? 0;
-                const end = entry.timestamp_end ?? 999999;
-                
-                // Match segments falling within this question's time range
-                const matched = segments.filter((seg: any) => {
-                  const mid = (seg.start + seg.end) / 2;
-                  return mid >= start && mid <= end;
-                });
-                
-                const text = matched.map((seg: any) => seg.text.trim()).join(" ");
-                return {
-                  ...entry,
-                  text: text || entry.text || ""
-                };
+        console.log(`Starting Groq Whisper transcription for interview: ${id} clips...`);
+        
+        // Process each clip concurrently
+        await Promise.all(body.transcript.map(async (entry: any) => {
+          if (!entry.clip_url) return;
+          try {
+            const videoRes = await fetch(entry.clip_url);
+            if (videoRes.ok) {
+              const arrayBuffer = await videoRes.arrayBuffer();
+              const buffer = Buffer.from(arrayBuffer);
+              
+              const formData = new FormData();
+              const blob = new Blob([buffer], { type: "video/webm" });
+              formData.append("file", blob, "video.webm");
+              formData.append("model", "whisper-large-v3");
+              formData.append("response_format", "verbose_json");
+              
+              const groqRes = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
+                method: "POST",
+                headers: {
+                  "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
+                },
+                body: formData
               });
+              
+              if (groqRes.ok) {
+                const groqData = await groqRes.json();
+                const segments = groqData.segments || [];
+                entry.text = segments.map((seg: any) => seg.text.trim()).join(" ") || entry.text || "";
+              } else {
+                console.error("Groq API returned an error for clip:", await groqRes.text());
+              }
+            } else {
+              console.error(`Failed to download clip from URL: ${entry.clip_url}`);
+            }
+          } catch (e) {
+            console.error(`Transcription error for clip ${entry.clip_url}:`, e);
+          }
+        }));
 
-              // Generate AI Summary
-              try {
-                console.log(`Generating AI Summary...`);
-                const fullText = body.transcript.map((t: any) => `Q: ${t.question}\nA: ${t.text}`).join("\n\n");
-                
-                const chatRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                  method: "POST",
-                  headers: {
-                    "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
-                    "Content-Type": "application/json"
-                  },
-                  body: JSON.stringify({
-                    model: "llama-3.1-8b-instant",
-                    response_format: { type: "json_object" },
-                    messages: [
-                      { 
-                        role: "system", 
-                        content: `You are an expert HR recruiter. Analyze the following interview transcript and return a JSON object with two keys:
+        // Generate AI Summary
+        try {
+          console.log(`Generating AI Summary...`);
+          const fullText = body.transcript.map((t: any) => `Q: ${t.question}\nA: ${t.text}`).join("\n\n");
+          
+          if (fullText.trim().length > 0) {
+            const chatRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                model: "llama-3.1-8b-instant",
+                response_format: { type: "json_object" },
+                messages: [
+                  { 
+                    role: "system", 
+                    content: `You are an expert HR recruiter. Analyze the following interview transcript and return a JSON object with two keys:
 1. "summary": A concise 3-4 bullet point summary highlighting the candidate's key qualifications, experience, and communication style. Use markdown bullet points.
 2. "scores": An object containing ratings out of 5 for "Communication", "Clarity", "Confidence", and "Relevance". Example: {"Communication": 4, "Clarity": 5, "Confidence": 3, "Relevance": 4}.
 Respond ONLY with the JSON object.` 
-                      },
-                      { role: "user", content: fullText }
-                    ]
-                  })
-                });
-                
-                if (chatRes.ok) {
-                  const chatData = await chatRes.json();
-                  const contentStr = chatData.choices[0]?.message?.content || "{}";
-                  try {
-                    const parsed = JSON.parse(contentStr);
-                    body.summary = parsed.summary || "";
-                    body.scores = parsed.scores || null;
-                    console.log(`Successfully generated AI Summary and Scores`);
-                  } catch (e) {
-                    console.error("Failed to parse AI JSON response", e);
-                    body.summary = contentStr; // Fallback
-                  }
-                } else {
-                  console.error("Groq Chat API returned an error:", await chatRes.text());
-                }
-              } catch (summaryErr) {
-                console.error("Summary generation failed:", summaryErr);
+                  },
+                  { role: "user", content: fullText }
+                ]
+              })
+            });
+            
+            if (chatRes.ok) {
+              const chatData = await chatRes.json();
+              const contentStr = chatData.choices[0]?.message?.content || "{}";
+              try {
+                const parsed = JSON.parse(contentStr);
+                body.summary = parsed.summary || "";
+                body.scores = parsed.scores || null;
+                console.log(`Successfully generated AI Summary and Scores`);
+              } catch (e) {
+                console.error("Failed to parse AI JSON response", e);
+                body.summary = contentStr; // Fallback
               }
+            } else {
+              console.error("Groq Chat API returned an error:", await chatRes.text());
             }
-          } else {
-            console.error("Groq API returned an error:", await groqRes.text());
           }
-        } else {
-          console.error(`Failed to download video from URL: ${body.video_url}`);
+        } catch (summaryErr) {
+          console.error("Summary generation failed:", summaryErr);
         }
       } catch (transcribeError) {
         console.error("Transcription failed but continuing PATCH update:", transcribeError);
