@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Briefcase, FileText, Video, Calendar, BarChart, LogOut, Settings2 } from 'lucide-react';
+import { Briefcase, FileText, Video, Calendar, BarChart, LogOut } from 'lucide-react';
 
 const Sidebar = () => {
   const pathname = usePathname();
@@ -14,9 +14,7 @@ const Sidebar = () => {
     { name: 'Video Bot Screening', path: '/admin/video-bot-admin', icon: Video },
     { name: 'Technical Scheduler', path: '/admin/technicalscheduler', icon: Calendar },
     { name: 'Reports', path: '/admin/reports', icon: BarChart },
-    { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
     { name: 'Department', path: '/admin/jobpostings', icon: Briefcase },
-    { name: 'Email Settings', path: '/admin/settings', icon: Settings2 },
   ];
 
   return (
