@@ -9,13 +9,12 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
   
   const getPageTitle = () => {
-    if (pathname === '/admin') return 'Dashboard Overview';
+    if (pathname === '/admin') return 'Video Bot Screening';
     if (pathname?.startsWith('/admin/jobpostings')) return 'Department';
     if (pathname?.startsWith('/admin/resumeupload')) return 'Resume Upload & Parsing';
     if (pathname?.startsWith('/admin/video-bot-admin')) return 'Video Bot Screening';
     if (pathname?.startsWith('/admin/technicalscheduler')) return 'Technical Scheduler';
     if (pathname?.startsWith('/admin/reports')) return 'Reports & Evaluation';
-    if (pathname?.startsWith('/admin/settings')) return 'Settings';
 
     const segments = pathname?.split('/').filter(Boolean) || [];
     if (segments.length > 1) {
