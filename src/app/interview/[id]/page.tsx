@@ -48,6 +48,7 @@ export default function InterviewPage() {
   const [strikes, setStrikes] = useState(0);
   const [showWarning, setShowWarning] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [isPrepPhase, setIsPrepPhase] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -155,6 +156,11 @@ export default function InterviewPage() {
 
   useEffect(() => {
     if (timeLeft === null) return;
+
+    if (timeLeft === 90 && isPrepPhase) {
+      startActualRecording();
+    }
+
     if (timeLeft <= 0) {
       // Auto-submit: stop recording if active, then advance
       if (isRecordingRef.current) {
@@ -167,6 +173,7 @@ export default function InterviewPage() {
           blob: new Blob([], { type: "video/webm" }),
           duration: 0,
         };
+        setIsPrepPhase(false);
         setAllChunks((prev) => {
           const updated = [...prev, autoChunk];
           const nextIndex = currentQuestionIndex + 1;
@@ -184,7 +191,7 @@ export default function InterviewPage() {
     }
     const timerId = setTimeout(() => setTimeLeft((t) => (t !== null ? t - 1 : null)), 1000);
     return () => clearTimeout(timerId);
-  }, [timeLeft]);
+  }, [timeLeft, isPrepPhase]);
 
   useEffect(() => {
     if (isCameraReady) {
@@ -212,7 +219,7 @@ export default function InterviewPage() {
     if (stage === "interview" && !isSpeaking && isCameraReady) {
       // Small delay so UI settles after speech ends
       const t = setTimeout(() => {
-        startRecording();
+        startTimer();
       }, 400);
       return () => clearTimeout(t);
     }
@@ -372,9 +379,14 @@ export default function InterviewPage() {
     };
   }, [stage, showWarning]);
 
-  const startRecording = () => {
+  const startTimer = () => {
+    if (isRecordingRef.current || isPrepPhase) return;
+    setIsPrepPhase(true);
+    setTimeLeft(95);
+  };
+
+  const startActualRecording = () => {
     if (!streamRef.current) return;
-    // Prevent double-start if already recording
     if (isRecordingRef.current) return;
 
     // Fresh recorder for each question — gives us a clean individual clip
@@ -393,8 +405,7 @@ export default function InterviewPage() {
     startTimeRef.current = Date.now();
     isRecordingRef.current = true;
     setIsRecording(true);
-    // Start the 95-second countdown (90s for answering + 5s buffer)
-    setTimeLeft(95);
+    setIsPrepPhase(false);
   };
 
   const stopRecording = (): Promise<RecordingChunk> => {
@@ -846,28 +857,34 @@ export default function InterviewPage() {
                       <circle
                         cx="48" cy="48" r="40"
                         fill="none"
-                        stroke={timeLeft <= 10 ? "#ef4444" : timeLeft <= 20 ? "#f59e0b" : "#6366f1"}
+                        stroke={isPrepPhase ? "#3b82f6" : timeLeft <= 10 ? "#ef4444" : timeLeft <= 20 ? "#f59e0b" : "#6366f1"}
                         strokeWidth="7"
                         strokeLinecap="round"
                         strokeDasharray={`${2 * Math.PI * 40}`}
-                        strokeDashoffset={`${2 * Math.PI * 40 * (1 - timeLeft / 60)}`}
+                        strokeDashoffset={`${2 * Math.PI * 40 * (1 - (isPrepPhase ? 1 : timeLeft / 90))}`}
                         style={{ transition: "stroke-dashoffset 0.9s linear, stroke 0.3s" }}
                       />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
                       <span
                         className="font-mono font-black text-2xl leading-none"
-                        style={{ color: timeLeft <= 10 ? "#ef4444" : timeLeft <= 20 ? "#f59e0b" : "#6366f1" }}
+                        style={{ color: isPrepPhase ? "#3b82f6" : timeLeft <= 10 ? "#ef4444" : timeLeft <= 20 ? "#f59e0b" : "#6366f1" }}
                       >
-                        {timeLeft < 10 ? `0:0${timeLeft}` : `0:${timeLeft}`}
+                        {isPrepPhase 
+                          ? `${timeLeft - 90}` 
+                          : `${Math.floor(timeLeft / 60)}:${(timeLeft % 60) < 10 ? "0" : ""}${timeLeft % 60}`}
                       </span>
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mt-0.5">left</span>
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mt-0.5">
+                        {isPrepPhase ? "prep" : "left"}
+                      </span>
                     </div>
                   </div>
                   <p className={`text-xs font-semibold ${timeLeft <= 10 ? "text-red-500 animate-pulse" : "text-slate-400"}`}>
                     {isRecording
                       ? timeLeft <= 10 ? "⚠ Wrapping up soon…" : "Recording your answer"
-                      : "Recording starts automatically"}
+                      : isPrepPhase 
+                        ? `Recording starts in ${timeLeft - 90}s…` 
+                        : "Recording starts automatically"}
                   </p>
                 </div>
               )}
