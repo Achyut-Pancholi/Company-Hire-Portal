@@ -650,7 +650,7 @@ export default function InterviewPage() {
             <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">What to expect</p>
             {[
               `${interview.questions.length} questions asked by our AI. You have 90 seconds to answer each.`,
-              "You control when to start and stop recording each answer",
+              "Recording starts automatically after a 5-second countdown",
               "Your webcam and microphone will be used",
               "Ensure you're in a quiet, well-lit space",
               "WARNING: This is a one-time link — do not refresh the page",
@@ -733,8 +733,8 @@ export default function InterviewPage() {
               <div className="space-y-4 mb-6">
                 {[
                   { step: "1", text: "AI reads the question aloud", icon: Volume2 },
-                  { step: "2", text: 'Click "Start Answer" to begin recording', icon: Mic },
-                  { step: "3", text: 'Click "Submit Answer" when done', icon: Square },
+                  { step: "2", text: "Recording starts automatically after a 5-second countdown", icon: Mic },
+                  { step: "3", text: 'Click "Submit Answer" when done (or wait for the timer)', icon: Square },
                   { step: "4", text: "Repeat for all questions", icon: ChevronRight },
                 ].map((s) => {
                   const Icon = s.icon;
