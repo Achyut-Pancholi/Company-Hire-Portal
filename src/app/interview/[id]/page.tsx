@@ -393,8 +393,8 @@ export default function InterviewPage() {
     startTimeRef.current = Date.now();
     isRecordingRef.current = true;
     setIsRecording(true);
-    // Start the 60-second countdown (timer drives itself via the timeLeft useEffect)
-    setTimeLeft(60);
+    // Start the 95-second countdown (90s for answering + 5s buffer)
+    setTimeLeft(95);
   };
 
   const stopRecording = (): Promise<RecordingChunk> => {
@@ -638,11 +638,12 @@ export default function InterviewPage() {
           <div className="p-5 rounded-2xl border border-[#E2E8F0] bg-slate-50/50 text-left space-y-3 mb-8">
             <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">What to expect</p>
             {[
-              `${interview.questions.length} questions asked by our AI`,
+              `${interview.questions.length} questions asked by our AI. You have 90 seconds to answer each.`,
               "You control when to start and stop recording each answer",
               "Your webcam and microphone will be used",
               "Ensure you're in a quiet, well-lit space",
-              "This is a one-time link — do not refresh the page",
+              "WARNING: This is a one-time link — do not refresh the page",
+              "WARNING: Do not exit fullscreen or switch tabs. Doing so 3 times will terminate the interview.",
             ].map((item) => (
               <div key={item} className="flex items-center gap-3">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
