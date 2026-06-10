@@ -140,6 +140,37 @@
   background: hsl(var(--muted-foreground));
 }
 
+/* Sidebar visible scrollbar */
+.visible-sidebar-scrollbar {
+  scrollbar-width: auto !important;
+  scrollbar-color: #cbd5e1 #f1f5f9 !important;
+}
+
+.visible-sidebar-scrollbar::-webkit-scrollbar {
+  width: 8px !important;
+  height: 8px !important;
+  display: block !important;
+}
+
+.visible-sidebar-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9 !important;
+  border-radius: 4px !important;
+}
+
+.visible-sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1 !important;
+  border-radius: 4px !important;
+  border: 1.5px solid #f1f5f9 !important;
+}
+
+.visible-sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8 !important;
+}
+
+.visible-sidebar-scrollbar::-webkit-scrollbar-thumb:active {
+  background-color: #64748b !important;
+}
+
 :root {
   /* Grayscale Palette */
   --gray-50: #f8fafc;

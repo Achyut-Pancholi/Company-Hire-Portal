@@ -326,7 +326,7 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
                 Question Clips
               </h3>
 
-              <div className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+              <div className="flex-1 overflow-y-auto space-y-2 pr-1.5 visible-sidebar-scrollbar">
                 {transcript!.map((entry, i) => {
                   const isActive = activeClipIndex === i;
                   return (
@@ -422,7 +422,7 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
 
               <div
                 ref={transcriptContainerRef}
-                className="flex-1 overflow-y-auto space-y-4 pr-2 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent"
+                className="flex-1 overflow-y-auto space-y-4 pr-2 visible-sidebar-scrollbar"
               >
                 {transcript && transcript.length > 0 ? (
                   transcript.map((entry: TranscriptEntry, i: number) => {
