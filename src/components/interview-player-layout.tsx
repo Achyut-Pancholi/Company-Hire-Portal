@@ -396,7 +396,7 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
 
               <div 
                 ref={sidebarClipsContainerRef}
-                className="flex-1 overflow-y-auto space-y-2 pr-1.5 visible-sidebar-scrollbar"
+                className="relative flex-1 overflow-y-auto space-y-2 pr-1.5 visible-sidebar-scrollbar"
               >
                 {transcript!.map((entry, i) => {
                   const isActive = activeQuestionIndex === i;
@@ -494,7 +494,7 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
 
               <div
                 ref={transcriptContainerRef}
-                className="flex-1 overflow-y-auto space-y-4 pr-2 visible-sidebar-scrollbar"
+                className="relative flex-1 overflow-y-auto space-y-4 pr-2 visible-sidebar-scrollbar"
               >
                 {transcript && transcript.length > 0 ? (
                   transcript.map((entry: TranscriptEntry, i: number) => {
@@ -587,7 +587,7 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
           </h3>
           <div 
             ref={fullTranscriptContainerRef}
-            className="space-y-3 max-h-[300px] overflow-y-auto pr-1.5 visible-sidebar-scrollbar"
+            className="relative space-y-3 max-h-[300px] overflow-y-auto pr-1.5 visible-sidebar-scrollbar"
           >
             {transcript.map((entry, i) => {
               const isActive = activeQuestionIndex === i;
