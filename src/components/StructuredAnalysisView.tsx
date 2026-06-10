@@ -59,29 +59,33 @@ export function StructuredAnalysisView({ text }: { text: string | any }) {
       
       lines.forEach(line => {
         const lower = line.toLowerCase().trim();
-        if (lower.startsWith('pros:') || lower.startsWith('strengths:')) {
+        if (lower.startsWith('pros:') || lower.startsWith('strengths:') || lower === 'pros' || lower === 'strengths' || lower === 'pros / strengths' || lower === 'pros / strengths:') {
           currentSection = 'pros';
-          const val = line.replace(/^(pros|strengths):/i, '').trim();
+          const val = line.replace(/^(pros|strengths|pros \/ strengths):?/i, '').trim();
           if (val) pros.push(val);
-        } else if (lower.startsWith('cons:') || lower.startsWith('weaknesses:')) {
+        } else if (lower.startsWith('cons:') || lower.startsWith('weaknesses:') || lower === 'cons' || lower === 'weaknesses' || lower === 'cons / weaknesses' || lower === 'cons / weaknesses:') {
           currentSection = 'cons';
-          const val = line.replace(/^(cons|weaknesses):/i, '').trim();
+          const val = line.replace(/^(cons|weaknesses|cons \/ weaknesses):?/i, '').trim();
           if (val) cons.push(val);
-        } else if (lower.startsWith('okok:') || lower.startsWith('neutral:')) {
+        } else if (lower.startsWith('okok:') || lower.startsWith('neutral:') || lower.startsWith('neutral points') || lower === 'neutral' || lower === 'neutral points' || lower === 'neutral points:') {
           currentSection = 'okok';
-          const val = line.replace(/^(okok|neutral):/i, '').trim();
+          const val = line.replace(/^(okok|neutral|neutral points):?/i, '').trim();
           if (val) okok.push(val);
-        } else if (line.trim().startsWith('-') || line.trim().startsWith('*')) {
-          const val = line.replace(/^[-*]\s*/, '').trim();
-          if (currentSection === 'pros') pros.push(val);
-          else if (currentSection === 'cons') cons.push(val);
-          else if (currentSection === 'okok') okok.push(val);
-          else summaryList.push(val); // Treat bulleted items in summary as a list
+        } else if (line.trim().startsWith('-') || line.trim().startsWith('*') || line.trim().startsWith('•')) {
+          const val = line.replace(/^[-*•]\s*/, '').trim();
+          if (val) {
+            if (currentSection === 'pros') pros.push(val);
+            else if (currentSection === 'cons') cons.push(val);
+            else if (currentSection === 'okok') okok.push(val);
+            else summaryList.push(val);
+          }
         } else {
           if (currentSection === 'pros' && line.trim()) pros.push(line.trim());
           else if (currentSection === 'cons' && line.trim()) cons.push(line.trim());
           else if (currentSection === 'okok' && line.trim()) okok.push(line.trim());
-          else summaryText += line + '\n';
+          else if (line.trim()) {
+            summaryText += line + '\n';
+          }
         }
       });
     }

@@ -130,12 +130,65 @@ Respond ONLY with the JSON object.`
               const chatData = await chatRes.json();
               const contentStr = chatData.choices[0]?.message?.content || "{}";
               try {
-                const parsed = JSON.parse(contentStr);
+                // Robust JSON parser to handle unescaped newlines or code block wrappers
+                let clean = contentStr.trim();
+                if (clean.startsWith("```")) {
+                  clean = clean.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
+                }
+                
+                let parsed: any = null;
+                try {
+                  parsed = JSON.parse(clean);
+                } catch (jsonErr) {
+                  console.warn("Standard JSON.parse failed, attempting regex-based recovery of summary and scores...");
+                  
+                  // Extract scores object
+                  let scores: any = null;
+                  const scoresMatch = clean.match(/"scores"\s*:\s*(\{[^}]+\})/s);
+                  if (scoresMatch) {
+                    try {
+                      scores = JSON.parse(scoresMatch[1].replace(/,\s*([\]}])/g, '$1'));
+                    } catch (e) {
+                      const scorePairs = scoresMatch[1].match(/"([^"]+)"\s*:\s*(\d)/g);
+                      if (scorePairs) {
+                        scores = {};
+                        scorePairs.forEach(pair => {
+                          const parts = pair.split(":");
+                          const key = parts[0].replace(/"/g, "").trim();
+                          const val = parseInt(parts[1].trim(), 10);
+                          scores[key] = val;
+                        });
+                      }
+                    }
+                  }
+
+                  // Extract summary string
+                  let summary = "";
+                  const summaryMatch = clean.match(/"summary"\s*:\s*"([\s\S]*?)"(?=\s*,\s*"scores"|\s*\})/);
+                  if (summaryMatch) {
+                    summary = summaryMatch[1];
+                  } else {
+                    const fallbackMatch = clean.match(/"summary"\s*:\s*"([\s\S]*)/);
+                    if (fallbackMatch) {
+                      summary = fallbackMatch[1].replace(/"\s*,\s*"scores"[\s\S]*/, "").replace(/"\s*\}\s*$/, "").trim();
+                    }
+                  }
+
+                  // Unescape newlines/quotes
+                  summary = summary.replace(/\\n/g, "\n").replace(/\\"/g, '"');
+                  
+                  if (summary || scores) {
+                    parsed = { summary, scores };
+                  } else {
+                    throw jsonErr;
+                  }
+                }
+
                 body.summary = parsed.summary || "";
                 body.scores = parsed.scores || null;
                 console.log(`Successfully generated AI Summary and Scores`);
               } catch (e) {
-                console.error("Failed to parse AI JSON response", e);
+                console.error("Failed to parse AI JSON response:", e);
                 body.summary = contentStr; // Fallback
               }
             } else {
