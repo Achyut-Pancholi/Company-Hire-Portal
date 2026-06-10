@@ -251,22 +251,25 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
     }
     if (!transcript || transcript.length === 0) return null;
 
-    // Check if it's the old format (no timestamps)
-    const isOldFormat = transcript.every((t) => !t.timestamp_start);
-    if (isOldFormat && videoRef.current && videoRef.current.duration > 0) {
+    // If any transcript entry is missing a start timestamp, fall back to segment-based or activeClipIndex
+    const missingTimestamps = transcript.some((t) => t.timestamp_start === undefined);
+    
+    if (missingTimestamps && videoRef.current && videoRef.current.duration > 0) {
       const duration = videoRef.current.duration;
       const segmentLength = duration / transcript.length;
       return Math.min(Math.floor(currentTime / segmentLength), transcript.length - 1);
+    } else if (missingTimestamps) {
+      return activeClipIndex; // Fallback if video duration isn't loaded yet
     }
 
-    const index = transcript.findIndex(
-      (t) =>
-        t.timestamp_start !== undefined &&
-        t.timestamp_end !== undefined &&
-        currentTime >= t.timestamp_start! &&
-        currentTime <= t.timestamp_end!
-    );
-    return index !== -1 ? index : null;
+    const index = transcript.findIndex((t, i) => {
+      const start = t.timestamp_start!;
+      const nextStart = i < transcript.length - 1 ? transcript[i + 1].timestamp_start! : Infinity;
+      const end = t.timestamp_end ?? nextStart;
+      return currentTime >= start && currentTime < end;
+    });
+
+    return index !== -1 ? index : activeClipIndex;
   })();
 
   // Default to first clip if hasClips is true

@@ -207,21 +207,20 @@ export function VideoPlayerOverlay({
           {!hasClips && (() => {
             if (!transcript || !Array.isArray(transcript) || transcript.length === 0) return null;
 
-            const isOldFormat = transcript.every((t) => !t.timestamp_start);
+            const missingTimestamps = transcript.some((t) => t.timestamp_start === undefined);
             let activeT: TranscriptEntry | undefined;
 
-            if (isOldFormat && videoDuration > 0) {
+            if (missingTimestamps && videoDuration > 0) {
               const segmentLength = videoDuration / transcript.length;
               const index = Math.min(Math.floor(currentTime / segmentLength), transcript.length - 1);
               activeT = transcript[Math.max(0, index)];
-            } else {
-              activeT = transcript.find(
-                (t) =>
-                  t.timestamp_start !== undefined &&
-                  t.timestamp_end !== undefined &&
-                  currentTime >= t.timestamp_start! &&
-                  currentTime <= t.timestamp_end!
-              );
+            } else if (!missingTimestamps) {
+              activeT = transcript.find((t, i) => {
+                const start = t.timestamp_start!;
+                const nextStart = i < transcript.length - 1 ? transcript[i + 1].timestamp_start! : Infinity;
+                const end = t.timestamp_end ?? nextStart;
+                return currentTime >= start && currentTime < end;
+              });
             }
 
             if (!activeT) return null;
