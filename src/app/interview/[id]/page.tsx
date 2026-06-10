@@ -616,7 +616,7 @@ export default function InterviewPage() {
           </div>
           <h2 className="text-2xl font-bold text-slate-900 mb-2">Processing your interview</h2>
           <p className="text-slate-500 text-sm mb-6 font-medium">
-            Merging your answers and uploading the final video...
+            Uploading and processing your answer clips...
           </p>
           <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden shadow-inner">
             <div
