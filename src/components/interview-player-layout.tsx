@@ -235,6 +235,47 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
 
   const activeTranscriptRef = useRef<HTMLDivElement>(null);
   const transcriptContainerRef = useRef<HTMLDivElement>(null);
+  const activeSidebarClipRef = useRef<HTMLDivElement>(null);
+  const sidebarClipsContainerRef = useRef<HTMLDivElement>(null);
+  const activeFullTranscriptRef = useRef<HTMLDivElement>(null);
+  const fullTranscriptContainerRef = useRef<HTMLDivElement>(null);
+
+  const transcript = interview.transcript as TranscriptEntry[] | null;
+  const scores = interview.scores as Record<string, number> | null;
+  const hasClips = transcript && transcript.length > 0 && transcript.some((t) => t.clip_url);
+
+  // Default to first clip if hasClips is true
+  useEffect(() => {
+    if (hasClips && activeClipIndex === null) {
+      setActiveClipIndex(0);
+    }
+  }, [hasClips, activeClipIndex]);
+
+  // Scroll active clip/transcript into view when activeClipIndex changes
+  useEffect(() => {
+    if (activeClipIndex !== null) {
+      if (activeSidebarClipRef.current && sidebarClipsContainerRef.current) {
+        const container = sidebarClipsContainerRef.current;
+        const activeEl = activeSidebarClipRef.current;
+        const containerHalfHeight = container.clientHeight / 2;
+        const activeHalfHeight = activeEl.clientHeight / 2;
+        container.scrollTo({
+          top: activeEl.offsetTop - containerHalfHeight + activeHalfHeight,
+          behavior: "smooth",
+        });
+      }
+      if (activeFullTranscriptRef.current && fullTranscriptContainerRef.current) {
+        const container = fullTranscriptContainerRef.current;
+        const activeEl = activeFullTranscriptRef.current;
+        const containerHalfHeight = container.clientHeight / 2;
+        const activeHalfHeight = activeEl.clientHeight / 2;
+        container.scrollTo({
+          top: activeEl.offsetTop - containerHalfHeight + activeHalfHeight,
+          behavior: "smooth",
+        });
+      }
+    }
+  }, [activeClipIndex]);
 
   useEffect(() => {
     if (activeTranscriptRef.current && transcriptContainerRef.current) {
@@ -262,11 +303,6 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
       document.exitFullscreen();
     }
   };
-
-  const transcript = interview.transcript as TranscriptEntry[] | null;
-  const scores = interview.scores as Record<string, number> | null;
-
-  const hasClips = transcript && transcript.length > 0 && transcript.some((t) => t.clip_url);
 
   /** Play a clip from the list */
   const handleClipSelect = (idx: number) => {
@@ -326,12 +362,16 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
                 Question Clips
               </h3>
 
-              <div className="flex-1 overflow-y-auto space-y-2 pr-1.5 visible-sidebar-scrollbar">
+              <div 
+                ref={sidebarClipsContainerRef}
+                className="flex-1 overflow-y-auto space-y-2 pr-1.5 visible-sidebar-scrollbar"
+              >
                 {transcript!.map((entry, i) => {
                   const isActive = activeClipIndex === i;
                   return (
                     <div
                       key={i}
+                      ref={isActive ? activeSidebarClipRef : null}
                       onClick={() => handleClipSelect(i)}
                       className={`group cursor-pointer rounded-xl border transition-all duration-200 ${
                         isActive
@@ -517,13 +557,34 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
             <MessageSquare className="w-4 h-4 text-slate-400" />
             Full Transcript
           </h3>
-          <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1.5 visible-sidebar-scrollbar">
-            {transcript.map((entry, i) => (
-              <div key={i} className="p-3 rounded-xl border border-slate-100 bg-slate-50/50">
-                <p className="text-xs font-bold text-indigo-700 mb-1">Q{i + 1}: {entry.question}</p>
-                {entry.text && <p className="text-sm text-slate-600 leading-relaxed">{entry.text}</p>}
-              </div>
-            ))}
+          <div 
+            ref={fullTranscriptContainerRef}
+            className="space-y-3 max-h-[300px] overflow-y-auto pr-1.5 visible-sidebar-scrollbar"
+          >
+            {transcript.map((entry, i) => {
+              const isActive = activeClipIndex === i;
+              return (
+                <div
+                  key={i}
+                  ref={isActive ? activeFullTranscriptRef : null}
+                  onClick={() => handleClipSelect(i)}
+                  className={`p-3 rounded-xl border transition-all duration-200 cursor-pointer ${
+                    isActive
+                      ? "bg-indigo-50 border-indigo-200 shadow-sm"
+                      : "bg-slate-50/50 border-slate-100 hover:bg-slate-50 hover:border-slate-200"
+                  }`}
+                >
+                  <p className={`text-xs font-bold mb-1 ${isActive ? "text-indigo-900" : "text-indigo-700"}`}>
+                    Q{i + 1}: {entry.question}
+                  </p>
+                  {entry.text && (
+                    <p className={`text-sm leading-relaxed ${isActive ? "text-slate-800 font-medium" : "text-slate-600"}`}>
+                      {entry.text}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

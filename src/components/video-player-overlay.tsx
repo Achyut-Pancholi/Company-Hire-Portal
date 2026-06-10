@@ -146,6 +146,7 @@ export function VideoPlayerOverlay({
             controlsList="nofullscreen"
             className="w-full flex-1 object-contain min-h-0"
             onTimeUpdate={handleTimeUpdate}
+            onEnded={playNext}
           />
 
           {/* Fullscreen toggle */}
