@@ -244,6 +244,31 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
   const scores = interview.scores as Record<string, number> | null;
   const hasClips = transcript && transcript.length > 0 && transcript.some((t) => t.clip_url);
 
+  // Resolve active index based on clips or timestamps
+  const activeQuestionIndex = (() => {
+    if (hasClips) {
+      return activeClipIndex;
+    }
+    if (!transcript || transcript.length === 0) return null;
+
+    // Check if it's the old format (no timestamps)
+    const isOldFormat = transcript.every((t) => !t.timestamp_start);
+    if (isOldFormat && videoRef.current && videoRef.current.duration > 0) {
+      const duration = videoRef.current.duration;
+      const segmentLength = duration / transcript.length;
+      return Math.min(Math.floor(currentTime / segmentLength), transcript.length - 1);
+    }
+
+    const index = transcript.findIndex(
+      (t) =>
+        t.timestamp_start !== undefined &&
+        t.timestamp_end !== undefined &&
+        currentTime >= t.timestamp_start! &&
+        currentTime <= t.timestamp_end!
+    );
+    return index !== -1 ? index : null;
+  })();
+
   // Default to first clip if hasClips is true
   useEffect(() => {
     if (hasClips && activeClipIndex === null) {
@@ -251,9 +276,16 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
     }
   }, [hasClips, activeClipIndex]);
 
-  // Scroll active clip/transcript into view when activeClipIndex changes
+  // Sync activeClipIndex with computed active index in merged-video mode
   useEffect(() => {
-    if (activeClipIndex !== null) {
+    if (!hasClips && activeQuestionIndex !== null && activeQuestionIndex !== activeClipIndex) {
+      setActiveClipIndex(activeQuestionIndex);
+    }
+  }, [hasClips, activeQuestionIndex, activeClipIndex]);
+
+  // Scroll active clip/transcript into view when activeQuestionIndex changes
+  useEffect(() => {
+    if (activeQuestionIndex !== null) {
       if (activeSidebarClipRef.current && sidebarClipsContainerRef.current) {
         const container = sidebarClipsContainerRef.current;
         const activeEl = activeSidebarClipRef.current;
@@ -274,21 +306,18 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
           behavior: "smooth",
         });
       }
+      if (activeTranscriptRef.current && transcriptContainerRef.current) {
+        const container = transcriptContainerRef.current;
+        const activeEl = activeTranscriptRef.current;
+        const containerHalfHeight = container.clientHeight / 2;
+        const activeHalfHeight = activeEl.clientHeight / 2;
+        container.scrollTo({
+          top: activeEl.offsetTop - containerHalfHeight + activeHalfHeight,
+          behavior: "smooth",
+        });
+      }
     }
-  }, [activeClipIndex]);
-
-  useEffect(() => {
-    if (activeTranscriptRef.current && transcriptContainerRef.current) {
-      const container = transcriptContainerRef.current;
-      const activeEl = activeTranscriptRef.current;
-      const containerHalfHeight = container.clientHeight / 2;
-      const activeHalfHeight = activeEl.clientHeight / 2;
-      container.scrollTo({
-        top: activeEl.offsetTop - containerHalfHeight + activeHalfHeight,
-        behavior: "smooth",
-      });
-    }
-  }, [currentTime]);
+  }, [activeQuestionIndex]);
 
   useEffect(() => {
     const onFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -367,7 +396,7 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
                 className="flex-1 overflow-y-auto space-y-2 pr-1.5 visible-sidebar-scrollbar"
               >
                 {transcript!.map((entry, i) => {
-                  const isActive = activeClipIndex === i;
+                  const isActive = activeQuestionIndex === i;
                   return (
                     <div
                       key={i}
@@ -466,11 +495,7 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
               >
                 {transcript && transcript.length > 0 ? (
                   transcript.map((entry: TranscriptEntry, i: number) => {
-                    const isActive =
-                      entry.timestamp_start !== undefined &&
-                      entry.timestamp_end !== undefined &&
-                      currentTime >= entry.timestamp_start! &&
-                      currentTime <= entry.timestamp_end!;
+                    const isActive = activeQuestionIndex === i;
                     return (
                       <div
                         key={i}
@@ -562,7 +587,7 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
             className="space-y-3 max-h-[300px] overflow-y-auto pr-1.5 visible-sidebar-scrollbar"
           >
             {transcript.map((entry, i) => {
-              const isActive = activeClipIndex === i;
+              const isActive = activeQuestionIndex === i;
               return (
                 <div
                   key={i}
