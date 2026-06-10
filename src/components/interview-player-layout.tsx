@@ -517,7 +517,7 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
             <MessageSquare className="w-4 h-4 text-slate-400" />
             Full Transcript
           </h3>
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1.5 visible-sidebar-scrollbar">
             {transcript.map((entry, i) => (
               <div key={i} className="p-3 rounded-xl border border-slate-100 bg-slate-50/50">
                 <p className="text-xs font-bold text-indigo-700 mb-1">Q{i + 1}: {entry.question}</p>
