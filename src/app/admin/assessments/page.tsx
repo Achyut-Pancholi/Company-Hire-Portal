@@ -240,32 +240,28 @@ export default function AssessmentsPage() {
     }
   }, [targetDept, jobs]);
 
-  // Load configured questions from localStorage or fallback
-  useEffect(() => {
-    if (!isClient) return;
-    const matrixKey = `${targetDept}|${subDept}`;
-    const stored = localStorage.getItem('elasticrew_question_matrix');
-    
-    let pool: Record<string, string[]> = BASELINE_FALLBACK;
-    if (stored) {
-      try {
-        pool = JSON.parse(stored);
-      } catch (e) {
-        console.error("Failed to parse elasticrew_question_matrix", e);
+  // Load configured questions from database (questions_bank table)
+  const fetchVideoBotQuestions = async () => {
+    if (!isClient || !targetDept || !subDept) return;
+    try {
+      const res = await fetch(`/api/questions`, {
+        headers: { 'x-api-key': 'kl_internal_admin_secret_2026_secure' }
+      });
+      if (res.ok) {
+        const allQuestions = await res.json();
+        // Filter questions for current dept + sub_dept
+        const filtered = allQuestions.filter((q: any) => 
+          q.department === targetDept && q.sub_department === subDept
+        );
+        setQuestions(filtered.map((q: any) => q.question_text));
       }
-    } else {
-      localStorage.setItem('elasticrew_question_matrix', JSON.stringify(BASELINE_FALLBACK));
+    } catch (e) {
+      console.error("Failed to fetch video bot questions:", e);
     }
+  };
 
-    const setQuestionsList = pool[matrixKey] || [
-      "Please describe your technical background and experience level with core development tools.",
-      "How do you ensure data accuracy and track exceptions within your workflow pipelines?",
-      "Describe a challenging technical constraint you encountered and how you resolved it.",
-      "How do you approach learning a completely new structural framework or corporate protocol?",
-      "What methods do you employ to collaborate cleanly and share documentation within distributed engineering teams?"
-    ];
-
-    setQuestions(setQuestionsList);
+  useEffect(() => {
+    fetchVideoBotQuestions();
   }, [targetDept, subDept, isClient]);
 
   // Toast auto-clear
@@ -278,32 +274,59 @@ export default function AssessmentsPage() {
     }
   }, [toast]);
 
-  // Save current questions pool to localStorage
-  const handleSaveConfig = () => {
-    const matrixKey = `${targetDept}|${subDept}`;
-    const stored = localStorage.getItem('elasticrew_question_matrix');
-    let pool: Record<string, string[]> = { ...BASELINE_FALLBACK };
-
-    if (stored) {
-      try {
-        pool = JSON.parse(stored);
-      } catch (e) {
-        console.error("Failed to parse elasticrew_question_matrix on save", e);
-      }
-    }
-
+  // Save current questions to database (questions_bank table)
+  const handleSaveConfig = async () => {
     // Filter out empty entries
     const cleanedQuestions = questions.map(q => q.trim()).filter(Boolean);
-    pool[matrixKey] = cleanedQuestions;
-    localStorage.setItem('elasticrew_question_matrix', JSON.stringify(pool));
-    
-    // Sync state
-    setQuestions(cleanedQuestions);
 
-    setToast({
-      type: 'success',
-      message: `Configuration updated successfully for ${targetDept} → ${subDept}.`
-    });
+    try {
+      // 1. Delete existing questions for this dept + sub_dept
+      const existingRes = await fetch(`/api/questions`, {
+        headers: { 'x-api-key': 'kl_internal_admin_secret_2026_secure' }
+      });
+      if (existingRes.ok) {
+        const allQuestions = await existingRes.json();
+        const toDelete = allQuestions.filter((q: any) => 
+          q.department === targetDept && q.sub_department === subDept
+        );
+        // Delete old questions
+        for (const q of toDelete) {
+          await fetch(`/api/questions?id=${q.id}`, {
+            method: 'DELETE',
+            headers: { 'x-api-key': 'kl_internal_admin_secret_2026_secure' }
+          });
+        }
+      }
+
+      // 2. Insert all current questions
+      for (const qText of cleanedQuestions) {
+        await fetch('/api/questions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': 'kl_internal_admin_secret_2026_secure'
+          },
+          body: JSON.stringify({
+            department: targetDept,
+            sub_department: subDept,
+            question_text: qText,
+            is_mandatory: false
+          })
+        });
+      }
+
+      setQuestions(cleanedQuestions);
+      setToast({
+        type: 'success',
+        message: `Configuration saved to database for ${targetDept} → ${subDept}. (${cleanedQuestions.length} questions)`
+      });
+    } catch (err) {
+      console.error("Error saving questions to DB:", err);
+      setToast({
+        type: 'error',
+        message: 'Failed to save questions to database.'
+      });
+    }
   };
 
   // Inline question changes
@@ -338,25 +361,43 @@ export default function AssessmentsPage() {
     setIsModalOpen(true);
   };
 
-  // Save question from modal
-  const handleSaveModalQuestion = (e: React.FormEvent) => {
+  // Save question from modal (add or edit)
+  const handleSaveModalQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!modalValue.trim()) return;
 
     if (modalMode === 'add') {
-      setQuestions([...questions, modalValue.trim()]);
-      setToast({
-        type: 'success',
-        message: 'Question added successfully.'
-      });
+      // Save directly to DB
+      try {
+        const res = await fetch('/api/questions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': 'kl_internal_admin_secret_2026_secure'
+          },
+          body: JSON.stringify({
+            department: targetDept,
+            sub_department: subDept,
+            question_text: modalValue.trim(),
+            is_mandatory: false
+          })
+        });
+        if (res.ok) {
+          setQuestions([...questions, modalValue.trim()]);
+          setToast({ type: 'success', message: 'Question added and saved to database.' });
+        } else {
+          const err = await res.json();
+          setToast({ type: 'error', message: err.error || 'Failed to add question.' });
+        }
+      } catch (err) {
+        setToast({ type: 'error', message: 'Error adding question.' });
+      }
     } else if (modalMode === 'edit' && editingIndex !== null) {
+      // For edit, update local state - user clicks "Save Configuration" to persist all changes
       const nextQ = [...questions];
       nextQ[editingIndex] = modalValue.trim();
       setQuestions(nextQ);
-      setToast({
-        type: 'success',
-        message: 'Question updated successfully.'
-      });
+      setToast({ type: 'success', message: 'Question updated. Click "Save Configuration" to persist changes.' });
     }
 
     setIsModalOpen(false);
