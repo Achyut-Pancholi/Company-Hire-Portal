@@ -165,19 +165,30 @@ export default function CandidatesPage() {
   // Helper to extract candidate details
   const getCandidateSubDept = (c: any) => {
     const job = jobs.find((j: any) => j.title === c.jobApplied || j.title === c.job_applied);
-    return job?.sub_department || "General";
+    if (job?.sub_department) return job.sub_department;
+    // fallback: check if any job's sub_department appears in the candidate's job_applied string
+    const jobApplied = (c.jobApplied || c.job_applied || '').toLowerCase();
+    const fallbackJob = jobs.find((j: any) => j.sub_department && jobApplied.includes(j.sub_department.toLowerCase()));
+    return fallbackJob?.sub_department || null; // null = unknown
   };
   const getCandidateDept = (c: any) => {
     const job = jobs.find((j: any) => j.title === c.jobApplied || j.title === c.job_applied);
-    return job?.department || "General";
+    if (job?.department) return job.department;
+    // fallback: check if any job's department appears in the candidate's job_applied string
+    const jobApplied = (c.jobApplied || c.job_applied || '').toLowerCase();
+    const fallbackJob = jobs.find((j: any) => j.department && jobApplied.includes(j.department.toLowerCase()));
+    return fallbackJob?.department || null; // null = unknown
   };
 
-  // Filter candidates list
+  // Filter candidates list — if dept/subdept is unknown, show the candidate anyway (fail open)
   const filteredCandidates = candidates.filter((c: any) => {
     const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           (c.unique_id || String(c.id)).toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesDept = selectedDept === 'all' || getCandidateDept(c) === selectedDept;
-    const matchesSubDept = selectedSubDept === 'all' || getCandidateSubDept(c) === selectedSubDept;
+    const candidateDept = getCandidateDept(c);
+    const candidateSubDept = getCandidateSubDept(c);
+    // If filter is set but we can't resolve candidate's dept, show them (don't hide unknowns)
+    const matchesDept = selectedDept === 'all' || candidateDept === null || candidateDept === selectedDept;
+    const matchesSubDept = selectedSubDept === 'all' || candidateSubDept === null || candidateSubDept === selectedSubDept;
     return matchesSearch && matchesDept && matchesSubDept;
   });
 
