@@ -7,7 +7,7 @@ export default function AdminPage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace('/admin/video-bot-admin');
+    router.replace('/admin/candidates?view=videobot');
   }, [router]);
 
   return null;

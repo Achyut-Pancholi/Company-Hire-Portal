@@ -13,7 +13,6 @@ const Sidebar = () => {
     { name: 'Candidates', path: '/admin/candidates', icon: FileText },
     { name: 'Assessments', path: '/admin/assessments', icon: CheckSquare },
     { name: 'Reports', path: '/admin/reports', icon: BarChart },
-    { name: 'Video Bot Screening', path: '/admin/video-bot-admin', icon: Video },
     { name: 'Departments', path: '/admin/jobpostings', icon: Briefcase },
     { name: 'Settings', path: '/admin/settings', icon: Settings },
   ];
@@ -41,7 +40,26 @@ const Sidebar = () => {
       
       <nav style={{ flex: 1, padding: '1.5rem 1rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {navItems.map((item) => {
-          const isActive = pathname === item.path || (item.path !== '/admin' && pathname?.startsWith(item.path));
+          let isActive = false;
+          
+          if (typeof window !== 'undefined') {
+            const currentParams = new URLSearchParams(window.location.search);
+            const currentView = currentParams.get('view');
+            
+            if (item.path.includes('?')) {
+              const [basePath, searchStr] = item.path.split('?');
+              const itemParams = new URLSearchParams(searchStr);
+              const itemView = itemParams.get('view');
+              isActive = pathname === basePath && currentView === itemView;
+            } else if (item.path === '/admin/candidates') {
+              isActive = pathname === '/admin/candidates' && (!currentView || currentView === 'candidates' || currentView === 'tech');
+            } else {
+              isActive = pathname === item.path || (item.path !== '/admin' && pathname?.startsWith(item.path));
+            }
+          } else {
+            // Fallback for SSR
+            isActive = pathname === item.path || (item.path !== '/admin' && pathname?.startsWith(item.path));
+          }
           return (
             <Link
               key={item.name}

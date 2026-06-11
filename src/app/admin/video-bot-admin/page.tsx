@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Video, Settings2, PlayCircle, Eye, CheckCircle, XCircle, Send, Trash2, Loader2, Mail, CheckSquare, XSquare, MessageSquare } from 'lucide-react';
 import { useAppContext } from '@/components/admin/context/AppContext';
 import QuestionBankModal from '@/components/admin/QuestionBankModal';
@@ -10,6 +11,14 @@ import ConfirmActionModal from '@/components/admin/ConfirmActionModal';
 const NEXT_JS_URL = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
 
 const VideoBot = () => {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.pathname === '/admin/video-bot-admin') {
+      router.replace('/admin/candidates?view=videobot');
+    }
+  }, [router]);
+
   const { candidates, jobs, refreshCandidates, apiFetch } = useAppContext();
   const [showQuestionModal, setShowQuestionModal] = useState(false);
   

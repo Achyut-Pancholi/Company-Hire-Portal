@@ -4,6 +4,21 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Search, Loader2, Send, X } from 'lucide-react';
 import { useAppContext } from '@/components/admin/context/AppContext';
 import StandardResume from '@/components/admin/StandardResume';
+import VideoBot from '../video-bot-admin/page';
+import { SchedulerProvider } from '../modules/scheduler/store/schedulerReducer.js';
+import dynamic from 'next/dynamic';
+
+const SchedulerApp = dynamic(
+  () => import('../modules/scheduler/index').then((mod) => mod.SchedulerApp),
+  {
+    ssr: false,
+    loading: () => (
+      <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+        Loading scheduler component...
+      </div>
+    )
+  }
+);
 
 export default function CandidatesPage() {
   const { jobs, candidates, refreshCandidates, apiFetch } = useAppContext();
@@ -12,6 +27,37 @@ export default function CandidatesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDept, setSelectedDept] = useState('all');
   const [selectedSubDept, setSelectedSubDept] = useState('all');
+
+  // View state: All Candidates, Video Bot Screening, Tech Scheduler
+  const [activeView, setActiveView] = useState<'candidates' | 'videobot' | 'tech'>('candidates');
+
+  useEffect(() => {
+    const checkView = () => {
+      const params = new URLSearchParams(window.location.search);
+      const v = params.get('view') as 'candidates' | 'videobot' | 'tech';
+      if (v === 'videobot' || v === 'tech') {
+        setActiveView(v);
+      } else {
+        setActiveView('candidates');
+      }
+    };
+    checkView();
+    window.addEventListener('popstate', checkView);
+    return () => window.removeEventListener('popstate', checkView);
+  }, []);
+
+  const handleViewChange = (view: 'candidates' | 'videobot' | 'tech') => {
+    setActiveView(view);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (view === 'candidates') {
+        url.searchParams.delete('view');
+      } else {
+        url.searchParams.set('view', view);
+      }
+      window.history.pushState({}, '', url.pathname + url.search);
+    }
+  };
 
   // Add Candidate Modal States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -366,63 +412,77 @@ export default function CandidatesPage() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
       
       {/* HEADER SECTION */}
-      <header className="header-actions" style={{ marginBottom: '24px' }}>
-        <h1 className="page-title" style={{ margin: 0 }}>Candidates</h1>
-        <button className="btn-add" onClick={() => setIsAddModalOpen(true)}>
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style={{ marginRight: '6px' }}>
-            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
-          </svg>
-          Add Candidate
-        </button>
-      </header>
+      {activeView === 'candidates' && (
+        <header className="header-actions" style={{ marginBottom: '24px' }}>
+          <h1 className="page-title" style={{ margin: 0 }}>Candidates</h1>
+          <button className="btn-add" onClick={() => setIsAddModalOpen(true)}>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style={{ marginRight: '6px' }}>
+              <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+            </svg>
+            Add Candidate
+          </button>
+        </header>
+      )}
+
+      {activeView === 'videobot' && (
+        <header className="header-actions" style={{ marginBottom: '24px' }}>
+          <h1 className="page-title" style={{ margin: 0 }}>Video Bot Screening</h1>
+        </header>
+      )}
 
       {/* FILTER & SEARCH CONTAINER */}
       <section className="candidates-section">
-        <div className="filter-bar">
-          <div className="search-box">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input 
-              type="text" 
-              placeholder="Search by candidate name or ID..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-            />
+        {activeView === 'candidates' && (
+          <div className="filter-bar">
+            <div className="search-box">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input 
+                type="text" 
+                placeholder="Search by candidate name or ID..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <div className="filter-group">
+              <select 
+                className="filter-select" 
+                value={selectedDept}
+                onChange={e => {
+                  setSelectedDept(e.target.value);
+                  setSelectedSubDept('all');
+                }}
+              >
+                <option value="all">All Departments</option>
+                {availableDepartments.map(dept => (
+                  <option key={dept} value={dept}>{dept}</option>
+                ))}
+              </select>
+              
+              <select 
+                className="filter-select"
+                value={selectedSubDept}
+                disabled={selectedDept === 'all'}
+                onChange={e => setSelectedSubDept(e.target.value)}
+              >
+                <option value="all">All Sub Departments</option>
+                {selectedDept !== 'all' && getSubDepartments(selectedDept).map(sd => (
+                  <option key={sd} value={sd}>{sd}</option>
+                ))}
+              </select>
+            </div>
           </div>
-          <div className="filter-group">
-            <select 
-              className="filter-select" 
-              value={selectedDept}
-              onChange={e => {
-                setSelectedDept(e.target.value);
-                setSelectedSubDept('all');
-              }}
-            >
-              <option value="all">All Departments</option>
-              {availableDepartments.map(dept => (
-                <option key={dept} value={dept}>{dept}</option>
-              ))}
-            </select>
-            
-            <select 
-              className="filter-select"
-              value={selectedSubDept}
-              disabled={selectedDept === 'all'}
-              onChange={e => setSelectedSubDept(e.target.value)}
-            >
-              <option value="all">All Sub Departments</option>
-              {selectedDept !== 'all' && getSubDepartments(selectedDept).map(sd => (
-                <option key={sd} value={sd}>{sd}</option>
-              ))}
-            </select>
-          </div>
-        </div>
+        )}
 
         {/* WORKFLOW SUB NAVIGATION TABS */}
         <div className="sub-nav-container">
-          <button className="sub-nav-tab active">
+          <button 
+            type="button"
+            onClick={() => handleViewChange('candidates')} 
+            className={`sub-nav-tab ${activeView === 'candidates' ? 'active' : ''}`}
+          >
             <svg className="tab-icon icon-blue" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
               <circle cx="9" cy="7" r="4"></circle>
@@ -433,29 +493,37 @@ export default function CandidatesPage() {
             <span className="count-pill">{filteredCandidates.length}</span>
           </button>
           
-          <a href="/admin/video-bot-admin" className="sub-nav-tab text-decoration-none">
+          <button 
+            type="button"
+            onClick={() => handleViewChange('videobot')} 
+            className={`sub-nav-tab text-decoration-none ${activeView === 'videobot' ? 'active' : ''}`}
+          >
             <svg className="tab-icon icon-purple" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M23 7l-7 5 7 5V7z"></path>
               <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
             </svg>
             <span>Video Bot Screening</span>
-          </a>
+          </button>
           
-          <button onClick={() => alert("MCQ Assessment is not configured yet.")} className="sub-nav-tab text-decoration-none">
+          <button type="button" onClick={() => alert("MCQ Assessment is not configured yet.")} className="sub-nav-tab text-decoration-none">
             <svg className="tab-icon icon-blue-alt" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
             </svg>
             <span>MCQ Assessment</span>
           </button>
           
-          <a href="/admin/technicalscheduler" className="sub-nav-tab text-decoration-none">
+          <button 
+            type="button"
+            onClick={() => handleViewChange('tech')} 
+            className={`sub-nav-tab text-decoration-none ${activeView === 'tech' ? 'active' : ''}`}
+          >
             <svg className="tab-icon icon-green" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
             </svg>
             <span>Tech Scheduler</span>
-          </a>
+          </button>
           
-          <button onClick={() => alert("HR Interview is not configured yet.")} className="sub-nav-tab text-decoration-none">
+          <button type="button" onClick={() => alert("HR Interview is not configured yet.")} className="sub-nav-tab text-decoration-none">
             <svg className="tab-icon icon-amber" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
             </svg>
@@ -464,68 +532,85 @@ export default function CandidatesPage() {
         </div>
 
         {/* CANDIDATES DATA TABLE */}
-        <div className="table-responsive-wrapper">
-          <table className="candidate-table">
-            <thead>
-              <tr>
-                <th>Candidate ID</th>
-                <th>Candidate Name</th>
-                <th>Sub Dept</th>
-                <th>Stage</th>
-                <th>ElastiCrew Resume</th>
-                <th className="col-action" style={{ textAlign: 'right' }}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredCandidates.length === 0 ? (
+        {activeView === 'candidates' && (
+          <div className="table-responsive-wrapper">
+            <table className="candidate-table">
+              <thead>
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: 'var(--gray-500)', fontStyle: 'italic' }}>
-                    No candidates found in this view context.
-                  </td>
+                  <th>Candidate ID</th>
+                  <th>Candidate Name</th>
+                  <th>Sub Dept</th>
+                  <th>Stage</th>
+                  <th>ElastiCrew Resume</th>
+                  <th className="col-action" style={{ textAlign: 'right' }}>Action</th>
                 </tr>
-              ) : (
-                filteredCandidates.map((c: any) => {
-                  const displayId = c.display_id || c.unique_id || String(c.id).substring(0, 8);
-                  const resumeFilename = `${c.name.toLowerCase().replace(/\s+/g, '_')}_resume.pdf`;
-                  return (
-                    <tr key={c.id} className="candidate-row">
-                      <td><span className="id-badge">{displayId}</span></td>
-                      <td>
-                        <strong 
-                          style={{ color: 'var(--text-dark)', cursor: 'pointer' }}
-                          onClick={() => setSelectedCandidate(c)}
-                        >
-                          {c.name}
-                        </strong>
-                      </td>
-                      <td>{getCandidateSubDept(c)}</td>
-                      <td>{renderStageBadge(c)}</td>
-                      <td>
-                        <span className="resume-tag" onClick={() => setSelectedCandidate(c)}>
-                          📄 {resumeFilename}
-                        </span>
-                      </td>
-                      <td className="col-action">
-                        <select 
-                          className="action-dropdown"
-                          value=""
-                          onChange={e => handleDropdownAction(e.target.value, c)}
-                        >
-                          <option value="" disabled>Manage</option>
-                          <option value="video">Send Video Bot Invite</option>
-                          <option value="mcq">Send MCQ Invite</option>
-                          <option value="tech">Send Tech Invite</option>
-                          <option value="hr">Send HR Invite</option>
-                          <option value="delete" className="danger-option">Delete Candidate</option>
-                        </select>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filteredCandidates.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: 'var(--gray-500)', fontStyle: 'italic' }}>
+                      No candidates found in this view context.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredCandidates.map((c: any) => {
+                    const displayId = c.display_id || c.unique_id || String(c.id).substring(0, 8);
+                    const resumeFilename = `${c.name.toLowerCase().replace(/\s+/g, '_')}_resume.pdf`;
+                    return (
+                      <tr key={c.id} className="candidate-row">
+                        <td><span className="id-badge">{displayId}</span></td>
+                        <td>
+                          <strong 
+                            style={{ color: 'var(--text-dark)', cursor: 'pointer' }}
+                            onClick={() => setSelectedCandidate(c)}
+                          >
+                            {c.name}
+                          </strong>
+                        </td>
+                        <td>{getCandidateSubDept(c)}</td>
+                        <td>{renderStageBadge(c)}</td>
+                        <td>
+                          <span className="resume-tag" onClick={() => setSelectedCandidate(c)}>
+                            📄 {resumeFilename}
+                          </span>
+                        </td>
+                        <td className="col-action">
+                          <select 
+                            className="action-dropdown"
+                            value=""
+                            onChange={e => handleDropdownAction(e.target.value, c)}
+                          >
+                            <option value="" disabled>Manage</option>
+                            <option value="video">Send Video Bot Invite</option>
+                            <option value="mcq">Send MCQ Invite</option>
+                            <option value="tech">Send Tech Invite</option>
+                            <option value="hr">Send HR Invite</option>
+                            <option value="delete" className="danger-option">Delete Candidate</option>
+                          </select>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* IN-PLACE WORKSPACES */}
+        {activeView === 'videobot' && (
+          <div style={{ marginTop: '24px' }}>
+            <VideoBot />
+          </div>
+        )}
+
+        {activeView === 'tech' && (
+          <div style={{ marginTop: '24px' }}>
+            <SchedulerProvider>
+              <SchedulerApp />
+            </SchedulerProvider>
+          </div>
+        )}
       </section>
 
       {/* MODAL 1: ADD CANDIDATE MODAL */}
