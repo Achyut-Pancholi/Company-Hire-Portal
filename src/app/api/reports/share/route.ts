@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase/server";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
@@ -57,7 +57,7 @@ function reportEmailTemplate(
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Your Interview Report — ElastiCrew</title>
+<title>Your Interview Report â€” ElastiCrew</title>
 </head>
 <body style="margin:0;padding:0;background:#f4f7f6;font-family:'Helvetica Neue',Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f7f6;padding:40px 20px;">
@@ -68,7 +68,7 @@ function reportEmailTemplate(
         <tr>
           <td style="background:linear-gradient(135deg,#0E2D7B 0%,#1e40af 100%);padding:32px 40px;text-align:center;">
             <div style="display:inline-block;vertical-align:middle;">
-              <span style="color:#7DBA00;font-size:22px;font-weight:900;letter-spacing:-0.5px;">Elasti</span><span style="color:#fff;font-size:22px;font-weight:900;">Crew</span>
+              <span style="color:#0D9488;font-size:22px;font-weight:900;letter-spacing:-0.5px;">Elasti</span><span style="color:#fff;font-size:22px;font-weight:900;">Crew</span>
             </div>
             <p style="color:rgba(255,255,255,0.6);margin:8px 0 0;font-size:12px;letter-spacing:0.8px;text-transform:uppercase;">Interview Report</p>
           </td>
@@ -78,7 +78,7 @@ function reportEmailTemplate(
         <tr>
           <td style="padding:40px;">
             <p style="color:#64748b;font-size:12px;margin:0 0 6px;text-transform:uppercase;letter-spacing:1px;font-weight:600;">Your Report is Ready</p>
-            <h1 style="color:#0E2D7B;font-size:24px;font-weight:800;margin:0 0 14px;line-height:1.3;">Hello, ${candidateName} 👋</h1>
+            <h1 style="color:#0E2D7B;font-size:24px;font-weight:800;margin:0 0 14px;line-height:1.3;">Hello, ${candidateName} ðŸ‘‹</h1>
             <p style="color:#475569;font-size:15px;line-height:1.7;margin:0 0 28px;">
               Your interview report for the <strong style="color:#0E2D7B;">${jobRole}</strong> position has been prepared and is now available for you to view.
             </p>
@@ -104,7 +104,7 @@ function reportEmailTemplate(
               <tr>
                 <td align="center">
                   <a href="${reportUrl}" style="display:inline-block;background:linear-gradient(135deg,#0E2D7B,#1e40af);color:#fff;text-decoration:none;font-size:15px;font-weight:700;padding:16px 48px;border-radius:12px;letter-spacing:0.3px;">
-                    View Full Report →
+                    View Full Report â†’
                   </a>
                 </td>
               </tr>
@@ -122,7 +122,7 @@ function reportEmailTemplate(
           <td style="background:#f8fafc;padding:20px 40px;border-top:1px solid #e2e8f0;text-align:center;">
             <p style="color:#94a3b8;font-size:12px;margin:0;">
               This report is shared by ElastiCrew Hiring Team.<br>
-              © 2025 ElastiCrew. All rights reserved.
+              Â© 2025 ElastiCrew. All rights reserved.
             </p>
           </td>
         </tr>
@@ -198,7 +198,7 @@ export async function POST(req: NextRequest) {
       await transporter.sendMail({
         from: `"${fromName}" <${fromEmail}>`,
         to: candidateEmail,
-        subject: `Your Interview Report is Ready — ${jobRole} Position`,
+        subject: `Your Interview Report is Ready â€” ${jobRole} Position`,
         html: reportEmailTemplate(candidateName, jobRole, reportUrl, scores || {}, recommendation || "Under Review"),
       });
     }
@@ -214,3 +214,4 @@ export async function POST(req: NextRequest) {
 export async function OPTIONS() {
   return NextResponse.json({}, { status: 200 });
 }
+

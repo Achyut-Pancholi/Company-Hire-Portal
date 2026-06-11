@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -19,7 +19,7 @@ import {
   Radar, RadarChart, PolarGrid, Legend, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer
 } from 'recharts';
 
-/* ─────────────────────────── helpers ─────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const NEXT_JS_URL = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
 
 const scoreColor = (v: any) => {
@@ -144,7 +144,7 @@ const scoreLabel = (v: any) => {
 const getInitials = (name = '') =>
   name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 
-/* ─────────────────── SVG Radial Progress ─────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ SVG Radial Progress â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const RadialProgress = ({ value = 0, size = 80, stroke = 7, color = '#3b82f6', label }: any) => {
   const r = (size - stroke) / 2;
   const circ = 2 * Math.PI * r;
@@ -169,7 +169,7 @@ const RadialProgress = ({ value = 0, size = 80, stroke = 7, color = '#3b82f6', l
   );
 };
 
-/* ──────────────── Horizontal bar chart ─────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Horizontal bar chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const BarChart = ({ data = [], color = '#3b82f6' }: { data: any[]; color?: string }) => {
   const max = Math.max(...data.map((d: any) => d.value), 1);
   return (
@@ -191,7 +191,7 @@ const BarChart = ({ data = [], color = '#3b82f6' }: { data: any[]; color?: strin
   );
 };
 
-/* ──────────────── Mini Donut chart ──────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Mini Donut chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const Donut = ({ slices = [], size = 70 }: { slices: any[]; size?: number }) => {
   const r = size / 2 - 8;
   const circ = 2 * Math.PI * r;
@@ -218,7 +218,7 @@ const Donut = ({ slices = [], size = 70 }: { slices: any[]; size?: number }) => 
   );
 };
 
-/* ──────────────── Skill Match Visual ─────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Skill Match Visual â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const SkillMatch = ({ jobSkills = [], candidateSkills = [] }: { jobSkills: string[]; candidateSkills: string[] }) => {
   const norm = (s: string) => s.trim().toLowerCase();
   const cSet = new Set(candidateSkills.map(norm));
@@ -249,7 +249,7 @@ const SkillMatch = ({ jobSkills = [], candidateSkills = [] }: { jobSkills: strin
   );
 };
 
-/* ────────────────── Transcript Analysis ───────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Transcript Analysis â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const TranscriptAnalysis = ({ transcript = [] }: { transcript: any[] }) => {
   if (!transcript || transcript.length === 0) {
     return <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>No transcript available yet.</div>;
@@ -264,12 +264,12 @@ const TranscriptAnalysis = ({ transcript = [] }: { transcript: any[] }) => {
           </div>
           {entry.answer && (
             <p style={{ fontSize: '0.78rem', color: 'var(--gray-700)', margin: '0 0 0 26px', lineHeight: 1.5 }}>
-              <span style={{ color: 'var(--brand-green)', fontWeight: '700' }}>A: </span>{entry.answer}
+              <span style={{ color: 'var(--brand-teal)', fontWeight: '700' }}>A: </span>{entry.answer}
             </p>
           )}
           {(entry.timestamp_start !== undefined) && (
             <span style={{ marginLeft: '26px', fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-              {Math.round(entry.timestamp_start)}s – {Math.round(entry.timestamp_end)}s
+              {Math.round(entry.timestamp_start)}s â€“ {Math.round(entry.timestamp_end)}s
             </span>
           )}
         </div>
@@ -278,7 +278,7 @@ const TranscriptAnalysis = ({ transcript = [] }: { transcript: any[] }) => {
   );
 };
 
-/* ──────────────────── Strength / Weakness ──────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Strength / Weakness â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const deriveStrengthsWeaknesses = (candidate: any) => {
   const strengths = [];
   const weaknesses = [];
@@ -327,7 +327,7 @@ const deriveStrengthsWeaknesses = (candidate: any) => {
   return { strengths, weaknesses };
 };
 
-/* ─────────────────────── Detail Modal ──────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Detail Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMessage, onCopyShareLink }: any) => {
   const { refreshCandidates, apiFetch } = useAppContext();
   const [viewResumeOpen, setViewResumeOpen] = useState(false);
@@ -449,12 +449,12 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
   
   const dynamicExperience = (() => {
     const directExp = data.experience || data.totalExperience;
-    if (directExp && String(directExp).trim() && String(directExp).trim() !== "—" && String(directExp).trim() !== "null") {
+    if (directExp && String(directExp).trim() && String(directExp).trim() !== "â€”" && String(directExp).trim() !== "null") {
       return String(directExp).trim();
     }
     const expAnalysis = data.totalExperienceAnalysis;
     if (expAnalysis) {
-      if (expAnalysis.totalExperience && String(expAnalysis.totalExperience).trim() && String(expAnalysis.totalExperience).trim() !== "—" && String(expAnalysis.totalExperience).trim() !== "null") {
+      if (expAnalysis.totalExperience && String(expAnalysis.totalExperience).trim() && String(expAnalysis.totalExperience).trim() !== "â€”" && String(expAnalysis.totalExperience).trim() !== "null") {
         return String(expAnalysis.totalExperience).trim();
       }
       if (typeof expAnalysis.domainExperience === 'number' && expAnalysis.domainExperience > 0) {
@@ -518,7 +518,7 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
   const screeningVideoUrl = (() => {
     let rawUrl = "";
     const directScreeningUrl = candidate.screeningVideoUrl || candidate.screening_video_url;
-    if (directScreeningUrl && typeof directScreeningUrl === 'string' && directScreeningUrl.trim() !== "" && directScreeningUrl.trim() !== "—" && directScreeningUrl.trim() !== "null") {
+    if (directScreeningUrl && typeof directScreeningUrl === 'string' && directScreeningUrl.trim() !== "" && directScreeningUrl.trim() !== "â€”" && directScreeningUrl.trim() !== "null") {
       rawUrl = directScreeningUrl.trim();
     } else if (matchedInterview?.video_url) {
       rawUrl = String(matchedInterview.video_url).trim();
@@ -526,7 +526,7 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
     if (
       rawUrl && 
       rawUrl !== "" && 
-      rawUrl !== "—" && 
+      rawUrl !== "â€”" && 
       rawUrl !== "null" && 
       rawUrl !== "undefined" && 
       !rawUrl.includes("mixkit.co") &&
@@ -546,7 +546,7 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
     if (
       rawUrl && 
       rawUrl !== "" && 
-      rawUrl !== "—" && 
+      rawUrl !== "â€”" && 
       rawUrl !== "null" && 
       rawUrl !== "undefined" && 
       !rawUrl.includes("mixkit.co") &&
@@ -766,11 +766,11 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
                 </h2>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', color: '#94a3b8', fontSize: '0.76rem', marginTop: '3px', fontWeight: '500' }}>
                   <span>Position: <strong style={{ color: '#f8fafc' }}>{candidate.jobApplied || "Data Not Available"}</strong></span>
-                  <span>•</span>
+                  <span>â€¢</span>
                   <span>Experience: <strong style={{ color: '#f8fafc' }}>{dynamicExperience}</strong></span>
-                  <span>•</span>
+                  <span>â€¢</span>
                   <span>Qualification: <strong style={{ color: '#f8fafc' }}>{qualification}</strong></span>
-                  <span>•</span>
+                  <span>â€¢</span>
                   <span>Generated: <strong style={{ color: '#f8fafc' }}>{reportDate}</strong></span>
                 </div>
               </div>
@@ -1721,9 +1721,9 @@ const DetailModal = ({ candidate, jobs, onClose, onUploadVideo, uploadStatusMess
 };
 
 
-/* ═══════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    MAIN REPORTS PAGE
-═══════════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 const Reports = () => {
   const { candidates, jobs, refreshCandidates, apiFetch } = useAppContext();
   const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
@@ -1919,7 +1919,7 @@ const Reports = () => {
           console.log("  - extracted_data transcriptUpdatedAt:", updatedCandidate.extracted_data?.transcriptUpdatedAt);
         }
 
-        alert(`✅ Transcript analyzed successfully!\n\nScores:\n• Communication: ${analysis.communication}%\n• Technical: ${transcriptIntelligenceScore}%\n• Confidence: ${analysis.confidence}%\n• Recommendation: ${analysis.recommendation}`);
+        alert(`âœ… Transcript analyzed successfully!\n\nScores:\nâ€¢ Communication: ${analysis.communication}%\nâ€¢ Technical: ${transcriptIntelligenceScore}%\nâ€¢ Confidence: ${analysis.confidence}%\nâ€¢ Recommendation: ${analysis.recommendation}`);
         
         // Refresh candidates list in the table to display updated scores
         await refreshCandidates();
@@ -1958,7 +1958,7 @@ const Reports = () => {
     let finalFileToUpload: File = file;
     let isCompressed = false;
 
-    // ─── Helper: upload via direct Supabase signed URL or local fallback ───────
+    // â”€â”€â”€ Helper: upload via direct Supabase signed URL or local fallback â”€â”€â”€â”€â”€â”€â”€
     const uploadToSupabase = async (uploadFile: File): Promise<string> => {
       // Guard: ensure file is non-empty
       if (!uploadFile || uploadFile.size === 0) {
@@ -2041,7 +2041,7 @@ const Reports = () => {
               }
             };
 
-            xhr.onerror = () => reject(new Error("Network error — local fallback upload API unreachable"));
+            xhr.onerror = () => reject(new Error("Network error â€” local fallback upload API unreachable"));
             xhr.send(form);
           });
 
@@ -2052,13 +2052,13 @@ const Reports = () => {
         throw err;
       }
     };
-    // ─────────────────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     try {
       console.log(`=== VIDEO UPLOAD START ===`);
       console.log(`Candidate: ${candidateId}, Original file: ${file.name}, Size: ${(file.size / (1024 * 1024)).toFixed(2)} MB`);
 
-      // ── Step 1: FFmpeg compression (two-pass if needed) ───────────────────
+      // â”€â”€ Step 1: FFmpeg compression (two-pass if needed) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       const MAX_UPLOAD_MB = 48; // Supabase free tier hard limit is ~50MB per object
 
       const runCompression = async (ffmpeg: any, inputName: string, outputName: string, pass: number) => {
@@ -2123,7 +2123,7 @@ const Reports = () => {
         await (ffmpeg as any).writeFile(inputName, await fetchFile(file));
         setUploadStatusMessage("Compressing... 0%");
 
-        // ── Pass 1: crf32, 480p, 700k ───────────────────────────────────────
+        // â”€â”€ Pass 1: crf32, 480p, 700k â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         await runCompression(ffmpeg, inputName, out1Name, 1);
 
         const pass1Data = await (ffmpeg as any).readFile(out1Name);
@@ -2135,9 +2135,9 @@ const Reports = () => {
 
         let compressedBlob = pass1Blob;
 
-        // ── Pass 2 (emergency): crf36, 360p, 500k — only if still too large ─
+        // â”€â”€ Pass 2 (emergency): crf36, 360p, 500k â€” only if still too large â”€
         if (pass1MB > MAX_UPLOAD_MB) {
-          console.warn(`Pass 1 output (${pass1MB.toFixed(2)}MB) exceeds ${MAX_UPLOAD_MB}MB limit — running emergency Pass 2...`);
+          console.warn(`Pass 1 output (${pass1MB.toFixed(2)}MB) exceeds ${MAX_UPLOAD_MB}MB limit â€” running emergency Pass 2...`);
           setUploadStatusMessage("Extra compression... 0%");
 
           await runCompression(ffmpeg, inputName, out2Name, 2);
@@ -2182,12 +2182,12 @@ const Reports = () => {
         try { await (ffmpeg as any).deleteFile(out1Name); } catch { /* ignore */ }
 
       } catch (compressErr: any) {
-        // If this is a user-facing size error, rethrow — don't fall back to original
+        // If this is a user-facing size error, rethrow â€” don't fall back to original
         if (compressErr.message?.includes('too large after compression') ||
             compressErr.message?.includes('Maximum allowed')) {
           throw compressErr;
         }
-        console.warn("FFmpeg compression failed — falling back to original file:", compressErr);
+        console.warn("FFmpeg compression failed â€” falling back to original file:", compressErr);
         finalFileToUpload = file;
         isCompressed = false;
 
@@ -2201,12 +2201,12 @@ const Reports = () => {
         }
       }
 
-      // ── Step 2: Upload (compressed or original) ─────────────────────────────
+      // â”€â”€ Step 2: Upload (compressed or original) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       setUploadStatusMessage("Uploading... 0%");
       const publicVideoUrl = await uploadToSupabase(finalFileToUpload);
-      console.log("Upload success — public URL:", publicVideoUrl);
+      console.log("Upload success â€” public URL:", publicVideoUrl);
 
-      // ── Step 3: Save URL to DB ────────────────────────────────────────────
+      // â”€â”€ Step 3: Save URL to DB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       const objectUrl = URL.createObjectURL(finalFileToUpload);
       const updatedExtractedData = {
         ...candidateExtractedData,
@@ -2221,7 +2221,7 @@ const Reports = () => {
         compressedSize:              finalFileToUpload.size,
       };
 
-      console.log("Saving to DB — videoUrl:", publicVideoUrl);
+      console.log("Saving to DB â€” videoUrl:", publicVideoUrl);
 
       const payload = {
         id: candidateId,
@@ -2237,9 +2237,9 @@ const Reports = () => {
 
       if (response.ok) {
         const saved = await response.json();
-        console.log("DB saved — videoUrl in DB:", saved?.extracted_data?.videoUrl);
-        setUploadStatusMessage("✅ Upload complete!");
-        alert(`✅ Video ${isCompressed ? 'compressed & ' : ''}uploaded successfully!\n\nURL: ${publicVideoUrl}`);
+        console.log("DB saved â€” videoUrl in DB:", saved?.extracted_data?.videoUrl);
+        setUploadStatusMessage("âœ… Upload complete!");
+        alert(`âœ… Video ${isCompressed ? 'compressed & ' : ''}uploaded successfully!\n\nURL: ${publicVideoUrl}`);
         await refreshCandidates();
       } else {
         const errData = await response.json();
@@ -2247,7 +2247,7 @@ const Reports = () => {
       }
     } catch (err: any) {
       console.error("=== VIDEO UPLOAD ERROR ===", err);
-      setUploadStatusMessage(`❌ ${err.message || 'Upload failed'}`);
+      setUploadStatusMessage(`âŒ ${err.message || 'Upload failed'}`);
       alert('Video upload error:\n\n' + (err.message || String(err)));
     } finally {
       setUploadingVideoId(null);
@@ -2419,7 +2419,7 @@ const Reports = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
 
-      {/* ── TOP STATS ── */}
+      {/* â”€â”€ TOP STATS â”€â”€ */}
       <div className="grid grid-cols-4 gap-6">
         {[
           { label: 'Total Candidates', value: total, icon: User, color: 'var(--brand-navy)', bg: 'rgba(14,45,123,0.08)' },
@@ -2443,7 +2443,7 @@ const Reports = () => {
       </div>
 
 
-      {/* ── CANDIDATE TABLE ── */}
+      {/* â”€â”€ CANDIDATE TABLE â”€â”€ */}
       <div className="card">
         <div className="card-header" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', justifyContent: 'space-between' }}>
           <h3 className="card-title" style={{ margin: 0 }}>Candidate Reports</h3>
@@ -2523,12 +2523,12 @@ const Reports = () => {
                       </div>
                     </td>
                     <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--brand-green)', backgroundColor: 'rgba(125, 186, 0, 0.1)', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--brand-teal)', backgroundColor: 'rgba(13, 148, 136, 0.1)', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
                         #{c.display_id || c.unique_id || String(c.id).substring(0,6)}
                       </span>
                     </td>
                     <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
-                      <span className="badge badge-info" style={{ fontSize: '0.68rem', whiteSpace: 'nowrap' }}>{c.jobApplied || '—'}</span>
+                      <span className="badge badge-info" style={{ fontSize: '0.68rem', whiteSpace: 'nowrap' }}>{c.jobApplied || 'â€”'}</span>
                     </td>
                     <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
                       <button
@@ -2550,7 +2550,7 @@ const Reports = () => {
                         title={(c.extractedData?.transcript?.length || c.transcript?.length) ? "Transcript Uploaded" : "Upload Transcript"}
                       >
                         {uploadingId === c.id ? (
-                          <span style={{ fontSize: '0.72rem' }}>⏳</span>
+                          <span style={{ fontSize: '0.72rem' }}>â³</span>
                         ) : (
                           <Upload size={15} />
                         )}
@@ -2559,7 +2559,7 @@ const Reports = () => {
                     <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
                       {uploadingVideoId === c.id ? (
                         <div style={{ fontSize: '0.68rem', fontWeight: 'bold', color: 'var(--brand-navy)', whiteSpace: 'nowrap' }} title={uploadStatusMessage}>
-                          {uploadStatusMessage || "⏳ ..."}
+                          {uploadStatusMessage || "â³ ..."}
                         </div>
                       ) : (
                         <button
@@ -2735,7 +2735,7 @@ const Reports = () => {
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
                     }}
                   >
-                    {remarkSaving ? 'Saving...' : '💾 Save Remark'}
+                    {remarkSaving ? 'Saving...' : 'ðŸ’¾ Save Remark'}
                   </button>
                 </div>
               </div>
@@ -2765,7 +2765,7 @@ const Reports = () => {
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.87rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--brand-green)', backgroundColor: 'rgba(125, 186, 0, 0.1)', padding: '2px 6px', borderRadius: '10px', flexShrink: 0 }}>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--brand-teal)', backgroundColor: 'rgba(13, 148, 136, 0.1)', padding: '2px 6px', borderRadius: '10px', flexShrink: 0 }}>
                           #{c.display_id || c.unique_id || String(c.id).substring(0,6)}
                         </span>
                         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
@@ -2787,13 +2787,13 @@ const Reports = () => {
                         <div style={{ height: '4px', backgroundColor: 'var(--gray-100)', borderRadius: '999px', overflow: 'hidden', marginBottom: '3px' }}>
                           <div style={{ height: '100%', width: `${value || 0}%`, backgroundColor: scoreColor(value), borderRadius: '999px' }} />
                         </div>
-                        <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: '600' }}>{label}: {value || '—'}</span>
+                        <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: '600' }}>{label}: {value || 'â€”'}</span>
                       </div>
                     ))}
                   </div>
 
                   {/* mini strength preview */}
-                  {strengths[0] && <p style={{ fontSize: '0.72rem', color: '#065f46', backgroundColor: 'rgba(16,185,129,0.07)', padding: '5px 8px', borderRadius: '7px', margin: 0 }}>✓ {strengths[0]}</p>}
+                  {strengths[0] && <p style={{ fontSize: '0.72rem', color: '#065f46', backgroundColor: 'rgba(16,185,129,0.07)', padding: '5px 8px', borderRadius: '7px', margin: 0 }}>âœ“ {strengths[0]}</p>}
 
                   <div style={{ display: 'flex', gap: '6px', marginTop: 'auto' }}>
                     <button className="btn btn-primary" style={{ flex: 1, padding: '5px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }} onClick={() => setSelectedCandidate(c)}>
@@ -2820,7 +2820,7 @@ const Reports = () => {
         )}
       </div>
 
-      {/* ─── DETAIL MODAL ─── */}
+      {/* â”€â”€â”€ DETAIL MODAL â”€â”€â”€ */}
       {selectedCandidate && (
         <DetailModal
           candidate={selectedCandidate}
@@ -2854,3 +2854,4 @@ const Reports = () => {
 };
 
 export default Reports;
+

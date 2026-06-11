@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -40,9 +40,9 @@ const Sidebar = () => {
         <div style={{
           width: '32px', height: '32px',
           borderRadius: '8px',
-          background: 'linear-gradient(135deg, var(--brand-green) 0%, #5fa300 100%)',
+          background: 'linear-gradient(135deg, var(--brand-teal) 0%, #0b7a70 100%)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 2px 8px rgba(125,186,0,0.4)',
+          boxShadow: '0 2px 8px rgba(13,148,136,0.4)',
           flexShrink: 0
         }}>
           <span style={{ fontSize: '0.875rem', fontWeight: '800', color: '#fff' }}>EC</span>
@@ -52,7 +52,7 @@ const Sidebar = () => {
           fontSize: '1.35rem',
           fontWeight: '800',
           letterSpacing: '-0.5px',
-          background: 'linear-gradient(135deg, #ffffff 0%, var(--brand-green) 100%)',
+          background: 'linear-gradient(135deg, #ffffff 0%, var(--brand-teal) 100%)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
           backgroundClip: 'text',
@@ -92,19 +92,19 @@ const Sidebar = () => {
                 padding: '0.7rem 1rem',
                 borderRadius: 'var(--radius-lg)',
                 color: isActive ? 'white' : 'rgba(255,255,255,0.65)',
-                backgroundColor: isActive ? 'rgba(125, 186, 0, 0.18)' : 'transparent',
-                borderLeft: isActive ? '3px solid var(--brand-green)' : '3px solid transparent',
+                backgroundColor: isActive ? 'rgba(13, 148, 136, 0.18)' : 'transparent',
+                borderLeft: isActive ? '3px solid var(--brand-teal)' : '3px solid transparent',
                 fontWeight: isActive ? '600' : '400',
                 fontSize: '0.9rem',
                 transition: 'all 0.18s ease',
                 textDecoration: 'none',
-                boxShadow: isActive ? '0 2px 8px rgba(125,186,0,0.15)' : 'none',
+                boxShadow: isActive ? '0 2px 8px rgba(13,148,136,0.15)' : 'none',
               }}
               onMouseEnter={(e) => {
                 if (!isActive) {
                   (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.08)';
                   (e.currentTarget as HTMLElement).style.color = 'white';
-                  (e.currentTarget as HTMLElement).style.borderLeftColor = 'rgba(125,186,0,0.4)';
+                  (e.currentTarget as HTMLElement).style.borderLeftColor = 'rgba(13,148,136,0.4)';
                 }
               }}
               onMouseLeave={(e) => {
@@ -115,7 +115,7 @@ const Sidebar = () => {
                 }
               }}
             >
-              <item.icon size={18} color={isActive ? 'var(--brand-green)' : 'rgba(255,255,255,0.55)'} />
+              <item.icon size={18} color={isActive ? 'var(--brand-teal)' : 'rgba(255,255,255,0.55)'} />
               {item.name}
             </Link>
           );
@@ -159,3 +159,4 @@ const Sidebar = () => {
 };
 
 export default Sidebar;
+

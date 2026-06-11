@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useScheduler } from './hooks/useScheduler.js';
@@ -50,7 +50,7 @@ export function SchedulerApp() {
       department: panelDepartment.trim(),
       email: panelEmail.trim(),
       avatar: panelName.trim().split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase(),
-      color: ['#0E2D7B', '#7DBA00', '#7c3aed', '#10b981', '#f59e0b', '#ef4444'][Math.floor(Math.random() * 6)]
+      color: ['#0E2D7B', '#0D9488', '#7c3aed', '#10b981', '#f59e0b', '#ef4444'][Math.floor(Math.random() * 6)]
     };
 
     try {
@@ -348,7 +348,7 @@ export function SchedulerApp() {
           {panelists.map((p: any) => (
             <div key={p.id} className="panellist-chip">
               <span>{p.name} ({p.role})</span>
-              <button className="remove-chip-btn" onClick={() => handleRemovePanelist(p.id, p.name)}>×</button>
+              <button className="remove-chip-btn" onClick={() => handleRemovePanelist(p.id, p.name)}>Ã—</button>
             </div>
           ))}
           {panelists.length === 0 && (
@@ -411,11 +411,11 @@ export function SchedulerApp() {
                     </td>
                     <td className="grid-layout-td col-assets">
                       <span className="asset-link-active" onClick={() => handleFetchTeamsAsset('Recording', iv.candidate_name)}>
-                        🎥 Recording
+                        ðŸŽ¥ Recording
                       </span>
                       <br />
                       <span className="asset-link-active" style={{ marginTop: '4px' }} onClick={() => handleFetchTeamsAsset('Transcript', iv.candidate_name)}>
-                        📄 Transcript
+                        ðŸ“„ Transcript
                       </span>
                     </td>
                     <td className="grid-layout-td col-manage">
@@ -606,3 +606,4 @@ export function SchedulerApp() {
     </div>
   );
 }
+

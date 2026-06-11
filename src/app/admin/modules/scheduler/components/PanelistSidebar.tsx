@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * PanelistSidebar.jsx
@@ -27,7 +27,7 @@ const STATUS_LABELS = {
   blocked: 'Off',
 };
 
-// ─── Availability Dot ─────────────────────────────────────────────────────────
+// â”€â”€â”€ Availability Dot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const AvailDot = memo(({ status }) => (
   <div
@@ -38,7 +38,7 @@ const AvailDot = memo(({ status }) => (
 ));
 AvailDot.displayName = 'AvailDot';
 
-// ─── Weekly Dots Row (Mon-Fri) ─────────────────────────────────────────────────
+// â”€â”€â”€ Weekly Dots Row (Mon-Fri) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const WeeklyDots = memo(({ panelistId, weekDays, getPanelistStatus }) => (
   <div className="panelist-week-dots">
@@ -55,7 +55,7 @@ const WeeklyDots = memo(({ panelistId, weekDays, getPanelistStatus }) => (
 ));
 WeeklyDots.displayName = 'WeeklyDots';
 
-// ─── Workload Bar ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ Workload Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const WorkloadBar = memo(({ percent, scheduledMinutes }) => {
   const color = percent >= 70 ? '#ef4444' : percent >= 40 ? '#f59e0b' : '#10b981';
@@ -79,7 +79,7 @@ const WorkloadBar = memo(({ percent, scheduledMinutes }) => {
 });
 WorkloadBar.displayName = 'WorkloadBar';
 
-// ─── Panelist Row ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ Panelist Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const PanelistRow = memo(({ panelist, workload, weekDays, getPanelistStatus, isSelected, onSelect, onEdit, onDelete }) => (
   <div
@@ -163,7 +163,7 @@ const PanelistRow = memo(({ panelist, workload, weekDays, getPanelistStatus, isS
 ));
 PanelistRow.displayName = 'PanelistRow';
 
-// ─── Main Sidebar ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ Main Sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const DAYS_OF_WEEK = [
   { value: 1, label: 'Mon' },
@@ -243,7 +243,7 @@ export default function PanelistSidebar() {
         .toUpperCase()
         .slice(0, 2);
 
-      const colors = ['#0E2D7B', '#7DBA00', '#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
+      const colors = ['#0E2D7B', '#0D9488', '#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
       const randomColor = colors[Math.floor(Math.random() * colors.length)];
 
       addPanelist({
@@ -272,7 +272,7 @@ export default function PanelistSidebar() {
             setShowAddForm(true);
           }}
           style={{
-            background: 'var(--brand-green)',
+            background: 'var(--brand-teal)',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
@@ -481,10 +481,11 @@ export default function PanelistSidebar() {
           <span className="panelist-sidebar__stat-label">interviews this week</span>
         </div>
         <div className="panelist-sidebar__note">
-          Working hours: 9 AM – 6 PM IST<br />
-          Lunch: 1 – 2 PM · Buffer: 15 min
+          Working hours: 9 AM â€“ 6 PM IST<br />
+          Lunch: 1 â€“ 2 PM Â· Buffer: 15 min
         </div>
       </div>
     </aside>
   );
 }
+

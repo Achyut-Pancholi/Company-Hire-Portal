@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useRef } from 'react';
 import { CheckSquare, FileSpreadsheet, Plus, X, Upload, Download, CheckCircle, AlertCircle } from 'lucide-react';
@@ -329,7 +329,7 @@ export default function AssessmentsPage() {
           onClick={handleSaveConfig}
           className="btn-submit"
           style={{
-            backgroundColor: 'var(--brand-green)',
+            backgroundColor: 'var(--brand-teal)',
             color: '#ffffff',
             border: 'none',
             padding: '10px 24px',
@@ -341,11 +341,11 @@ export default function AssessmentsPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 2px 4px rgba(125, 186, 0, 0.2)',
+            boxShadow: '0 2px 4px rgba(13, 148, 136, 0.2)',
             transition: 'background-color 0.15s ease'
           }}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--brand-green-hover)'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--brand-green)'}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--brand-teal-hover)'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--brand-teal)'}
         >
           Save Configuration
         </button>
@@ -628,3 +628,4 @@ export default function AssessmentsPage() {
     </div>
   );
 }
+

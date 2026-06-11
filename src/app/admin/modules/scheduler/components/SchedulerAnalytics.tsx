@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 
 /**
  * SchedulerAnalytics.jsx
 /**
  * SchedulerAnalytics.jsx
  * Interview analytics: workload, funnel, efficiency metrics.
- * CSS-based charts — no external chart library.
+ * CSS-based charts â€” no external chart library.
  */
 
 import React, { useMemo } from 'react';
@@ -50,7 +50,7 @@ export default function SchedulerAnalytics() {
   const { workloads } = useAvailability();
   const { interviews } = state;
 
-  // ── Metrics ──────────────────────────────────────────────────────────────
+  // â”€â”€ Metrics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const stats = useMemo(() => {
     const scheduled  = interviews.filter(iv => iv.status === 'scheduled').length;
@@ -65,7 +65,7 @@ export default function SchedulerAnalytics() {
     return { scheduled, completed, cancelled, total, totalDuration };
   }, [interviews]);
 
-  // ── Platform breakdown ────────────────────────────────────────────────────
+  // â”€â”€ Platform breakdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const platformStats = useMemo(() => {
     const counts = {};
@@ -100,7 +100,7 @@ export default function SchedulerAnalytics() {
         <MetricCard icon={Calendar}     label="Total Scheduled" value={stats.scheduled}    color="#0E2D7B" />
         <MetricCard icon={CheckCircle}  label="Completed"        value={stats.completed}    color="#10b981" />
         <MetricCard icon={XCircle}      label="Cancelled"         value={stats.cancelled}    color="#ef4444" />
-        <MetricCard icon={Clock}        label="Interview Hours"   value={`${Math.floor(stats.totalDuration / 60)}h ${stats.totalDuration % 60}m`} color="#7DBA00" sub="this period" />
+        <MetricCard icon={Clock}        label="Interview Hours"   value={`${Math.floor(stats.totalDuration / 60)}h ${stats.totalDuration % 60}m`} color="#0D9488" sub="this period" />
       </div>
 
       <div className="analytics-charts-row">
@@ -124,7 +124,7 @@ export default function SchedulerAnalytics() {
                   value={w.scheduledMinutes}
                   max={maxWorkload}
                   color={color}
-                  subLabel={w.scheduledMinutes > 0 ? formatDuration(w.scheduledMinutes) : '—'}
+                  subLabel={w.scheduledMinutes > 0 ? formatDuration(w.scheduledMinutes) : 'â€”'}
                 />
               );
             })}
@@ -170,13 +170,14 @@ export default function SchedulerAnalytics() {
         </div>
         <div className="analytics-summary-item">
           <Clock size={14} color="#0E2D7B" />
-          <span>Avg duration: <strong>{stats.total > 0 ? formatDuration(Math.round(stats.totalDuration / Math.max(stats.total - stats.cancelled, 1))) : '—'}</strong></span>
+          <span>Avg duration: <strong>{stats.total > 0 ? formatDuration(Math.round(stats.totalDuration / Math.max(stats.total - stats.cancelled, 1))) : 'â€”'}</strong></span>
         </div>
         <div className="analytics-summary-item">
-          <Users size={14} color="#7DBA00" />
+          <Users size={14} color="#0D9488" />
           <span>Active panelists: <strong>{state.panelists.filter(p => (workloads[p.id]?.interviewCount || 0) > 0).length} / {state.panelists.length}</strong></span>
         </div>
       </div>
     </div>
   );
 }
+

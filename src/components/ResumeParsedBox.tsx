@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from 'react';
 import { FileText, BookOpen, Award, Code2 } from 'lucide-react';
@@ -65,7 +65,7 @@ export function ResumeParsedBox({ candidate }: { candidate: any }) {
         {edu.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {edu.map((e: any, i: number) => (
-              <div key={i} style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid var(--border)', background: i === 0 ? 'linear-gradient(135deg,rgba(14,45,123,0.03) 0%,rgba(125,186,0,0.03) 100%)' : 'var(--gray-50)', position: 'relative' }}>
+              <div key={i} style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid var(--border)', background: i === 0 ? 'linear-gradient(135deg,rgba(14,45,123,0.03) 0%,rgba(13,148,136,0.03) 100%)' : 'var(--gray-50)', position: 'relative' }}>
                 {i === 0 && <span style={{ position: 'absolute', top: '8px', right: '10px', fontSize: '0.58rem', fontWeight: '800', padding: '1px 6px', borderRadius: '999px', backgroundColor: 'var(--brand-navy)', color: '#fff' }}>Highest</span>}
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                   <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: 'rgba(14,45,123,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -75,8 +75,8 @@ export function ResumeParsedBox({ candidate }: { candidate: any }) {
                     <p style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.8rem', margin: 0 }}>{e.degree || 'N/A'}</p>
                     <p style={{ color: 'var(--gray-600)', fontSize: '0.74rem', margin: '2px 0' }}>{e.college || e.institution || 'Institution N/A'}</p>
                     <div style={{ display: 'flex', gap: '10px', marginTop: '2px', fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                      {e.passingYear && <span>🎓 Class of {e.passingYear}</span>}
-                      {e.cgpaOrPercentage && <span>📊 {e.cgpaOrPercentage}</span>}
+                      {e.passingYear && <span>ðŸŽ“ Class of {e.passingYear}</span>}
+                      {e.cgpaOrPercentage && <span>ðŸ“Š {e.cgpaOrPercentage}</span>}
                     </div>
                   </div>
                 </div>
@@ -102,3 +102,4 @@ export function ResumeParsedBox({ candidate }: { candidate: any }) {
     </div>
   );
 }
+
