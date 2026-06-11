@@ -37,12 +37,13 @@ const Login = () => {
   return (
     <div className="auth-bg" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
       <div className="auth-card animate-slide-up" style={{ width: '100%', maxWidth: '420px', position: 'relative', zIndex: 10, padding: '1.75rem 1.5rem 2rem' }}>
-        <div className="card-header" style={{ textAlign: 'center', borderBottom: 'none', paddingBottom: '0' }}>
-          <div style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--brand-navy)', display: 'block', margin: '0 auto 1.75rem', textAlign: 'center' }}>
-            ElastiCrew
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '1rem 0 0.5rem', borderBottom: 'none' }}>
+          <div style={{ fontSize: '2rem', fontWeight: '800', display: 'block', margin: '0 auto 1.25rem', textAlign: 'center', letterSpacing: '-0.5px' }}>
+            <span style={{ color: 'var(--brand-teal, #0D9488)' }}>Elasti</span>
+            <span style={{ color: 'var(--brand-navy, #0E2D7B)' }}>Crew</span>
           </div>
           <h2 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem', color: 'var(--brand-navy)' }}>Welcome Back</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Sign in to the Admin Dashboard</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: 0 }}>Sign in to the Admin Dashboard</p>
         </div>
 
         <div className="card-body">

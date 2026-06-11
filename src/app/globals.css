@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -2468,11 +2468,38 @@ ul, ol {
 }
 
 .col-action {
-    width: 130px !important;
-    min-width: 130px !important;
-    max-width: 130px !important;
+    width: 250px !important;
+    min-width: 250px !important;
+    max-width: 250px !important;
     text-align: right;
     padding-right: 20px !important;
+}
+
+.btn-share-invite {
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 6px;
+    border: 1px solid var(--brand-teal);
+    background-color: transparent;
+    color: var(--brand-teal);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.btn-share-invite:hover {
+    background-color: var(--brand-teal);
+    color: #ffffff;
+}
+
+.btn-share-invite.copied {
+    background-color: var(--brand-teal);
+    color: #ffffff;
+    border-color: var(--brand-teal);
 }
 
 /* Dark theme specific overrides for candidates section */

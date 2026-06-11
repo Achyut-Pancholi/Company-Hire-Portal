@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { CheckSquare, FileSpreadsheet, Plus, X, Upload, Download, CheckCircle, AlertCircle } from 'lucide-react';
+import { CheckSquare, FileSpreadsheet, Plus, X, Upload, Download, CheckCircle, AlertCircle, Edit2, Trash2 } from 'lucide-react';
 
 const BASELINE_FALLBACK = {
   "Operations|HR|Fresher(0)": [
@@ -68,6 +68,12 @@ export default function AssessmentsPage() {
   // Questions State
   const [questions, setQuestions] = useState<string[]>([]);
   const [toast, setToast] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
+
+  // Modal states
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [modalValue, setModalValue] = useState('');
 
   // Native input ref for MCQ file upload
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -160,11 +166,51 @@ export default function AssessmentsPage() {
   const handleDeleteQuestion = (index: number) => {
     const nextQ = questions.filter((_, i) => i !== index);
     setQuestions(nextQ);
+    setToast({
+      type: 'success',
+      message: 'Question removed from list.'
+    });
   };
 
-  // Append empty question row
+  // Open modal to add a new question
   const handleAddQuestion = () => {
-    setQuestions([...questions, "Enter custom target evaluation prompt text here..."]);
+    setModalMode('add');
+    setModalValue('');
+    setIsModalOpen(true);
+  };
+
+  // Open modal to edit an existing question
+  const handleOpenEditModal = (index: number) => {
+    setModalMode('edit');
+    setEditingIndex(index);
+    setModalValue(questions[index]);
+    setIsModalOpen(true);
+  };
+
+  // Save question from modal
+  const handleSaveModalQuestion = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!modalValue.trim()) return;
+
+    if (modalMode === 'add') {
+      setQuestions([...questions, modalValue.trim()]);
+      setToast({
+        type: 'success',
+        message: 'Question added successfully.'
+      });
+    } else if (modalMode === 'edit' && editingIndex !== null) {
+      const nextQ = [...questions];
+      nextQ[editingIndex] = modalValue.trim();
+      setQuestions(nextQ);
+      setToast({
+        type: 'success',
+        message: 'Question updated successfully.'
+      });
+    }
+
+    setIsModalOpen(false);
+    setModalValue('');
+    setEditingIndex(null);
   };
 
   // MCQ Spreadsheet actions
@@ -370,24 +416,31 @@ export default function AssessmentsPage() {
               </p>
             </div>
             <button 
+              type="button"
               onClick={handleAddQuestion}
-              className="btn-secondary"
+              className="btn-outline"
               style={{
-                backgroundColor: 'var(--gray-100)',
-                color: 'var(--gray-800)',
-                border: '1px solid var(--border)',
                 padding: '8px 16px',
                 borderRadius: '6px',
                 fontWeight: '600',
-                fontSize: '12px',
+                fontSize: '12.5px',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                transition: 'background-color 0.15s ease'
+                border: '1px solid var(--border-strong)',
+                backgroundColor: '#ffffff',
+                color: 'var(--brand-navy)',
+                transition: 'all 0.15s ease'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-200)'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-100)'}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--gray-50)';
+                e.currentTarget.style.borderColor = 'var(--brand-navy)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#ffffff';
+                e.currentTarget.style.borderColor = 'var(--border-strong)';
+              }}
             >
               <Plus size={14} /> Add Target Question
             </button>
@@ -401,18 +454,19 @@ export default function AssessmentsPage() {
                 className="q-entry-row"
                 style={{
                   display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '12px',
-                  padding: '12px 16px',
+                  alignItems: 'center',
+                  gap: '16px',
+                  padding: '16px',
                   backgroundColor: 'var(--gray-50)',
                   border: '1px solid var(--border)',
-                  borderRadius: '8px',
-                  transition: 'border-color 0.15s ease'
+                  borderRadius: '10px',
+                  transition: 'all 0.2s ease',
+                  boxShadow: 'var(--shadow-sm)'
                 }}
               >
                 <div className="q-number-badge" style={{
-                  backgroundColor: 'var(--gray-200)',
-                  color: 'var(--gray-700)',
+                  backgroundColor: 'var(--brand-navy)',
+                  color: '#ffffff',
                   fontWeight: '700',
                   fontSize: '11px',
                   width: '24px',
@@ -421,65 +475,89 @@ export default function AssessmentsPage() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  flexShrink: 0,
-                  marginTop: '6px'
+                  flexShrink: 0
                 }}>
                   {index + 1}
                 </div>
                 
-                <textarea 
-                  className="q-text-input" 
-                  value={qText}
-                  onChange={e => handleQuestionChange(index, e.target.value)}
-                  rows={2}
-                  style={{
-                    flexGrow: 1,
-                    border: '1.5px solid var(--border)',
-                    borderRadius: '8px',
-                    background: '#ffffff',
-                    fontSize: '13.5px',
-                    color: 'var(--text-main)',
-                    fontWeight: '500',
-                    outline: 'none',
-                    padding: '8px 12px',
-                    fontFamily: 'inherit',
-                    resize: 'none',
-                    transition: 'all 0.18s ease',
-                    boxShadow: 'var(--shadow-xs)'
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = 'var(--brand-teal)';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(13, 148, 136, 0.18), var(--shadow-sm)';
-                    e.target.style.backgroundColor = '#f0fdfa';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = 'var(--border)';
-                    e.target.style.boxShadow = 'var(--shadow-xs)';
-                    e.target.style.backgroundColor = '#ffffff';
-                  }}
-                />
+                <div style={{
+                  flexGrow: 1,
+                  fontSize: '13.5px',
+                  color: 'var(--text-main)',
+                  fontWeight: '500',
+                  lineHeight: '1.6',
+                  wordBreak: 'break-word'
+                }}>
+                  {qText}
+                </div>
 
-                <button 
-                  onClick={() => handleDeleteQuestion(index)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--gray-400)',
-                    fontSize: '18px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '4px',
-                    transition: 'color 0.15s ease',
-                    marginTop: '6px',
-                    flexShrink: 0
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = '#ef4444'}
-                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--gray-400)'}
-                >
-                  <X size={16} />
-                </button>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  flexShrink: 0
+                }}>
+                  <button 
+                    type="button"
+                    onClick={() => handleOpenEditModal(index)}
+                    title="Edit Question"
+                    style={{
+                      backgroundColor: '#ffffff',
+                      border: '1px solid var(--border)',
+                      borderRadius: '6px',
+                      color: 'var(--brand-navy)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '6px 12px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      transition: 'all 0.15s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--gray-50)';
+                      e.currentTarget.style.borderColor = 'var(--brand-navy)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#ffffff';
+                      e.currentTarget.style.borderColor = 'var(--border)';
+                    }}
+                  >
+                    <Edit2 size={13} />
+                    Edit
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => handleDeleteQuestion(index)}
+                    title="Delete Question"
+                    style={{
+                      backgroundColor: '#ffffff',
+                      border: '1px solid var(--border)',
+                      borderRadius: '6px',
+                      color: '#ef4444',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '6px 12px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      transition: 'all 0.15s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#fef2f2';
+                      e.currentTarget.style.borderColor = '#fca5a5';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#ffffff';
+                      e.currentTarget.style.borderColor = 'var(--border)';
+                    }}
+                  >
+                    <Trash2 size={13} />
+                    Delete
+                  </button>
+                </div>
               </div>
             ))}
 
@@ -644,6 +722,140 @@ export default function AssessmentsPage() {
         </div>
       )}
 
+      {/* Modal Dialog for Add/Edit Question */}
+      {isModalOpen && (
+        <div className="modal-overlay active" style={{ zIndex: 99999 }}>
+          <div className="modal-card" style={{ width: '100%', maxWidth: '500px', padding: '24px' }}>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: 'var(--text-dark)' }}>
+                  {modalMode === 'add' ? 'Add Target Question' : 'Edit Target Question'}
+                </h3>
+                <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
+                  {targetDept} - {subDept} ({expLevel}) Parameters
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'var(--gray-400)',
+                  padding: '4px',
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.15s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--gray-100)';
+                  e.currentTarget.style.color = 'var(--text-main)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'var(--gray-400)';
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveModalQuestion} style={{ margin: 0 }}>
+              {/* Body */}
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px', color: 'var(--text-main)' }}>
+                  Evaluation Question
+                </label>
+                <textarea
+                  value={modalValue}
+                  onChange={(e) => setModalValue(e.target.value)}
+                  placeholder="Enter question text here..."
+                  required
+                  rows={4}
+                  style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: '1.5px solid var(--border)',
+                    fontSize: '13.5px',
+                    color: 'var(--text-main)',
+                    fontWeight: '500',
+                    outline: 'none',
+                    resize: 'none',
+                    fontFamily: 'inherit',
+                    boxShadow: 'var(--shadow-xs)',
+                    transition: 'all 0.18s ease'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = 'var(--brand-teal)';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(13, 148, 136, 0.18), var(--shadow-sm)';
+                    e.target.style.backgroundColor = '#f0fdfa';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = 'var(--border)';
+                    e.target.style.boxShadow = 'var(--shadow-xs)';
+                    e.target.style.backgroundColor = '#ffffff';
+                  }}
+                  autoFocus
+                />
+              </div>
+
+              {/* Footer */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border)',
+                    background: '#ffffff',
+                    color: 'var(--text-main)',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-50)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ffffff'}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!modalValue.trim()}
+                  style={{
+                    padding: '8px 18px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    background: 'var(--brand-teal)',
+                    color: '#ffffff',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: !modalValue.trim() ? 'not-allowed' : 'pointer',
+                    opacity: !modalValue.trim() ? 0.6 : 1,
+                    transition: 'all 0.15s ease',
+                    boxShadow: '0 2px 4px rgba(13, 148, 136, 0.2)'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (modalValue.trim()) e.currentTarget.style.backgroundColor = 'var(--brand-teal-hover)';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (modalValue.trim()) e.currentTarget.style.backgroundColor = 'var(--brand-teal)';
+                  }}
+                >
+                  {modalMode === 'add' ? 'Add Question' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
