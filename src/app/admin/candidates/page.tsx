@@ -669,10 +669,10 @@ export default function CandidatesPage() {
             <table className="candidate-table">
               <thead>
                 <tr>
-                  <th>Candidate ID</th>
+                  <th>Date Added</th>
                   <th>Candidate Name</th>
                   <th>Sub Dept</th>
-                  <th>Stage</th>
+                  <th>Pipeline Stage</th>
                   <th>ElastiCrew Resume</th>
                   <th className="col-action" style={{ textAlign: 'right' }}>Action</th>
                 </tr>
@@ -686,11 +686,15 @@ export default function CandidatesPage() {
                   </tr>
                 ) : (
                   filteredCandidates.map((c: any) => {
-                    const displayId = c.display_id || c.unique_id || String(c.id).substring(0, 8);
                     const resumeFilename = `${c.name.toLowerCase().replace(/\s+/g, '_')}_resume.pdf`;
+                    const formattedDate = c.created_at ? new Date(c.created_at).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    }) : 'N/A';
                     return (
                       <tr key={c.id} className="candidate-row">
-                        <td><span className="id-badge">{displayId}</span></td>
+                        <td style={{ color: 'var(--text-muted)', fontSize: '13px' }}>{formattedDate}</td>
                         <td>
                           <strong 
                             style={{ color: 'var(--text-dark)', cursor: 'pointer' }}
@@ -708,12 +712,6 @@ export default function CandidatesPage() {
                         </td>
                         <td className="col-action">
                           <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                            <button 
-                              className={`btn-share-invite ${copiedId === c.id ? 'copied' : ''}`}
-                              onClick={() => handleCopyInvite(c)}
-                            >
-                              {copiedId === c.id ? '✓ Copied' : 'Share Invite'}
-                            </button>
                             <select 
                               className="action-dropdown"
                               value=""
