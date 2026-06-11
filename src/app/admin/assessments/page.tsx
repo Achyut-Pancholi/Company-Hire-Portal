@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CheckSquare, FileSpreadsheet, Plus, X, Upload, Download, CheckCircle, AlertCircle, Edit2, Trash2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { useAppContext } from '@/components/admin/context/AppContext';
 
 const BASELINE_FALLBACK = {
   "Operations|HR": [
@@ -56,18 +57,21 @@ const BASELINE_FALLBACK = {
   ]
 };
 
-const TRACK_RELATIONS = {
-  "Operations": ["HR", "Logistics", "Compliance"],
-  "Engineering": ["Full Stack", "DevOps", "Data Platform"]
-};
-
 export default function AssessmentsPage() {
+  const { jobs } = useAppContext();
   const [activeTab, setActiveTab] = useState<'videobot' | 'mcq'>('videobot');
   const [isClient, setIsClient] = useState(false);
 
+  // Dynamic departments/sub-departments from jobs table (same as all other pages)
+  const availableDepartments = Array.from(new Set(jobs.map((j: any) => j.department).filter(Boolean))) as string[];
+  const getSubDepartments = (dept: string) => {
+    const subDepts = Array.from(new Set(jobs.filter((j: any) => j.department === dept && j.sub_department).map((j: any) => j.sub_department))) as string[];
+    return subDepts.length > 0 ? subDepts : ['General'];
+  };
+
   // Dropdown States
-  const [targetDept, setTargetDept] = useState<string>('Operations');
-  const [subDept, setSubDept] = useState<string>('HR');
+  const [targetDept, setTargetDept] = useState<string>('');
+  const [subDept, setSubDept] = useState<string>('');
 
   // Questions State
   const [questions, setQuestions] = useState<string[]>([]);
@@ -223,9 +227,18 @@ export default function AssessmentsPage() {
 
   // Sync sub-departments when department changes
   useEffect(() => {
-    const defaultSubDept = TRACK_RELATIONS[targetDept]?.[0] || '';
-    setSubDept(defaultSubDept);
-  }, [targetDept]);
+    if (!targetDept) {
+      // Set initial department from jobs
+      if (availableDepartments.length > 0) {
+        setTargetDept(availableDepartments[0]);
+      }
+      return;
+    }
+    const subs = getSubDepartments(targetDept);
+    if (subs.length > 0 && !subs.includes(subDept)) {
+      setSubDept(subs[0]);
+    }
+  }, [targetDept, jobs]);
 
   // Load configured questions from localStorage or fallback
   useEffect(() => {
@@ -489,7 +502,7 @@ export default function AssessmentsPage() {
     );
   }
 
-  const subDeptList = TRACK_RELATIONS[targetDept] || [];
+  const subDeptList = getSubDepartments(targetDept);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
@@ -575,12 +588,13 @@ export default function AssessmentsPage() {
           <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-main)' }}>Target Department</label>
           <select 
             value={targetDept} 
-            onChange={e => setTargetDept(e.target.value as any)}
+            onChange={e => setTargetDept(e.target.value)}
             className="form-control"
             style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '13.5px', color: 'var(--text-dark)', outline: 'none' }}
           >
-            <option value="Operations">Operations</option>
-            <option value="Engineering">Engineering</option>
+            {availableDepartments.map(dept => (
+              <option key={dept} value={dept}>{dept}</option>
+            ))}
           </select>
         </div>
 
