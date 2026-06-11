@@ -138,10 +138,11 @@ export default function CandidatesPage() {
   // Department / Sub-Department lists dynamically from jobs
   const availableDepartments = Array.from(new Set(jobs.map((j: any) => j.department).filter(Boolean))) as string[];
   const getSubDepartments = (dept: string) => {
-    return Array.from(new Set(jobs.filter((j: any) => j.department === dept && j.sub_department).map((j: any) => j.sub_department))) as string[];
+    const subDepts = Array.from(new Set(jobs.filter((j: any) => j.department === dept && j.sub_department).map((j: any) => j.sub_department))) as string[];
+    return subDepts.length > 0 ? subDepts : ['General'];
   };
   const getRoles = (dept: string, subDept: string) => {
-    return Array.from(new Set(jobs.filter((j: any) => j.department === dept && (j.sub_department === subDept || !j.sub_department)).map((j: any) => j.title))) as string[];
+    return Array.from(new Set(jobs.filter((j: any) => j.department === dept && (j.sub_department === subDept || !j.sub_department || subDept === 'General')).map((j: any) => j.title))) as string[];
   };
 
   // Helper to extract candidate details
