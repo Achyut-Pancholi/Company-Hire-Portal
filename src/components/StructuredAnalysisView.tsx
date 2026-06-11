@@ -30,7 +30,57 @@ export function StructuredAnalysisView({ text }: { text: string | any }) {
       const data = typeof cleanText === 'string' ? JSON.parse(cleanText) : cleanText;
       
       if (Array.isArray(data)) {
-        summaryList = data.filter(item => typeof item === 'string').map(item => String(item));
+        let reconstructedData: string[] = [];
+        data.forEach(item => {
+            if (typeof item !== 'string') return;
+            const trimmed = item.trim();
+            if (reconstructedData.length === 0) {
+                reconstructedData.push(trimmed);
+                return;
+            }
+            
+            const last = reconstructedData[reconstructedData.length - 1].trim();
+            const cleanLast = last.replace(/\*+$/, '').trim();
+            const sentenceEnded = /[.!?]$/.test(cleanLast);
+            const isExplicitBullet = /^[*•-]/.test(trimmed);
+            
+            if (sentenceEnded || isExplicitBullet) {
+                reconstructedData.push(trimmed);
+            } else {
+                if (!/[.,:;]$/.test(cleanLast) && !trimmed.startsWith('and ') && !trimmed.startsWith('/')) {
+                    reconstructedData[reconstructedData.length - 1] += ', ' + trimmed;
+                } else {
+                    reconstructedData[reconstructedData.length - 1] += (trimmed.startsWith('/') ? '' : ' ') + trimmed;
+                }
+            }
+        });
+        
+        let finalData: string[] = [];
+        reconstructedData.forEach(item => {
+           item.split('\n').forEach(line => {
+              if (line.trim()) finalData.push(line.trim());
+           });
+        });
+
+        const positiveWords = ['good', 'great', 'excellent', 'strong', 'well', 'impressive', 'demonstrated', 'proficient', 'clear', 'effective', 'ability', 'positive'];
+        const negativeWords = ['failed', 'lack', 'difficulty', 'require', 'weak', 'poor', 'bad', 'needs', 'not', 'unable', 'struggled', 'missed', 'unclear', 'necessary'];
+        
+        finalData.forEach(item => {
+          const lower = item.toLowerCase();
+          const hasPos = positiveWords.some(w => lower.includes(w));
+          const hasNeg = negativeWords.some(w => lower.includes(w));
+          
+          if (hasNeg && !hasPos) {
+            cons.push(item);
+          } else if (hasPos && !hasNeg) {
+            pros.push(item);
+          } else if (hasPos && hasNeg) {
+             // If both, consider it neutral
+            okok.push(item);
+          } else {
+            okok.push(item);
+          }
+        });
       } else if (data && typeof data === 'object') {
         if (data.pros) pros = Array.isArray(data.pros) ? data.pros : [data.pros];
         if (data.cons) cons = Array.isArray(data.cons) ? data.cons : [data.cons];
