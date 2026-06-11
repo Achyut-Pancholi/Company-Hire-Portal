@@ -109,6 +109,10 @@ export default function AssessmentsPage() {
   };
 
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
     fetchMcqQuestions();
   }, [targetDept, subDept, expLevel, isClient]);
 
