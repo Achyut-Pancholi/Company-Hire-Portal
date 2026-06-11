@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
@@ -76,7 +76,7 @@ export const EmbeddableVideo = ({ url, ...props }: any) => {
   return <video src={trimmedUrl} {...props} />;
 };
 
-/* ─────────────────── SVG Radial Progress ─────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ SVG Radial Progress â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const RadialProgress = ({ value = 0, size = 80, stroke = 7, color = '#3b82f6', label }: any) => {
   const r = (size - stroke) / 2;
   const circ = 2 * Math.PI * r;
@@ -101,7 +101,7 @@ const RadialProgress = ({ value = 0, size = 80, stroke = 7, color = '#3b82f6', l
   );
 };
 
-/* ────────────────── Transcript Analysis ───────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Transcript Analysis â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const TranscriptAnalysis = ({ transcript = [] }: any) => {
   if (!transcript || transcript.length === 0) {
     return <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>No transcript available yet.</div>;
@@ -116,12 +116,12 @@ const TranscriptAnalysis = ({ transcript = [] }: any) => {
           </div>
           {entry.answer && (
             <p style={{ fontSize: '0.78rem', color: 'var(--gray-700)', margin: '0 0 0 26px', lineHeight: 1.5 }}>
-              <span style={{ color: 'var(--brand-green)', fontWeight: '700' }}>A: </span>{entry.answer}
+              <span style={{ color: 'var(--brand-teal)', fontWeight: '700' }}>A: </span>{entry.answer}
             </p>
           )}
           {(entry.timestamp_start !== undefined) && (
             <span style={{ marginLeft: '26px', fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-              {Math.round(entry.timestamp_start)}s – {Math.round(entry.timestamp_end)}s
+              {Math.round(entry.timestamp_start)}s â€“ {Math.round(entry.timestamp_end)}s
             </span>
           )}
         </div>
@@ -155,7 +155,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
 
   // Always call hook unconditionally at top level (Rules of Hooks)
   const contextValue = useAppContext();
-  // Safely use context — it may be null if AppContext is not in the tree
+  // Safely use context â€” it may be null if AppContext is not in the tree
   const context: any = contextValue ?? null;
 
   // Tech Video (Admin Uploaded) - Transcript Intelligence
@@ -167,7 +167,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
     const clean = url.trim();
     if (
       clean === "" || 
-      clean === "—" || 
+      clean === "â€”" || 
       clean === "null" || 
       clean === "undefined" || 
       clean.includes("mixkit.co") ||
@@ -234,7 +234,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
   const screeningVideoUrl = useMemo(() => {
     let rawUrl = "";
     const directScreeningUrl = candidate.screeningVideoUrl || candidate.screening_video_url;
-    if (directScreeningUrl && typeof directScreeningUrl === 'string' && directScreeningUrl.trim() !== "" && directScreeningUrl.trim() !== "—" && directScreeningUrl.trim() !== "null") {
+    if (directScreeningUrl && typeof directScreeningUrl === 'string' && directScreeningUrl.trim() !== "" && directScreeningUrl.trim() !== "â€”" && directScreeningUrl.trim() !== "null") {
       rawUrl = directScreeningUrl.trim();
     } else if (matchedInterview?.video_url) {
       rawUrl = String(matchedInterview.video_url).trim();
@@ -243,7 +243,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
     if (
       rawUrl && 
       rawUrl !== "" && 
-      rawUrl !== "—" && 
+      rawUrl !== "â€”" && 
       rawUrl !== "null" && 
       rawUrl !== "undefined" && 
       !rawUrl.includes("mixkit.co") &&
@@ -265,7 +265,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
     if (
       rawUrl && 
       rawUrl !== "" && 
-      rawUrl !== "—" && 
+      rawUrl !== "â€”" && 
       rawUrl !== "null" && 
       rawUrl !== "undefined" && 
       !rawUrl.includes("mixkit.co") &&
@@ -354,7 +354,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
         // Fallback to string splitting if not JSON
         const str = typeof matchedInterview.summary === 'string' ? matchedInterview.summary : JSON.stringify(matchedInterview.summary);
         const lines = str.split('\n')
-          .map((l: string) => l.trim().replace(/^[-*•\d.]+\s*/, ''))
+          .map((l: string) => l.trim().replace(/^[-*â€¢\d.]+\s*/, ''))
           .filter((l: string) => l.length > 5 && !l.toLowerCase().includes("overall match") && !l.toLowerCase().includes("recommendation") && !l.startsWith('{') && !l.startsWith('}') && !l.includes('":'));
         if (lines.length > 0) {
           return lines.slice(0, 4);
@@ -380,7 +380,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
       })).slice(0, 4);
     }
     return [
-      { time: '—', text: 'No transcript recorded yet.' }
+      { time: 'â€”', text: 'No transcript recorded yet.' }
     ];
   }, [transcript]);
 
@@ -482,7 +482,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
                       <p style={{ color: 'var(--gray-600)', fontSize: '0.78rem', margin: '4px 0' }}>{e.college || e.institution || 'Institution N/A'}</p>
                       <div style={{ display: 'flex', gap: '12px', fontSize: '0.74rem', color: 'var(--text-muted)' }}>
                         {e.passingYear && <span>Class of {e.passingYear}</span>}
-                        {e.cgpaOrPercentage && <span>📊 {e.cgpaOrPercentage}</span>}
+                        {e.cgpaOrPercentage && <span>ðŸ“Š {e.cgpaOrPercentage}</span>}
                       </div>
                     </div>
                   ))}
@@ -566,7 +566,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
         return (
           <div style={{ backgroundColor: '#fff', borderRadius: '24px', padding: '2rem', width: '100%', maxWidth: '850px', display: 'flex', flexDirection: 'column', gap: '1.5rem', border: '1px solid var(--border)', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.15)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: 'var(--brand-navy)', display: 'flex', alignItems: 'center', gap: '6px' }}>🎥 VIDEO SCREENING & TRANSCRIPT</h3>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: 'var(--brand-navy)', display: 'flex', alignItems: 'center', gap: '6px' }}>ðŸŽ¥ VIDEO SCREENING & TRANSCRIPT</h3>
               <button onClick={handleClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--gray-400)' }}><X size={20} /></button>
             </div>
             <div style={{ padding: '0.5rem 0' }}>
@@ -681,7 +681,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
               <BookOpen size={14} /> Education History
             </p>
             {edu.length > 0 ? (
-              <div style={{ padding: '8px 10px', borderRadius: '10px', border: '1px solid var(--border)', background: 'linear-gradient(135deg,rgba(14,45,123,0.03) 0%,rgba(125,186,0,0.03) 100%)', position: 'relative' }}>
+              <div style={{ padding: '8px 10px', borderRadius: '10px', border: '1px solid var(--border)', background: 'linear-gradient(135deg,rgba(14,45,123,0.03) 0%,rgba(13,148,136,0.03) 100%)', position: 'relative' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                   <Award size={14} color="var(--brand-navy)" style={{ flexShrink: 0, marginTop: '2px' }} />
                   <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -740,7 +740,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
         <div className="zoom-box" style={{ backgroundColor: '#fff', padding: '1rem', borderRadius: '20px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1, overflow: 'hidden' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '6px', flexShrink: 0 }}>
             <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: '750', color: 'var(--brand-navy)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              🎥 Video Screening & Transcript
+              ðŸŽ¥ Video Screening & Transcript
             </p>
           </div>
           
@@ -993,7 +993,7 @@ export function ReportDashboardGrid({ candidate, NEXT_JS_URL, matchedInterviewFr
   );
 }
 
-/* ─────────────── Compact Transcript View for Column 3 ───────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Compact Transcript View for Column 3 â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function TranscriptCompactView({ transcript, storedAnalysis, onViewMore }: { transcript: any[]; storedAnalysis?: any; onViewMore: () => void }) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const liveAnalysis = useMemo(() => analyzeTranscript(transcript), [transcript]);
@@ -1230,3 +1230,4 @@ function TranscriptCompactView({ transcript, storedAnalysis, onViewMore }: { tra
     </div>
   );
 }
+

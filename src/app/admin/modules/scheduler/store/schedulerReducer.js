@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * schedulerReducer.js
@@ -8,13 +8,13 @@
 
 import React, { createContext, useContext, useReducer, useCallback } from 'react';
 
-// ─── Initial Panelists Constant ───────────────────────────────────────────────
+// â”€â”€â”€ Initial Panelists Constant â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const INITIAL_PANELISTS = [
   { id: 'p1', name: 'John Doe',     role: 'Engineering Lead',  avatar: 'JD', color: '#0E2D7B', email: 'john.doe@elasticrew.com', daysAvailable: [1, 2, 3, 4, 5] },
-  { id: 'p2', name: 'Sarah Smith',  role: 'Product Manager',   avatar: 'SS', color: '#7DBA00', email: 'sarah.smith@elasticrew.com', daysAvailable: [1, 2, 3, 4, 5] }
+  { id: 'p2', name: 'Sarah Smith',  role: 'Product Manager',   avatar: 'SS', color: '#0D9488', email: 'sarah.smith@elasticrew.com', daysAvailable: [1, 2, 3, 4, 5] }
 ];
 
-// ─── Action Constants ─────────────────────────────────────────────────────────
+// â”€â”€â”€ Action Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const ACTIONS = {
   // View & Navigation
@@ -71,7 +71,7 @@ export const ACTIONS = {
   TOGGLE_THEME:          'TOGGLE_THEME',
 };
 
-// ─── Modal Form Default State ─────────────────────────────────────────────────
+// â”€â”€â”€ Modal Form Default State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const DEFAULT_MODAL_FORM = {
   // Step 1 - Candidate
@@ -101,7 +101,7 @@ const DEFAULT_MODAL_FORM = {
   notifySlack:    false,
 };
 
-// ─── Initial State ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Initial State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const getInitialState = () => {
   let storedPanelists = [];
@@ -143,7 +143,7 @@ const getInitialState = () => {
     interviews: [],
     panelists: storedPanelists,
     optimisticQueue: [],   // pending ops to rollback on failure
-    loading: true,  // true on mount → prevents blank-calendar flash before first fetch
+    loading: true,  // true on mount â†’ prevents blank-calendar flash before first fetch
 
     // Modal state
     modal: {
@@ -153,7 +153,7 @@ const getInitialState = () => {
       formData: { ...DEFAULT_MODAL_FORM },
     },
 
-    // Drag state (UI only — not persisted)
+    // Drag state (UI only â€” not persisted)
     drag: {
       active:       false,
       eventId:      null,
@@ -185,12 +185,12 @@ const getInitialState = () => {
   };
 };
 
-// ─── Reducer ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Reducer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function schedulerReducer(state, action) {
   switch (action.type) {
 
-    // ── View & Navigation ──────────────────────────────────────────────────
+    // â”€â”€ View & Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     case ACTIONS.SET_VIEW:
       return { ...state, view: action.payload };
 
@@ -217,7 +217,7 @@ function schedulerReducer(state, action) {
         selectedPanelistId: state.selectedPanelistId === action.payload ? null : action.payload
       };
 
-    // ── Interviews ─────────────────────────────────────────────────────────
+    // â”€â”€ Interviews â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     case ACTIONS.SET_INTERVIEWS:
       return { ...state, interviews: action.payload, loading: false };
 
@@ -264,11 +264,11 @@ function schedulerReducer(state, action) {
       };
     }
 
-    // ── Loading ────────────────────────────────────────────────────────────
+    // â”€â”€ Loading â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     case ACTIONS.SET_LOADING:
       return { ...state, loading: action.payload };
 
-    // ── Modal ──────────────────────────────────────────────────────────────
+    // â”€â”€ Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     case ACTIONS.OPEN_MODAL:
       return {
         ...state,
@@ -304,7 +304,7 @@ function schedulerReducer(state, action) {
     case ACTIONS.SET_MODAL_LOADING:
       return { ...state, modal: { ...state.modal, loading: action.payload } };
 
-    // ── Drag ───────────────────────────────────────────────────────────────
+    // â”€â”€ Drag â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     case ACTIONS.DRAG_START:
       return {
         ...state,
@@ -331,7 +331,7 @@ function schedulerReducer(state, action) {
     case ACTIONS.DRAG_END:
       return { ...state, drag: { active: false, eventId: null, originalDate: null, originalTime: null, ghostDate: null, ghostTime: null } };
 
-    // ── Resize ─────────────────────────────────────────────────────────────
+    // â”€â”€ Resize â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     case ACTIONS.RESIZE_START:
       return {
         ...state,
@@ -355,21 +355,21 @@ function schedulerReducer(state, action) {
         resize: { active: false, eventId: null, originalDuration: null, ghostDuration: null },
       };
 
-    // ── Drawer ─────────────────────────────────────────────────────────────
+    // â”€â”€ Drawer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     case ACTIONS.OPEN_DRAWER:
       return { ...state, drawer: { open: true, interviewId: action.payload } };
 
     case ACTIONS.CLOSE_DRAWER:
       return { ...state, drawer: { open: false, interviewId: null } };
 
-    // ── Conflicts ──────────────────────────────────────────────────────────
+    // â”€â”€ Conflicts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     case ACTIONS.SET_CONFLICTS:
       return { ...state, conflicts: action.payload };
 
     case ACTIONS.CLEAR_CONFLICTS:
       return { ...state, conflicts: [] };
 
-    // ── Notifications ──────────────────────────────────────────────────────
+    // â”€â”€ Notifications â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     case ACTIONS.PUSH_NOTIFICATION:
       return {
         ...state,
@@ -444,7 +444,7 @@ function schedulerReducer(state, action) {
   }
 }
 
-// ─── Context + Provider ───────────────────────────────────────────────────────
+// â”€â”€â”€ Context + Provider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const SchedulerContext = createContext(null);
 
@@ -457,7 +457,7 @@ export const SchedulerProvider = ({ children }) => {
   );
 };
 
-// ─── Hooks ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Hooks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /** Raw context access */
 export const useSchedulerContext = () => {
@@ -466,7 +466,7 @@ export const useSchedulerContext = () => {
   return ctx;
 };
 
-// ─── Derived Selectors (memoization-friendly pure functions) ──────────────────
+// â”€â”€â”€ Derived Selectors (memoization-friendly pure functions) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const selectInterviewById = (state, id) =>
   state.interviews.find(iv => iv.id === id) || null;
@@ -479,3 +479,4 @@ export const selectScheduledCount = (state) =>
 
 export const selectPanelistInterviews = (state, panelistId) =>
   state.interviews.filter(iv => (iv.panelists || []).includes(panelistId));
+

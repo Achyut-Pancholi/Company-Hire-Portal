@@ -1,18 +1,25 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Video, Settings2, PlayCircle, Eye, CheckCircle, XCircle, Send, Trash2, Loader2, Mail, CheckSquare, XSquare, MessageSquare } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Video, PlayCircle, Eye, CheckCircle, XCircle, Send, Trash2, Loader2, Mail, CheckSquare, XSquare, MessageSquare } from 'lucide-react';
 import { useAppContext } from '@/components/admin/context/AppContext';
-import QuestionBankModal from '@/components/admin/QuestionBankModal';
+
 import WorkflowBadge from '@/components/admin/WorkflowBadge';
 import ConfirmActionModal from '@/components/admin/ConfirmActionModal';
 
 const NEXT_JS_URL = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
 
 const VideoBot = () => {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.pathname === '/admin/video-bot-admin') {
+      router.replace('/admin/candidates?view=videobot');
+    }
+  }, [router]);
+
   const { candidates, jobs, refreshCandidates, apiFetch } = useAppContext();
-  const [showQuestionModal, setShowQuestionModal] = useState(false);
-  
   // Dashboard state
   const [interviews, setInterviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,41 +47,15 @@ const VideoBot = () => {
   const [targetEmail, setTargetEmail] = useState('');
   
   // Dynamic Departments from jobs
-  const dynamicDepartments = Array.from(new Set(jobs.map((j: any) => j.department).filter(Boolean)));
-  const availableDepartments = dynamicDepartments.length > 0 ? dynamicDepartments : ['Technology and Delivery', 'Engineering', 'HR', 'Marketing'];
+  const availableDepartments = Array.from(new Set(jobs.map((j: any) => j.department).filter(Boolean))) as string[];
   
-  const getAvailableSubDepartments = (dept) => {
-    const subDepts = Array.from(new Set(jobs.filter(j => j.department === dept && j.sub_department).map(j => j.sub_department)));
-    if (subDepts.length > 0) return subDepts;
-    
-    const defaults = {
-      'Technology and Delivery': ['Development', 'Testing'],
-      'Operations': ['LnD'],
-      'Engineering': ['DevOps', 'Data Science', 'SRE'],
-      'HR': ['Recruitment', 'Operations'],
-      'Marketing': ['SEO', 'Content', 'Social Media'],
-      'Design': ['UI/UX']
-    };
-    return defaults[dept] || ['General'];
+  const getAvailableSubDepartments = (dept: string) => {
+    const subDepts = Array.from(new Set(jobs.filter((j: any) => j.department === dept && j.sub_department).map((j: any) => j.sub_department))) as string[];
+    return subDepts.length > 0 ? subDepts : ['General'];
   };
   
-  const getAvailableRoles = (dept: any, subDept: any) => {
-    const roles = Array.from(new Set(jobs.filter((j: any) => j.department === dept && (j.sub_department === subDept || !j.sub_department)).map((j: any) => j.title)));
-    if (roles.length > 0) return roles;
-
-    const defaults: any = {
-      'Technology and Delivery': {
-        'Development': ['Senior Dev', 'TSE Intern', 'PHP Developer', 'Frontend', 'Backend'],
-        'Testing': ['Senior QA', 'QA Intern']
-      },
-      'Operations': {
-        'LnD': ['Manager', 'Associate Manager']
-      },
-      'Design': {
-        'UI/UX': ['Product Designer', 'UI/UX Designer', 'Graphic Designer']
-      }
-    };
-    return (defaults[dept] && defaults[dept][subDept]) || ['General Role'];
+  const getAvailableRoles = (dept: string, subDept: string) => {
+    return Array.from(new Set(jobs.filter((j: any) => j.department === dept && (j.sub_department === subDept || !j.sub_department || subDept === 'General')).map((j: any) => j.title))) as string[];
   };
   
   // Copied indicator state
@@ -82,7 +63,7 @@ const VideoBot = () => {
 
   useEffect(() => {
     fetchInterviews();
-  }, [showQuestionModal]); // refresh when modal closes
+  }, []);
 
   useEffect(() => {
     const fetchSenders = async () => {
@@ -270,21 +251,20 @@ const VideoBot = () => {
   };
 
   const filteredCandidatesForDropdown = candidates.filter((c: any) => {
-    // Only show candidates where resume status = 'Approved'
-    const resumeApproved = (c.resumeStatus === 'Approved' || c.resume_status === 'Approved');
-    if (!resumeApproved) return false;
+    // If no department selected yet, show nothing
+    if (!inviteDepartment) return false;
 
-    const job = jobs.find((j: any) => j.title === c.jobApplied);
-    if (!job) return false;
+    // Match candidate's job against the jobs table to find dept
+    const job = jobs.find((j: any) => j.title === (c.jobApplied || c.job_applied));
     
-    // Strict Department check based on the selected Department
-    if (job.department !== inviteDepartment) return false;
+    // If we find a matching job, use its department; otherwise try candidate's own dept field
+    const candidateDept = job?.department || c.department;
+    if (candidateDept !== inviteDepartment) return false;
     
-    // Strict Role check
+    // Role filter (only apply when a role is selected)
     if (inviteRole && inviteRole !== 'General Role') {
-       if (job.title !== inviteRole) {
-          return false; 
-       }
+      const candidateRole = job?.title || c.jobApplied || c.job_applied;
+      if (candidateRole !== inviteRole) return false;
     }
     return true;
   });
@@ -310,9 +290,7 @@ const VideoBot = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       
-      {showQuestionModal && (
-        <QuestionBankModal onClose={() => setShowQuestionModal(false)} />
-      )}
+
 
       {confirmModal && (
         <ConfirmActionModal
@@ -504,9 +482,6 @@ const VideoBot = () => {
       <div className="card">
         <div className="card-header flex justify-between items-center">
           <h3 className="card-title">Common Interview Questions</h3>
-          <button className="btn btn-primary" style={{ padding: '0.375rem 0.75rem', fontSize: '0.875rem' }} onClick={() => setShowQuestionModal(true)}>
-            <Settings2 size={16} /> Manage Question Bank
-          </button>
         </div>
         <div className="table-container" style={{ border: 'none', borderRadius: '0' }}>
           <table className="table">
