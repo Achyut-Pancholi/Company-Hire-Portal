@@ -1,10 +1,10 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useRef } from 'react';
 import { Edit2, Save, Printer } from 'lucide-react';
 import { useAppContext } from '@/components/admin/context/AppContext';
 
-// Converts a string to Title Case (e.g. "JOHN DOE" â†’ "John Doe")
+// Converts a string to Title Case (e.g. "JOHN DOE" -> "John Doe")
 const toTitleCase = (str: string): string =>
   str
     .toLowerCase()
@@ -120,7 +120,7 @@ const StandardResume = ({ candidate, onClose, onUpdate, readOnly = false }) => {
               Standardized Candidate Resume
             </h3>
             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.125rem' }}>
-              Format: Single Column â€¢ Role: <strong style={{ color: 'var(--brand-teal)' }}>{candidate.jobApplied}</strong>
+              Format: Single Column • Role: <strong style={{ color: 'var(--brand-teal)' }}>{candidate.jobApplied}</strong>
             </p>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
