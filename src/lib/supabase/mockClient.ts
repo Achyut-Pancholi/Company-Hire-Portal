@@ -16,7 +16,7 @@ function readDb() {
   } catch (e) {
     console.error('[mock-db] Error reading database:', e);
   }
-  return { jobs: [], candidates: [], interviews: [], questions_bank: [], email_settings: [] };
+  return { jobs: [], candidates: [], interviews: [], questions_bank: [], email_settings: [], mcq_questions_bank: [] };
 }
 
 function writeDb(data: any) {
