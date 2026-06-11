@@ -55,7 +55,7 @@ export default function LoginPage() {
             Modern AI interviews
             <br />
             <span className="bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
-              built by kadellabs
+              built by ElastiCrew
             </span>
           </h2>
           <p className="text-white/40 text-base leading-relaxed max-w-sm">
@@ -141,7 +141,7 @@ export default function LoginPage() {
           </form>
 
           <p className="mt-6 text-center text-xs text-white/20">
-            © {new Date().getFullYear()} Kadellabs. All rights reserved.
+            © {new Date().getFullYear()} ElastiCrew. All rights reserved.
           </p>
         </div>
       </div>

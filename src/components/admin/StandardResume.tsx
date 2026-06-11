@@ -172,7 +172,9 @@ const StandardResume = ({ candidate, onClose, onUpdate, readOnly = false }) => {
             </p>
           </div>
           <div>
-            <img src="/kadellabs-logo.png" alt="Kadel Labs" style={{ height: '48px', objectFit: 'contain' }} />
+            <div style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--brand-navy)', letterSpacing: '-0.5px' }}>
+              ElastiCrew
+            </div>
           </div>
         </div>
 
@@ -329,7 +331,7 @@ const StandardResume = ({ candidate, onClose, onUpdate, readOnly = false }) => {
         
         {/* Footer */}
         <div style={{ marginTop: '4rem', padding: '1.5rem', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1', textAlign: 'center', color: '#64748b', fontSize: '0.85rem' }}>
-          This resume was standardized and automatically generated via the Kadel Labs Interview Platform. <br/>
+          This resume was standardized and automatically generated via the ElastiCrew Interview Platform. <br/>
           Original contact details have been omitted to promote unbiased, skills-first evaluation.
         </div>
       </div>

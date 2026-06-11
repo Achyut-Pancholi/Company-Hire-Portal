@@ -20,15 +20,12 @@ export function Logo({ className, size = "md", href, showTagline }: LogoProps) {
 
   const content = (
     <div className={cn("flex items-center gap-2.5", className)}>
-      <Image
-        src="/kadellabs-logo.png"
-        alt="kadellabs logo"
-        width={img * 3}
-        height={img}
-        className="object-contain"
-        priority
-        style={{ height: img, width: "auto" }}
-      />
+      <span 
+        className="font-bold text-slate-800 dark:text-white"
+        style={{ fontSize: size === 'sm' ? '1.1rem' : size === 'md' ? '1.35rem' : '1.75rem', letterSpacing: '-0.5px' }}
+      >
+        ElastiCrew
+      </span>
       {showTagline && (
         <span className="text-slate-400 dark:text-white/30 text-xs border-l border-slate-200 dark:border-white/10 pl-2.5 ml-1">
           Interview Platform

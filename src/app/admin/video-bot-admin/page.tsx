@@ -52,7 +52,8 @@ const VideoBot = () => {
       'Operations': ['LnD'],
       'Engineering': ['DevOps', 'Data Science', 'SRE'],
       'HR': ['Recruitment', 'Operations'],
-      'Marketing': ['SEO', 'Content', 'Social Media']
+      'Marketing': ['SEO', 'Content', 'Social Media'],
+      'Design': ['UI/UX']
     };
     return defaults[dept] || ['General'];
   };
@@ -68,6 +69,9 @@ const VideoBot = () => {
       },
       'Operations': {
         'LnD': ['Manager', 'Associate Manager']
+      },
+      'Design': {
+        'UI/UX': ['Product Designer', 'UI/UX Designer', 'Graphic Designer']
       }
     };
     return (defaults[dept] && defaults[dept][subDept]) || ['General Role'];
@@ -266,8 +270,8 @@ const VideoBot = () => {
   };
 
   const filteredCandidatesForDropdown = candidates.filter((c: any) => {
-    // Only show candidates where resume_stage_status = 'Approved'
-    const resumeApproved = (c.resume_stage_status === 'Approved' || c.resumeStageStatus === 'Approved');
+    // Only show candidates where resume status = 'Approved'
+    const resumeApproved = (c.resumeStatus === 'Approved' || c.resume_status === 'Approved');
     if (!resumeApproved) return false;
 
     const job = jobs.find((j: any) => j.title === c.jobApplied);
@@ -534,7 +538,7 @@ const VideoBot = () => {
                   const matchesName = c.name && interview.candidate_name && cleanName(c.name) === cleanName(interview.candidate_name);
                   return matchesEmail || matchesName;
                 });
-                const videoStageStatus = matchedCandidate?.video_stage_status ?? matchedCandidate?.videoStageStatus ?? 'Pending';
+                const videoStageStatus = matchedCandidate?.videoStatus ?? matchedCandidate?.video_status ?? 'Pending';
 
                 return (
                   <tr key={interview.id}>
@@ -633,8 +637,8 @@ const VideoBot = () => {
                             {matchedCandidate && (
                               <select
                                 value={(() => {
-                                  const status = matchedCandidate.video_stage_status || matchedCandidate.videoStageStatus || 'Pending';
-                                  return status === 'Pending' ? 'Under Review' : status;
+                                  const status = matchedCandidate.videoStatus || matchedCandidate.video_status || 'Pending';
+                                  return (status === 'Pending' || status === 'Under Review') ? 'Pending' : status;
                                 })()}
                                 onChange={(e) => {
                                   const val = e.target.value;
@@ -643,7 +647,7 @@ const VideoBot = () => {
                                   } else if (val === 'Rejected') {
                                     setConfirmModal({ type: 'reject', candidate: matchedCandidate });
                                   } else {
-                                    handleWorkflowActionDirect(matchedCandidate, 'video_stage_status', val);
+                                    handleWorkflowActionDirect(matchedCandidate, 'video_status', val);
                                   }
                                 }}
                                 disabled={actionLoading === matchedCandidate.id}
@@ -658,7 +662,7 @@ const VideoBot = () => {
                                   cursor: 'pointer',
                                 }}
                               >
-                                <option value="Under Review">Under Review</option>
+                                <option value="Pending">Under Review</option>
                                 <option value="Approved">Approved</option>
                                 <option value="Rejected">Rejected</option>
                               </select>

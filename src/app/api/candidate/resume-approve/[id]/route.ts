@@ -23,7 +23,7 @@ export async function POST(
     // Fetch current candidate
     const { data: candidate, error: fetchError } = await supabase
       .from("candidates")
-      .select("id, resume_stage_status, workflow_locked")
+      .select("id, resume_status, workflow_locked")
       .eq("id", id)
       .single();
 
@@ -32,10 +32,10 @@ export async function POST(
     }
 
     // Prevent duplicate actions — only check locked for terminal states
-    if (candidate.resume_stage_status === "Approved" || candidate.resume_stage_status === "Rejected") {
+    if (candidate.resume_status === "Approved" || candidate.resume_status === "Rejected") {
       return NextResponse.json(
         {
-          error: `Candidate resume has already been ${candidate.resume_stage_status.toLowerCase()}. No further action allowed.`,
+          error: `Candidate resume has already been ${candidate.resume_status.toLowerCase()}. No further action allowed.`,
           code: "ALREADY_PROCESSED",
         },
         { status: 409 }
@@ -48,7 +48,7 @@ export async function POST(
     const { data: updated, error: updateError } = await supabase
       .from("candidates")
       .update({
-        resume_stage_status: "Approved",
+        resume_status: "Approved",
         current_stage: "Video Screening",
         stage_order: 2,
         workflow_locked: false, // pipeline continues

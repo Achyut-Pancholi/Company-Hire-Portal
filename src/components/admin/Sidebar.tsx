@@ -3,18 +3,19 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Briefcase, FileText, Video, Calendar, BarChart, LogOut } from 'lucide-react';
+import { Briefcase, FileText, BarChart, LogOut, CheckSquare, LayoutDashboard, Settings } from 'lucide-react';
 
 const Sidebar = () => {
   const pathname = usePathname();
   const [isLogoutHovered, setIsLogoutHovered] = useState(false);
   
   const navItems = [
-    { name: 'Resume Upload', path: '/admin/resumeupload', icon: FileText },
-    { name: 'Video Bot Screening', path: '/admin/video-bot-admin', icon: Video },
-    { name: 'Technical Scheduler', path: '/admin/technicalscheduler', icon: Calendar },
+    { name: 'Candidates', path: '/admin/candidates', icon: FileText },
+    { name: 'Assessments', path: '/admin/assessments', icon: CheckSquare },
     { name: 'Reports', path: '/admin/reports', icon: BarChart },
-    { name: 'Department', path: '/admin/jobpostings', icon: Briefcase },
+    { name: 'Dashboard', path: '/admin/video-bot-admin', icon: LayoutDashboard },
+    { name: 'Departments', path: '/admin/jobpostings', icon: Briefcase },
+    { name: 'Settings', path: '/admin/settings', icon: Settings },
   ];
 
   return (
@@ -28,18 +29,14 @@ const Sidebar = () => {
     }}>
       <div style={{ 
         height: '73px', 
-        backgroundColor: '#ffffff', 
+        backgroundColor: 'var(--brand-navy)', 
         display: 'flex', 
         alignItems: 'center', 
-        justifyContent: 'center',
-        borderBottom: '1px solid var(--border)',
+        justifyContent: 'flex-start',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
         padding: '0 1.5rem'
       }}>
-        <img 
-          src="https://kadellabs.com/wp-content/uploads/2024/08/KL-blue-1-1.svg" 
-          alt="KadelLabs Logo" 
-          style={{ height: '42px', objectFit: 'contain' }}
-        />
+        <span style={{ fontSize: '1.35rem', fontWeight: '700', color: '#ffffff', letterSpacing: '-0.5px' }}>ElastiCrew</span>
       </div>
       
       <nav style={{ flex: 1, padding: '1.5rem 1rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>

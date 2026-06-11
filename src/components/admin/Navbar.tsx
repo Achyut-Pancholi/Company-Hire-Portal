@@ -1,6 +1,6 @@
 "use client";
 
-const ADMIN_EMAIL = process.env.NEXT_PUBLIC_DASHBOARD_EMAIL || 'careers@kadellabs.com';
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_DASHBOARD_EMAIL || 'careers@elasticrew.com';
 
 const Navbar = ({ title }) => {
   return (
@@ -29,7 +29,7 @@ const Navbar = ({ title }) => {
             fontWeight: '600', color: 'white',
             boxShadow: '0 2px 5px rgba(14, 45, 123, 0.2)'
           }}>
-            KL
+            EC
           </div>
         </div>
       </div>

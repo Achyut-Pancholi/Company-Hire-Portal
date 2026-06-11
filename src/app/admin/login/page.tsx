@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Lock, Mail, AlertCircle } from 'lucide-react';
 
-const ADMIN_EMAIL = process.env.NEXT_PUBLIC_DASHBOARD_EMAIL || 'careers@kadellabs.com';
-const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD || 'hr_kadellabs@2026';
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_DASHBOARD_EMAIL || 'careers@elasticrew.com';
+const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD || 'hr_elasticrew@2026';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -38,11 +38,9 @@ const Login = () => {
     <div className="auth-bg" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
       <div className="auth-card animate-slide-up" style={{ width: '100%', maxWidth: '420px', position: 'relative', zIndex: 10, padding: '1.75rem 1.5rem 2rem' }}>
         <div className="card-header" style={{ textAlign: 'center', borderBottom: 'none', paddingBottom: '0' }}>
-          <img
-            src="https://kadellabs.com/wp-content/uploads/2024/08/KL-blue-1-1.svg"
-            alt="KadelLabs Logo"
-            style={{ height: '54px', display: 'block', margin: '0 auto 1.75rem', objectFit: 'contain' }}
-          />
+          <div style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--brand-navy)', display: 'block', margin: '0 auto 1.75rem', textAlign: 'center' }}>
+            ElastiCrew
+          </div>
           <h2 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem', color: 'var(--brand-navy)' }}>Welcome Back</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Sign in to the Admin Dashboard</p>
         </div>
@@ -56,7 +54,7 @@ const Login = () => {
                 <input
                   type="email"
                   className="form-input"
-                  placeholder="careers@kadellabs.com"
+                  placeholder="careers@elasticrew.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   style={{ paddingLeft: '2.5rem' }}
@@ -109,7 +107,7 @@ const Login = () => {
           </form>
 
           <p suppressHydrationWarning style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            © {new Date().getFullYear()} Kadellabs. All rights reserved.
+            © {new Date().getFullYear()} ElastiCrew. All rights reserved.
           </p>
         </div>
       </div>
