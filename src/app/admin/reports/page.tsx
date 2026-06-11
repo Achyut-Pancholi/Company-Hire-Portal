@@ -2465,20 +2465,20 @@ const Reports = () => {
       <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
         {/* Header */}
         <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--gray-100)', display: 'flex', gap: '10px', alignItems: 'center', justifyContent: 'space-between', background: 'linear-gradient(180deg, #fafcff 0%, #fff 100%)', flexWrap: 'nowrap' }}>
-          <h3 style={{ margin: 0, fontWeight: '700', fontSize: '1rem', color: 'var(--brand-navy)', letterSpacing: '-0.01em', whiteSpace: 'nowrap' }}>Candidate Reports</h3>
+          <h3 style={{ margin: 0, fontWeight: '700', fontSize: '1rem', color: 'var(--brand-navy)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', flexShrink: 0 }}>Candidate Reports</h3>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'nowrap', flexShrink: 0 }}>
             {/* Search */}
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', flexShrink: 0 }}>
               <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)', pointerEvents: 'none' }} />
               <input
                 type="text" value={search} onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search candidate..."
                 className="form-input"
-                style={{ paddingLeft: '30px', width: '200px', fontSize: '0.8rem' }}
+                style={{ paddingLeft: '30px', width: '180px', fontSize: '0.8rem', flexShrink: 0 }}
               />
             </div>
             {/* Job filter */}
-            <select className="form-select" value={filterJob} onChange={(e) => setFilterJob(e.target.value)} style={{ fontSize: '0.8rem', minWidth: '130px' }}>
+            <select className="form-select" value={filterJob} onChange={(e) => setFilterJob(e.target.value)} style={{ fontSize: '0.8rem', width: '130px', flexShrink: 0 }}>
               {jobOptions.map((j: any) => (
                 <option key={j} value={j}>
                   {j === 'All' ? 'All Roles' : j}
@@ -2486,7 +2486,7 @@ const Reports = () => {
               ))}
             </select>
             {/* Rec filter */}
-            <select className="form-select" value={filterRec} onChange={(e) => setFilterRec(e.target.value)} style={{ fontSize: '0.8rem', minWidth: '150px' }}>
+            <select className="form-select" value={filterRec} onChange={(e) => setFilterRec(e.target.value)} style={{ fontSize: '0.8rem', width: '140px', flexShrink: 0 }}>
               {recOptions.map((r: any) => (
                 <option key={r} value={r}>
                   {r === 'All' ? 'All Verdicts' : r}
@@ -2494,7 +2494,7 @@ const Reports = () => {
               ))}
             </select>
             {/* Stage filter */}
-            <select className="form-select" value={filterStage} onChange={(e) => setFilterStage(e.target.value)} style={{ fontSize: '0.8rem', minWidth: '150px' }}>
+            <select className="form-select" value={filterStage} onChange={(e) => setFilterStage(e.target.value)} style={{ fontSize: '0.8rem', width: '140px', flexShrink: 0 }}>
               {stageOptions.map((s: any) => (
                 <option key={s} value={s}>
                   {s === 'All' ? 'All Stages' : s}
@@ -2502,14 +2502,14 @@ const Reports = () => {
               ))}
             </select>
             {/* View toggle */}
-            <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', border: '1.5px solid var(--border)' }}>
+            <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', border: '1.5px solid var(--border)', flexShrink: 0 }}>
               {[{ id: 'table', Icon: List }, { id: 'cards', Icon: LayoutGrid }].map(({ id, Icon }) => (
                 <button
                   key={id}
                   onClick={() => setViewMode(id)}
-                  style={{ padding: '6px 10px', border: 'none', cursor: 'pointer', backgroundColor: viewMode === id ? 'var(--brand-navy)' : '#fff', color: viewMode === id ? '#fff' : 'var(--gray-500)', display: 'flex', alignItems: 'center', transition: 'all 0.15s' }}
+                  style={{ padding: '6px 10px', border: 'none', cursor: 'pointer', backgroundColor: viewMode === id ? 'var(--brand-navy)' : '#fff', color: viewMode === id ? '#fff' : 'var(--gray-500)', display: 'flex', alignItems: 'center', transition: 'all 0.15s', flexShrink: 0 }}
                 >
-                  <Icon size={14} />
+                  <Icon size={14} style={{ flexShrink: 0 }} />
                 </button>
               ))}
             </div>
