@@ -3,53 +3,56 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CheckSquare, FileSpreadsheet, Plus, X, Upload, Download, CheckCircle, AlertCircle, Edit2, Trash2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { useAppContext } from '@/components/admin/context/AppContext';
 
 const BASELINE_FALLBACK = {
-  "Operations|HR|Fresher(0)": [
+  "Operations|HR": [
     "Tell us about yourself and what motivated you to pursue a career in HR operations?",
     "How do you prioritize your daily tasks when faced with multiple competing deadlines?",
     "Describe your familiarity with basic office productivity tools and spreadsheets.",
     "How do you maintain focus and accuracy when performing repetitive data entry tasks?",
-    "What step would you take if you were unsure how to handle a candidate documentation issue?"
-  ],
-  "Operations|HR|Junior(1-3)": [
+    "What step would you take if you were unsure how to handle a candidate documentation issue?",
     "Walk us through your experience coordinating candidate pipeline data loops.",
     "How do you handle internal compliance steps when onboarding fresh team rosters?",
     "What strategies do you use to manage scheduling timelines across varying time zones?",
     "Describe a situation where you successfully resolved a scheduling conflict between interviewers.",
     "Which applicant tracking system modules are you most proficient in utilizing?"
   ],
-  "Operations|HR|Mid Level(3-5)": [
-    "How do you optimize candidate screening touchpoints to improve overall pipeline conversions?",
-    "Detail your process for audit-checking employee resource logs against localized labor rules.",
-    "How do you address sudden drop-offs or bottleneck constraints within specific recruitment tracks?",
-    "Describe your approach to training junior HR coordinators on system documentation policies.",
-    "How do you leverage data reports to provide weekly pipeline summaries to department heads?"
+  "Operations|Logistics": [
+    "Please describe your experience coordinating supply chain or logistics operations.",
+    "How do you ensure data accuracy when tracking shipments and processing inventory logs?",
+    "Describe a challenging logistical constraint or delay you encountered and how you resolved it.",
+    "How do you prioritize urgent delivery schedules when faced with resource shortages?",
+    "What methods do you employ to collaborate cleanly and share logistics reports with team leads?"
   ],
-  "Operations|HR|Senior(5+)": [
-    "How do you design, execute, and scale regional recruitment operational frameworks from scratch?",
-    "Detail your stakeholder management strategy when department heads request unrealistic allocation timelines.",
-    "How do you mitigate compliance risks during large-scale, high-velocity hiring cycles?",
-    "What key performance indicators (KPIs) do you prioritize to track overall HR operations health?",
-    "Describe a time you completely overhauled a broken administrative workflow to save processing costs."
+  "Operations|Compliance": [
+    "Please describe your background in auditing operational workflows against corporate policies.",
+    "How do you stay updated on regional labor regulations and regulatory changes?",
+    "Describe a time you identified a compliance risk and took proactive steps to mitigate it.",
+    "How do you approach explaining compliance standards to non-specialist team members?",
+    "Detail your process for managing documentation audits during high-velocity hiring cycles."
   ],
-  "Operations|HR|Lead(10+)": [
-    "How do you construct global workforce talent allocation models aligned with enterprise fiscal budgets?",
-    "Explain your approach to implementing predictive AI assessment scoring systems across non-technical tracks.",
-    "How do you manage, mentor, and inspire cross-functional operational teams across distributed international landscapes?",
-    "Detail your corporate conflict resolution roadmap when handling sensitive executive team grievances.",
-    "How do you design an adaptive operational agility model to survive sudden macroeconomic structural changes?"
-  ],
-  "Engineering|Full Stack|Fresher(0)": [
+  "Engineering|Full Stack": [
     "What programming languages are you most comfortable with, and what projects have you built using them?",
     "Explain the difference between client-side rendering and server-side rendering.",
-    "How do you test and debug your code when an unexpected application error occurs?"
-  ],
-  "Engineering|Full Stack|Junior(1-3)": [
+    "How do you test and debug your code when an unexpected application error occurs?",
     "Explain the exact event loop architecture execution paths inside production Node.js instances.",
     "How do you resolve complex asynchronous CORS exception loops within your Express route configurations?",
-    "Detail your standard database optimization steps when dealing with slow lookup queries."
+    "Detail your standard database optimization steps when dealing with slow lookup queries.",
+    "How do you collaborate cleanly and share documentation within distributed engineering teams?"
+  ],
+  "Engineering|DevOps": [
+    "Please describe your experience configuring CI/CD build pipelines and deployment workflows.",
+    "How do you monitor infrastructure health and track service exception loops in production?",
+    "Describe a challenging cloud infrastructure constraint or system outage you resolved.",
+    "How do you approach securing microservice communication and managing API secret tokens?",
+    "What orchestration and containerization tools are you most proficient in utilizing?"
+  ],
+  "Engineering|Data Platform": [
+    "Please describe your experience designing scalable data schemas and ETL pipelines.",
+    "How do you optimize database performance for high-throughput write or query loads?",
+    "Describe a challenging data integrity or synchronization issue you resolved.",
+    "How do you ensure data security and compliance within analytical database warehouses?",
+    "Which data storage architectures (SQL, NoSQL, or streaming pipelines) do you prefer and why?"
   ]
 };
 
@@ -59,14 +62,12 @@ const TRACK_RELATIONS = {
 };
 
 export default function AssessmentsPage() {
-  const { jobs } = useAppContext();
   const [activeTab, setActiveTab] = useState<'videobot' | 'mcq'>('videobot');
   const [isClient, setIsClient] = useState(false);
 
   // Dropdown States
   const [targetDept, setTargetDept] = useState<string>('Operations');
   const [subDept, setSubDept] = useState<string>('HR');
-  const [role, setRole] = useState<string>('');
 
   // Questions State
   const [questions, setQuestions] = useState<string[]>([]);
@@ -99,7 +100,7 @@ export default function AssessmentsPage() {
     if (!isClient) return;
     setLoadingMcq(true);
     try {
-      const res = await fetch(`/api/mcq/questions?department=${encodeURIComponent(targetDept)}&sub_department=${encodeURIComponent(subDept)}&experience_level=${encodeURIComponent(expLevel)}`);
+      const res = await fetch(`/api/mcq/questions?department=${encodeURIComponent(targetDept)}&sub_department=${encodeURIComponent(subDept)}`);
       if (res.ok) {
         const data = await res.json();
         setMcqQuestions(data);
@@ -117,7 +118,7 @@ export default function AssessmentsPage() {
 
   useEffect(() => {
     fetchMcqQuestions();
-  }, [targetDept, subDept, expLevel, isClient]);
+  }, [targetDept, subDept, isClient]);
 
   const handleAddMcqQuestion = () => {
     setMcqModalMode('add');
@@ -153,7 +154,7 @@ export default function AssessmentsPage() {
       const payload: any = {
         department: targetDept,
         sub_department: subDept,
-        experience_level: expLevel,
+        experience_level: "General",
         question_text: mcqModalQuestion.trim(),
         option_a: mcqModalOptA.trim(),
         option_b: mcqModalOptB.trim(),
@@ -224,18 +225,12 @@ export default function AssessmentsPage() {
   useEffect(() => {
     const defaultSubDept = TRACK_RELATIONS[targetDept]?.[0] || '';
     setSubDept(defaultSubDept);
-    setRole('');
   }, [targetDept]);
-
-  // Reset role when subDept changes
-  useEffect(() => {
-    setRole('');
-  }, [subDept]);
 
   // Load configured questions from localStorage or fallback
   useEffect(() => {
     if (!isClient) return;
-    const matrixKey = `${targetDept}|${subDept}|${role}`;
+    const matrixKey = `${targetDept}|${subDept}`;
     const stored = localStorage.getItem('elasticrew_question_matrix');
     
     let pool: Record<string, string[]> = BASELINE_FALLBACK;
@@ -258,7 +253,7 @@ export default function AssessmentsPage() {
     ];
 
     setQuestions(setQuestionsList);
-  }, [targetDept, subDept, role, isClient]);
+  }, [targetDept, subDept, isClient]);
 
   // Toast auto-clear
   useEffect(() => {
@@ -272,7 +267,7 @@ export default function AssessmentsPage() {
 
   // Save current questions pool to localStorage
   const handleSaveConfig = () => {
-    const matrixKey = `${targetDept}|${subDept}|${role}`;
+    const matrixKey = `${targetDept}|${subDept}`;
     const stored = localStorage.getItem('elasticrew_question_matrix');
     let pool: Record<string, string[]> = { ...BASELINE_FALLBACK };
 
@@ -294,7 +289,7 @@ export default function AssessmentsPage() {
 
     setToast({
       type: 'success',
-      message: `Configuration updated successfully for ${targetDept} → ${subDept} (${role}).`
+      message: `Configuration updated successfully for ${targetDept} → ${subDept}.`
     });
   };
 
@@ -424,7 +419,7 @@ export default function AssessmentsPage() {
             body: JSON.stringify({
               department: targetDept,
               sub_department: subDept,
-              experience_level: expLevel,
+              experience_level: "General",
               questions: parsedQuestions
             })
           });
@@ -495,12 +490,6 @@ export default function AssessmentsPage() {
   }
 
   const subDeptList = TRACK_RELATIONS[targetDept] || [];
-  const roleList = Array.from(new Set(
-    jobs
-      .filter((j: any) => j.department === targetDept && (j.sub_department === subDept || !j.sub_department || subDept === 'General'))
-      .map((j: any) => j.title)
-      .filter(Boolean)
-  )) as string[];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
@@ -577,7 +566,7 @@ export default function AssessmentsPage() {
         padding: '20px',
         marginBottom: '24px',
         display: 'grid',
-        gridTemplateColumns: activeTab === 'videobot' ? 'repeat(auto-fit, minmax(200px, 1fr)) auto' : 'repeat(auto-fit, minmax(200px, 1fr))',
+        gridTemplateColumns: activeTab === 'videobot' ? '1fr 1fr auto' : '1fr 1fr',
         gap: '16px',
         alignItems: 'end',
         boxShadow: 'var(--shadow-sm)'
@@ -605,21 +594,6 @@ export default function AssessmentsPage() {
           >
             {subDeptList.map(track => (
               <option key={track} value={track}>{track}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="form-group" style={{ marginBottom: 0 }}>
-          <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-main)' }}>Role</label>
-          <select 
-            value={role} 
-            onChange={e => setRole(e.target.value)}
-            className="form-control"
-            style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '13.5px', color: 'var(--text-dark)', outline: 'none' }}
-          >
-            <option value="">Select Role...</option>
-            {roleList.map(r => (
-              <option key={r} value={r}>{r}</option>
             ))}
           </select>
         </div>
@@ -664,7 +638,7 @@ export default function AssessmentsPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
             <div>
               <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-dark)', margin: 0 }}>
-                {targetDept} - {subDept} {role ? `(${role})` : ''} Interview Parameters
+                {targetDept} - {subDept} Interview Parameters
               </h3>
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
                 Configure custom question limits seamlessly. Changes apply to newly generated invite links.
@@ -843,7 +817,7 @@ export default function AssessmentsPage() {
                 MCQ Question Bank Configuration
               </h3>
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
-                Manage the multiple-choice question pool for {targetDept} → {subDept} {role ? `(${role})` : ''}.
+                Manage the multiple-choice question pool for {targetDept} → {subDept}.
               </p>
             </div>
             <button 
@@ -1119,7 +1093,7 @@ export default function AssessmentsPage() {
                   {modalMode === 'add' ? 'Add Target Question' : 'Edit Target Question'}
                 </h3>
                 <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
-                  {targetDept} - {subDept} ({expLevel}) Parameters
+                  {targetDept} - {subDept} Parameters
                 </p>
               </div>
               <button
@@ -1227,7 +1201,7 @@ export default function AssessmentsPage() {
                   {mcqModalMode === 'add' ? 'Add MCQ Question' : 'Edit MCQ Question'}
                 </h3>
                 <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
-                  {targetDept} - {subDept} ({expLevel}) Parameters
+                  {targetDept} - {subDept} Parameters
                 </p>
               </div>
               <button

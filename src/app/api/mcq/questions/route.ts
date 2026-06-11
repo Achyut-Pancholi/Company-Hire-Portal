@@ -4,7 +4,7 @@ import { requireInternalSecret } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-// Fetch MCQ questions filtered by department, sub_department, and experience_level
+// Fetch MCQ questions filtered by department and sub_department (optional experience_level)
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -12,20 +12,36 @@ export async function GET(req: NextRequest) {
     const sub_department = searchParams.get("sub_department");
     const experience_level = searchParams.get("experience_level");
 
-    if (!department || !sub_department || !experience_level) {
+    if (!department || !sub_department) {
       return NextResponse.json(
-        { error: "Missing required query parameters: department, sub_department, experience_level" },
+        { error: "Missing required query parameters: department, sub_department" },
         { status: 400 }
       );
     }
 
     const supabase = getServiceSupabase();
+
+    // If experience_level is provided, try filtering by it first
+    if (experience_level) {
+      const { data, error } = await supabase
+        .from("mcq_questions_bank")
+        .select("*")
+        .eq("department", department)
+        .eq("sub_department", sub_department)
+        .eq("experience_level", experience_level)
+        .order("created_at", { ascending: true });
+
+      if (!error && data && data.length > 0) {
+        return NextResponse.json(data);
+      }
+    }
+
+    // Fallback: Fetch all questions for department & sub_department (including general/unspecified levels)
     const { data, error } = await supabase
       .from("mcq_questions_bank")
       .select("*")
       .eq("department", department)
       .eq("sub_department", sub_department)
-      .eq("experience_level", experience_level)
       .order("created_at", { ascending: true });
 
     if (error) {
@@ -81,13 +97,14 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { department, sub_department, experience_level, questions, id, question_text, option_a, option_b, option_c, option_d, correct_answer, points_value } = body;
 
-    if (!department || !sub_department || !experience_level) {
+    if (!department || !sub_department) {
       return NextResponse.json(
-        { error: "Missing required fields: department, sub_department, experience_level" },
+        { error: "Missing required fields: department, sub_department" },
         { status: 400 }
       );
     }
 
+    const expLevel = experience_level || "General";
     const supabase = getServiceSupabase();
 
     // 1. Bulk upload / Replace flow
@@ -98,7 +115,7 @@ export async function POST(req: NextRequest) {
         .delete()
         .eq("department", department)
         .eq("sub_department", sub_department)
-        .eq("experience_level", experience_level);
+        .eq("experience_level", expLevel);
 
       if (deleteError) {
         console.error("Error clearing old MCQ questions:", deleteError);
@@ -120,7 +137,7 @@ export async function POST(req: NextRequest) {
         return {
           department,
           sub_department,
-          experience_level,
+          experience_level: expLevel,
           question_text: q.question_text || q.questionText,
           option_a: oA,
           option_b: oB,
@@ -154,7 +171,7 @@ export async function POST(req: NextRequest) {
     const rowData = {
       department,
       sub_department,
-      experience_level,
+      experience_level: expLevel,
       question_text,
       option_a,
       option_b,
