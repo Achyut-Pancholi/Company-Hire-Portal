@@ -127,7 +127,7 @@ async function getTransporter(senderEmail?: string) {
 
 function mcqInviteEmailTemplate(
   candidateName: string,
-  jobRole: string,
+  position: string,
   candidateId: string,
   customBody?: string
 ): string {
@@ -137,7 +137,7 @@ function mcqInviteEmailTemplate(
   const bodyContent = customBody
     ? customBody.replace(/\n/g, "<br />")
     : `Hello, ${candidateName} 👋<br /><br />
-       You have been invited to complete the MCQ Objective Assessment for the <strong style="color:#0f172a;">${jobRole}</strong> position.<br /><br />
+       You have been invited to complete the MCQ Objective Assessment for the <strong style="color:#0f172a;">${position}</strong> position.<br /><br />
        This is a timed, multiple-choice assessment designed to evaluate your technical aptitude and concepts related to the role. Ensure you have a stable internet connection before starting.`;
 
   return `
@@ -176,7 +176,7 @@ function mcqInviteEmailTemplate(
                 <tr>
                   <td style="padding:6px 0;">
                     <span style="color:#64748b;font-size:13px;">Position</span>
-                    <div style="color:#0f172a;font-weight:600;font-size:15px;margin-top:2px;">${jobRole}</div>
+                    <div style="color:#0f172a;font-weight:600;font-size:15px;margin-top:2px;">${position}</div>
                   </td>
                 </tr>
               </table>
@@ -216,7 +216,7 @@ function mcqInviteEmailTemplate(
 
 function formInviteEmailTemplate(
   candidateName: string,
-  jobRole: string,
+  position: string,
   candidateId: string
 ): string {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -250,7 +250,7 @@ function formInviteEmailTemplate(
             <p style="color:#64748b;font-size:13px;margin:0 0 8px;text-transform:uppercase;letter-spacing:1px;font-weight:600;">Form Invitation</p>
             <h1 style="color:#0f172a;font-size:26px;font-weight:700;margin:0 0 16px;line-height:1.3;">Hello, ${candidateName} 👋</h1>
             <p style="color:#475569;font-size:15px;line-height:1.7;margin:0 0 24px;">
-              Please complete your candidate form for the <strong style="color:#0f172a;">${jobRole}</strong> position. 
+              Please complete your candidate form for the <strong style="color:#0f172a;">${position}</strong> position. 
               This is a required step before we proceed with your application.
             </p>
             
@@ -287,7 +287,7 @@ function formInviteEmailTemplate(
 }
 function inviteEmailTemplate(
   candidateName: string,
-  jobRole: string,
+  position: string,
   interviewId: string,
   expiresAt: string,
   customBody?: string
@@ -303,7 +303,7 @@ function inviteEmailTemplate(
   const bodyContent = customBody
     ? customBody.replace(/\n/g, "<br />")
     : `Hello, ${candidateName} 👋<br /><br />
-       You've been invited to complete a video interview for the <strong style="color:#0f172a;">${jobRole}</strong> position. 
+       You've been invited to complete a video interview for the <strong style="color:#0f172a;">${position}</strong> position. 
        Our AI-powered platform will guide you through the process.<br /><br />
        <strong>Instructions & What to expect:</strong>
        <ul style="color:#475569;font-size:14px;line-height:1.8;padding-left:20px;margin:12px 0 28px;">
@@ -356,7 +356,7 @@ function inviteEmailTemplate(
                 <tr>
                   <td style="padding:6px 0;">
                     <span style="color:#64748b;font-size:13px;">Position</span>
-                    <div style="color:#0f172a;font-weight:600;font-size:15px;margin-top:2px;">${jobRole}</div>
+                    <div style="color:#0f172a;font-weight:600;font-size:15px;margin-top:2px;">${position}</div>
                   </td>
                 </tr>
                 <tr>
@@ -403,7 +403,7 @@ function inviteEmailTemplate(
 
 function completionEmailTemplate(
   candidateName: string,
-  jobRole: string,
+  position: string,
   reviewUrl: string
 ): string {
   return `
@@ -430,7 +430,7 @@ function completionEmailTemplate(
               🎉 Interview Recording Ready
             </h1>
             <p style="color:#475569;font-size:15px;line-height:1.7;margin:0 0 24px;">
-              <strong>${candidateName}</strong> has completed their video interview for the <strong>${jobRole}</strong> position. 
+              <strong>${candidateName}</strong> has completed their video interview for the <strong>${position}</strong> position. 
               The recording is now available for review in your dashboard.
             </p>
             <table width="100%" cellpadding="0" cellspacing="0">
@@ -459,7 +459,7 @@ function completionEmailTemplate(
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { type, to, candidateName, jobRole, interviewId, expiresAt, reviewUrl, candidateId, subject: customSubject, bodyText } = body;
+    const { type, to, candidateName, jobRole: position, interviewId, expiresAt, reviewUrl, candidateId, subject: customSubject, bodyText } = body;
 
     if (!type || !to) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -469,17 +469,17 @@ export async function POST(req: NextRequest) {
     let html = "";
 
     if (type === "invite") {
-      subject = customSubject || `ElastiCrew Video Bot Screening Invitation — ${jobRole} Position`;
-      html = inviteEmailTemplate(candidateName, jobRole, interviewId, expiresAt, bodyText);
+      subject = customSubject || `ElastiCrew Video Bot Screening Invitation — ${position} Position`;
+      html = inviteEmailTemplate(candidateName, position, interviewId, expiresAt, bodyText);
     } else if (type === "mcq_invite") {
-      subject = customSubject || `ElastiCrew MCQ Assessment Invitation — ${jobRole} Position`;
-      html = mcqInviteEmailTemplate(candidateName, jobRole, candidateId, bodyText);
+      subject = customSubject || `ElastiCrew MCQ Assessment Invitation — ${position} Position`;
+      html = mcqInviteEmailTemplate(candidateName, position, candidateId, bodyText);
     } else if (type === "form_invite") {
-      subject = `Candidate Form — ${jobRole} Position`;
-      html = formInviteEmailTemplate(candidateName, jobRole, candidateId);
+      subject = `Candidate Form — ${position} Position`;
+      html = formInviteEmailTemplate(candidateName, position, candidateId);
     } else if (type === "completion") {
-      subject = `Interview Completed: ${candidateName} — ${jobRole}`;
-      html = completionEmailTemplate(candidateName, jobRole, reviewUrl);
+      subject = `Interview Completed: ${candidateName} — ${position}`;
+      html = completionEmailTemplate(candidateName, position, reviewUrl);
     } else {
       return NextResponse.json({ error: "Invalid email type" }, { status: 400 });
     }

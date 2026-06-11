@@ -173,7 +173,7 @@ export default function CandidateDrawer() {
             </div>
             <div>
               <h3 className="drawer-name">{interview.candidate_name}</h3>
-              <p className="drawer-role">{interview.job_role}</p>
+              <p className="drawer-role">{interview.sub_department || ''}</p>
               <span className={`badge ${interview.status === 'scheduled' ? 'badge-info' : interview.status === 'completed' ? 'badge-success' : 'badge-danger'}`}>
                 {interview.status}
               </span>

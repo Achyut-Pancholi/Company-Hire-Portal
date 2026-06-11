@@ -11,24 +11,18 @@ const QuestionBankModal = ({ onClose }) => {
   
   const [newDepartment, setNewDepartment] = useState('');
   const [newSubDepartment, setNewSubDepartment] = useState('');
-  const [newRole, setNewRole] = useState('');
   const [newQuestionText, setNewQuestionText] = useState('');
   
   // Unique departments combined from existing questions
   const allDepartments = [...new Set(questions.map(q => q.department || 'General'))].filter(Boolean);
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedSubDepartment, setSelectedSubDepartment] = useState('');
-  const [selectedRole, setSelectedRole] = useState('');
   // Dynamic Departments from jobs
   const availableDepartments = Array.from(new Set(jobs.map((j: any) => j.department).filter(Boolean))) as string[];
   
   const getAvailableSubDepartments = (dept: string) => {
     const subDepts = Array.from(new Set(jobs.filter((j: any) => j.department === dept && j.sub_department).map((j: any) => j.sub_department))) as string[];
     return subDepts.length > 0 ? subDepts : ['General'];
-  };
-
-  const getAvailableRoles = (dept: string, subDept: string) => {
-    return Array.from(new Set(jobs.filter((j: any) => j.department === dept && (j.sub_department === subDept || !j.sub_department || subDept === 'General')).map((j: any) => j.title))) as string[];
   };
 
   useEffect(() => {
@@ -65,10 +59,8 @@ const QuestionBankModal = ({ onClose }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          job_role: 'Common',
           department: newDepartment,
           sub_department: newSubDepartment,
-          role: newRole,
           question_text: newQuestionText.trim(),
           is_mandatory: false
         })
@@ -76,6 +68,10 @@ const QuestionBankModal = ({ onClose }) => {
       if (res.ok) {
         setNewQuestionText('');
         fetchQuestions();
+      } else {
+        const err = await res.json();
+        console.error("Failed to add question:", err);
+        alert(err.error || "Failed to add question");
       }
     } catch (e) {
       console.error(e);
@@ -102,7 +98,6 @@ const QuestionBankModal = ({ onClose }) => {
   const filteredQuestions = questions.filter((q: any) => {
     if (selectedDepartment && q.department !== selectedDepartment) return false;
     if (selectedSubDepartment && q.sub_department !== selectedSubDepartment) return false;
-    if (selectedRole && q.job_role !== selectedRole) return false;
     return true;
   });
 
@@ -120,7 +115,7 @@ const QuestionBankModal = ({ onClose }) => {
           {/* Add Question Form */}
           <div style={{ background: 'var(--gray-50)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
             <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '1rem' }}>Add New Question</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
               <div>
                 <label className="form-label">Department</label>
                 <select 
@@ -130,7 +125,6 @@ const QuestionBankModal = ({ onClose }) => {
                     const newDept = e.target.value;
                     setNewDepartment(newDept);
                     setNewSubDepartment('');
-                    setNewRole('');
                   }}
                 >
                   <option value="">Select Department...</option>
@@ -149,27 +143,11 @@ const QuestionBankModal = ({ onClose }) => {
                   onChange={e => {
                     const newSub = e.target.value;
                     setNewSubDepartment(newSub);
-                    setNewRole('');
                   }}
                 >
                   <option value="">Select Sub-Department...</option>
                   {newDepartment && (getAvailableSubDepartments(newDepartment)).map(sd => (
                     <option key={sd} value={sd}>{sd}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="form-label">Role</label>
-                <select 
-                  className="form-select"
-                  value={newRole}
-                  disabled={!newSubDepartment}
-                  onChange={e => setNewRole(e.target.value)}
-                >
-                  <option value="">Select Role...</option>
-                  {newSubDepartment && (getAvailableRoles(newDepartment, newSubDepartment)).map(r => (
-                    <option key={r} value={r}>{r}</option>
                   ))}
                 </select>
               </div>
@@ -186,8 +164,11 @@ const QuestionBankModal = ({ onClose }) => {
               ></textarea>
             </div>
             
-            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-              <button className="btn btn-primary" onClick={handleAddQuestion} disabled={!newQuestionText.trim()}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.75rem' }}>
+              {!newSubDepartment && newQuestionText.trim() && (
+                <span style={{ fontSize: '0.75rem', color: 'var(--danger)' }}>Please select a sub-department</span>
+              )}
+              <button className="btn btn-primary" onClick={handleAddQuestion} disabled={!newQuestionText.trim() || !newSubDepartment}>
                 <Plus size={16} /> Add Question
               </button>
             </div>
@@ -203,7 +184,6 @@ const QuestionBankModal = ({ onClose }) => {
                 onChange={e => {
                   setSelectedDepartment(e.target.value);
                   setSelectedSubDepartment('');
-                  setSelectedRole('');
                 }}
               >
                 <option value="">All Departments</option>
@@ -212,36 +192,19 @@ const QuestionBankModal = ({ onClose }) => {
                 ))}
               </select>
               {selectedDepartment && (
-                <>
-                  <select 
-                    className="form-select" 
-                    style={{ width: 'auto', padding: '0.25rem 2rem 0.25rem 0.75rem', fontSize: '0.875rem' }}
-                    value={selectedSubDepartment}
-                    onChange={e => {
-                      setSelectedSubDepartment(e.target.value);
-                      setSelectedRole('');
-                    }}
-                  >
-                    <option value="">All Sub-Departments</option>
-                    {(getAvailableSubDepartments(selectedDepartment)).map(sd => (
-                      <option key={sd} value={sd}>{sd}</option>
-                    ))}
-                  </select>
-                  
-                  {selectedSubDepartment && (
-                    <select 
-                      className="form-select" 
-                      style={{ width: 'auto', padding: '0.25rem 2rem 0.25rem 0.75rem', fontSize: '0.875rem' }}
-                      value={selectedRole}
-                      onChange={e => setSelectedRole(e.target.value)}
-                    >
-                      <option value="">All Roles</option>
-                      {(getAvailableRoles(selectedDepartment, selectedSubDepartment)).map(r => (
-                        <option key={r} value={r}>{r}</option>
-                      ))}
-                    </select>
-                  )}
-                </>
+                <select 
+                  className="form-select" 
+                  style={{ width: 'auto', padding: '0.25rem 2rem 0.25rem 0.75rem', fontSize: '0.875rem' }}
+                  value={selectedSubDepartment}
+                  onChange={e => {
+                    setSelectedSubDepartment(e.target.value);
+                  }}
+                >
+                  <option value="">All Sub-Departments</option>
+                  {(getAvailableSubDepartments(selectedDepartment)).map(sd => (
+                    <option key={sd} value={sd}>{sd}</option>
+                  ))}
+                </select>
               )}
             </div>
           </div>
@@ -261,7 +224,6 @@ const QuestionBankModal = ({ onClose }) => {
                     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
                       <span className="badge badge-gray" style={{ fontSize: '0.7rem' }}>{q.department || 'General'}</span>
                       <span className="badge badge-gray" style={{ fontSize: '0.7rem' }}>{q.sub_department || 'General'}</span>
-                      <span className="badge badge-gray" style={{ fontSize: '0.7rem' }}>{q.job_role || 'General'}</span>
                     </div>
                   </div>
                   <button 

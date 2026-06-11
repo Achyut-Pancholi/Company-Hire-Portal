@@ -192,7 +192,7 @@ export function SchedulerApp() {
       candidateId: cand.id,
       candidateName: cand.name,
       candidateEmail: cand.email,
-      jobRole: cand.jobApplied || cand.job_applied || 'General',
+      position: cand.jobApplied || cand.job_applied || 'General',
       panelistIds: selectedPanelistIds,
       date: interviewDate,
       time: interviewTime,
@@ -391,7 +391,7 @@ export function SchedulerApp() {
                   <tr key={iv.id} className="candidate-row">
                     <td className="grid-layout-td col-cand">
                       <strong>{iv.candidate_name}</strong>
-                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{iv.job_role}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{iv.sub_department || ''}</div>
                     </td>
                     <td className="grid-layout-td col-panel">
                       {assigned.map((p: any) => (

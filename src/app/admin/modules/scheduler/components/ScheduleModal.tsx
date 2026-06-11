@@ -72,7 +72,7 @@ function StepCandidate({ formData, update }) {
       candidateId:    c.id,
       candidateName:  c.name,
       candidateEmail: c.email,
-      jobRole:        c.jobApplied || c.job_applied || '',
+      position:       c.jobApplied || c.job_applied || '',
       _search:        c.name,
     });
     setIsFocused(false);
@@ -125,7 +125,7 @@ function StepCandidate({ formData, update }) {
           <div className="modal-candidate-card__info">
             <strong>{formData.candidateName}</strong>
             <span>{formData.candidateEmail}</span>
-            <span className="modal-candidate-card__role">{formData.jobRole}</span>
+            <span className="modal-candidate-card__role">{formData.position}</span>
           </div>
           <span className="badge badge-success">Selected</span>
         </div>
@@ -268,8 +268,8 @@ function StepReview({ formData, panelists }) {
           <span className="modal-review-value">{formData.candidateName || '—'}</span>
         </div>
         <div className="modal-review-row">
-          <span className="modal-review-label">Job Role</span>
-          <span className="modal-review-value">{formData.jobRole || '—'}</span>
+          <span className="modal-review-label">Position</span>
+          <span className="modal-review-value">{formData.position || '—'}</span>
         </div>
         <div className="modal-review-row">
           <span className="modal-review-label">Round</span>

@@ -26,10 +26,10 @@ async function seedJobs() {
   
   for (const [dept, subDepts] of Object.entries(DEFAULT_SUB_DEPARTMENTS)) {
     for (const subDept of subDepts) {
-      // Check if job already exists (exact match)
-      const exists = existingJobs.find(j => j.department === dept && j.title.trim().toLowerCase() === subDept.toLowerCase());
+      // Check if job already exists (exact match on department + sub_department)
+      const exists = existingJobs.find(j => j.department === dept && j.sub_department && j.sub_department.trim().toLowerCase() === subDept.toLowerCase());
       if (!exists) {
-        toInsert.push({ title: subDept, department: dept, status: 'Active' });
+        toInsert.push({ title: subDept, department: dept, sub_department: subDept, status: 'Active' });
       }
     }
   }

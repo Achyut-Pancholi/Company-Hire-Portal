@@ -78,7 +78,7 @@ const DEFAULT_MODAL_FORM = {
   candidateId:    '',
   candidateName:  '',
   candidateEmail: '',
-  jobRole:        '',
+  position:       '',
   round:          1,
   template:       'technical',
 

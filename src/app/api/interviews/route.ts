@@ -7,9 +7,9 @@ export async function POST(req: NextRequest) {
   if (authError) return authError;
   try {
     const body = await req.json();
-    const { candidate_name, candidate_email, job_role, questions, expires_at } = body;
+    const { candidate_name, candidate_email, department, sub_department, questions, expires_at } = body;
 
-    if (!candidate_name || !candidate_email || !job_role || !questions?.length) {
+    if (!candidate_name || !candidate_email || !department || !sub_department || !questions?.length) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -27,7 +27,8 @@ export async function POST(req: NextRequest) {
       .insert({
         candidate_name,
         candidate_email,
-        job_role,
+        department,
+        sub_department,
         questions,
         status: "pending",
         expires_at: expires_at || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
