@@ -150,7 +150,7 @@ function formInviteEmailTemplate(
           <td style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);padding:32px 40px;text-align:center;">
             <div style="display:inline-flex;align-items:center;gap:10px;">
               <div style="width:32px;height:32px;background:#3b82f6;border-radius:8px;display:inline-block;vertical-align:middle;"></div>
-              <span style="color:#fff;font-size:20px;font-weight:700;vertical-align:middle;margin-left:10px;">kadellabs</span>
+              <span style="color:#fff;font-size:20px;font-weight:700;vertical-align:middle;margin-left:10px;">ElastiCrew</span>
             </div>
             <p style="color:#93c5fd;margin:8px 0 0;font-size:13px;letter-spacing:0.5px;">Candidate Form Portal</p>
           </td>
@@ -187,7 +187,7 @@ function formInviteEmailTemplate(
           <td style="background:#f8fafc;padding:20px 40px;border-top:1px solid #e2e8f0;text-align:center;">
             <p style="color:#94a3b8;font-size:12px;margin:0;">
               This is a one-time link. Do not share it with anyone else.<br>
-              © 2025 kadellabs. All rights reserved.
+              © 2026 ElastiCrew. All rights reserved.
             </p>
           </td>
         </tr>
@@ -216,12 +216,19 @@ function inviteEmailTemplate(
     : `Hello, ${candidateName} 👋<br /><br />
        You've been invited to complete a video interview for the <strong style="color:#0f172a;">${jobRole}</strong> position. 
        Our AI-powered platform will guide you through the process.<br /><br />
-       <strong>What to expect:</strong>
+       <strong>Instructions & What to expect:</strong>
        <ul style="color:#475569;font-size:14px;line-height:1.8;padding-left:20px;margin:12px 0 28px;">
-         <li>The AI will ask you questions using voice</li>
-         <li>You control when to start and stop recording each answer</li>
-         <li>Your webcam will be on during the interview</li>
-         <li>Ensure you are in a quiet, well-lit space</li>
+         <li><strong>Questions:</strong> Asked by our AI. You have 90 seconds to answer each.</li>
+         <li><strong>Recording:</strong> Starts automatically after a 10-second countdown following the question.</li>
+         <li><strong>Control:</strong> Click "Submit Answer" when you are done (or wait for the timer to finish).</li>
+         <li><strong>Hardware:</strong> Your webcam and microphone will be used.</li>
+         <li><strong>Environment:</strong> Ensure you are in a quiet, well-lit space.</li>
+         <li><strong style="color:#b91c1c;">Strict Guidelines:</strong>
+           <ul style="margin:4px 0 0;padding-left:20px;color:#dc2626;list-style-type:disc;">
+             <li>This is a one-time link — do not refresh the page once started.</li>
+             <li>Do not exit fullscreen or switch tabs. Switching tabs/exiting fullscreen 3 times will terminate and submit your interview automatically.</li>
+           </ul>
+         </li>
        </ul>`;
 
   return `
@@ -241,7 +248,7 @@ function inviteEmailTemplate(
           <td style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);padding:32px 40px;text-align:center;">
             <div style="display:inline-flex;align-items:center;gap:10px;">
               <div style="width:32px;height:32px;background:#3b82f6;border-radius:8px;display:inline-block;vertical-align:middle;"></div>
-              <span style="color:#fff;font-size:20px;font-weight:700;vertical-align:middle;margin-left:10px;">kadellabs</span>
+              <span style="color:#fff;font-size:20px;font-weight:700;vertical-align:middle;margin-left:10px;">ElastiCrew</span>
             </div>
             <p style="color:#93c5fd;margin:8px 0 0;font-size:13px;letter-spacing:0.5px;">AI Video Interview Platform</p>
           </td>
@@ -294,7 +301,7 @@ function inviteEmailTemplate(
           <td style="background:#f8fafc;padding:20px 40px;border-top:1px solid #e2e8f0;text-align:center;">
             <p style="color:#94a3b8;font-size:12px;margin:0;">
               This is a one-time link. Do not share it with anyone else.<br>
-              © 2025 kadellabs. All rights reserved.
+              © 2026 ElastiCrew. All rights reserved.
             </p>
           </td>
         </tr>
@@ -324,7 +331,7 @@ function completionEmailTemplate(
         <tr>
           <td style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);padding:32px 40px;text-align:center;">
             <div style="width:32px;height:32px;background:#10b981;border-radius:8px;display:inline-block;vertical-align:middle;"></div>
-            <span style="color:#fff;font-size:20px;font-weight:700;vertical-align:middle;margin-left:10px;">kadellabs</span>
+            <span style="color:#fff;font-size:20px;font-weight:700;vertical-align:middle;margin-left:10px;">ElastiCrew</span>
             <p style="color:#6ee7b7;margin:8px 0 0;font-size:13px;">Interview Completed ✓</p>
           </td>
         </tr>
@@ -350,7 +357,7 @@ function completionEmailTemplate(
         </tr>
         <tr>
           <td style="background:#f8fafc;padding:20px 40px;border-top:1px solid #e2e8f0;text-align:center;">
-            <p style="color:#94a3b8;font-size:12px;margin:0;">© 2025 kadellabs. All rights reserved.</p>
+            <p style="color:#94a3b8;font-size:12px;margin:0;">© 2026 ElastiCrew. All rights reserved.</p>
           </td>
         </tr>
       </table>
@@ -373,7 +380,7 @@ export async function POST(req: NextRequest) {
     let html = "";
 
     if (type === "invite") {
-      subject = customSubject || `Your Interview Invitation — ${jobRole} Position`;
+      subject = customSubject || `ElastiCrew Video Bot Screening Invitation — ${jobRole} Position`;
       html = inviteEmailTemplate(candidateName, jobRole, interviewId, expiresAt, bodyText);
     } else if (type === "form_invite") {
       subject = `Candidate Form — ${jobRole} Position`;
@@ -385,7 +392,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid email type" }, { status: 400 });
     }
 
-    const fromName = process.env.MAIL_FROM_NAME || "kadellabs";
+    const fromName = process.env.MAIL_FROM_NAME || "ElastiCrew";
     const { transporter, fromEmail } = await getTransporter(body.senderEmail);
 
     await transporter.sendMail({
