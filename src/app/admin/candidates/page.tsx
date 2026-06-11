@@ -78,7 +78,6 @@ export default function CandidatesPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStep, setUploadStep] = useState('');
   const [uploadStatus, setUploadStatus] = useState({ type: '', message: '' });
-  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Email Invitation Modal States
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
@@ -405,41 +404,6 @@ export default function CandidatesPage() {
     }
   };
 
-  // Copy invite link to clipboard helper
-  const handleCopyInvite = (candidate: any) => {
-    const inviteUrl = `${window.location.origin}/interview/${candidate.id}`;
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(inviteUrl)
-        .then(() => {
-          setCopiedId(candidate.id);
-          setTimeout(() => setCopiedId(null), 2000);
-        })
-        .catch(err => {
-          console.error("Clipboard copy failed, using fallback:", err);
-          fallbackCopy(inviteUrl, candidate.id);
-        });
-    } else {
-      fallbackCopy(inviteUrl, candidate.id);
-    }
-  };
-
-  const fallbackCopy = (text: string, candidateId: string) => {
-    const textArea = document.createElement("textarea");
-    textArea.value = text;
-    textArea.style.position = "fixed";
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-    try {
-      document.execCommand('copy');
-      setCopiedId(candidateId);
-      setTimeout(() => setCopiedId(null), 2000);
-    } catch (err) {
-      console.error('Fallback copy failed', err);
-      alert(`Could not copy automatically. Here is the link:\n${text}`);
-    }
-    document.body.removeChild(textArea);
-  };
 
   // Stage Badge Render helper
   const renderStageBadge = (c: any) => {
@@ -625,26 +589,19 @@ export default function CandidatesPage() {
                           </span>
                         </td>
                         <td className="col-action">
-                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                            <button 
-                              className={`btn-share-invite ${copiedId === c.id ? 'copied' : ''}`}
-                              onClick={() => handleCopyInvite(c)}
-                            >
-                              {copiedId === c.id ? '✓ Copied' : 'Share Invite'}
-                            </button>
-                            <select 
-                              className="action-dropdown"
-                              value=""
-                              onChange={e => handleDropdownAction(e.target.value, c)}
-                            >
-                              <option value="" disabled>Manage</option>
-                              <option value="video">Send Video Bot Invite</option>
-                              <option value="mcq">Send MCQ Invite</option>
-                              <option value="tech">Send Tech Invite</option>
-                              <option value="hr">Send HR Invite</option>
-                              <option value="delete" className="danger-option">Delete Candidate</option>
-                            </select>
-                          </div>
+                          <select 
+                            className="action-dropdown"
+                            value=""
+                            onChange={e => handleDropdownAction(e.target.value, c)}
+                            style={{ width: '100%' }}
+                          >
+                            <option value="" disabled>Manage</option>
+                            <option value="video">Send Video Bot Invite</option>
+                            <option value="mcq">Send MCQ Invite</option>
+                            <option value="tech">Send Tech Invite</option>
+                            <option value="hr">Send HR Invite</option>
+                            <option value="delete" className="danger-option">Delete Candidate</option>
+                          </select>
                         </td>
                       </tr>
                     );
