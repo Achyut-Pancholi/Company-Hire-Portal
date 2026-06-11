@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { CheckSquare, FileSpreadsheet, Plus, X, Upload, Download, CheckCircle, AlertCircle, Edit2, Trash2 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 const BASELINE_FALLBACK = {
   "Operations|HR|Fresher(0)": [
@@ -229,7 +230,7 @@ export default function AssessmentsPage() {
     const matrixKey = `${targetDept}|${subDept}|${expLevel}`;
     const stored = localStorage.getItem('elasticrew_question_matrix');
     
-    let pool = BASELINE_FALLBACK;
+    let pool: Record<string, string[]> = BASELINE_FALLBACK;
     if (stored) {
       try {
         pool = JSON.parse(stored);
@@ -265,7 +266,7 @@ export default function AssessmentsPage() {
   const handleSaveConfig = () => {
     const matrixKey = `${targetDept}|${subDept}|${expLevel}`;
     const stored = localStorage.getItem('elasticrew_question_matrix');
-    let pool = { ...BASELINE_FALLBACK };
+    let pool: Record<string, string[]> = { ...BASELINE_FALLBACK };
 
     if (stored) {
       try {
@@ -357,65 +358,52 @@ export default function AssessmentsPage() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      
+      const fileExt = file.name.split('.').pop()?.toLowerCase();
+      if (fileExt !== 'csv' && fileExt !== 'xlsx' && fileExt !== 'xls') {
+        setToast({
+          type: 'error',
+          message: `Unsupported format (.${fileExt || 'unknown'}). Please save your spreadsheet as CSV (.csv) or Excel (.xlsx, .xls) and upload it.`
+        });
+        e.target.value = '';
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = async (event) => {
-        const text = event.target?.result as string;
-        if (!text) return;
-        
         try {
-          const lines = text.split(/\r?\n/);
-          if (lines.length < 2) {
-            setToast({ type: 'error', message: 'The uploaded file is empty or missing headers.' });
-            return;
-          }
+          let parsedQuestions: any[] = [];
           
-          const parsedQuestions = [];
-          
-          // State machine CSV parser to handle quotes and commas inside columns
-          const parseCSVLine = (line: string) => {
-            const result = [];
-            let current = '';
-            let inQuotes = false;
-            for (let i = 0; i < line.length; i++) {
-              const char = line[i];
-              if (char === '"') {
-                if (inQuotes && line[i + 1] === '"') {
-                  current += '"';
-                  i++; // skip next quote
-                } else {
-                  inQuotes = !inQuotes;
-                }
-              } else if (char === ',' && !inQuotes) {
-                result.push(current.trim());
-                current = '';
-              } else {
-                current += char;
-              }
+          if (fileExt === 'xlsx' || fileExt === 'xls' || fileExt === 'csv') {
+            const data = new Uint8Array(event.target?.result as ArrayBuffer);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
+            
+            if (rows.length < 2) {
+              setToast({ type: 'error', message: 'The uploaded file is empty or missing headers.' });
+              return;
             }
-            result.push(current.trim());
-            return result;
-          };
-
-          for (let i = 1; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (!line) continue;
             
-            const row = parseCSVLine(line);
-            if (row.length < 6) continue;
-            
-            parsedQuestions.push({
-              question_text: row[0],
-              option_a: row[1],
-              option_b: row[2],
-              option_c: row[3],
-              option_d: row[4],
-              correct_answer: (row[5] || 'A').toUpperCase().trim(),
-              points_value: parseInt(row[6]) || 5
-            });
+            for (let i = 1; i < rows.length; i++) {
+              const row = rows[i];
+              if (!row || row.length < 6 || row[0] === undefined || row[0] === null || String(row[0]).trim() === '') continue;
+              
+              parsedQuestions.push({
+                question_text: String(row[0]).trim(),
+                option_a: String(row[1] !== undefined && row[1] !== null ? row[1] : '').trim(),
+                option_b: String(row[2] !== undefined && row[2] !== null ? row[2] : '').trim(),
+                option_c: String(row[3] !== undefined && row[3] !== null ? row[3] : '').trim(),
+                option_d: String(row[4] !== undefined && row[4] !== null ? row[4] : '').trim(),
+                correct_answer: String(row[5] || 'A').toUpperCase().trim(),
+                points_value: parseInt(String(row[6] || '5')) || 5
+              });
+            }
           }
           
           if (parsedQuestions.length === 0) {
-            setToast({ type: 'error', message: 'No valid questions could be parsed from the CSV.' });
+            setToast({ type: 'error', message: 'No valid questions could be parsed from the file.' });
             return;
           }
           
@@ -445,10 +433,10 @@ export default function AssessmentsPage() {
           }
         } catch (err) {
           console.error("Error parsing uploaded file:", err);
-          setToast({ type: 'error', message: 'Error parsing the CSV file.' });
+          setToast({ type: 'error', message: 'Error parsing the spreadsheet file.' });
         }
       };
-      reader.readAsText(file);
+      reader.readAsArrayBuffer(file);
       e.target.value = '';
     }
   };
@@ -842,7 +830,7 @@ export default function AssessmentsPage() {
                 MCQ Question Bank Configuration
               </h3>
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
-                Manage the multiple-choice question pool for {targetDept} -> {subDept} ({expLevel}).
+                Manage the multiple-choice question pool for {targetDept} → {subDept} ({expLevel}).
               </p>
             </div>
             <button 
@@ -982,17 +970,17 @@ export default function AssessmentsPage() {
           >
             <Upload size={30} color="#15803d" style={{ marginBottom: '8px' }} />
             <div style={{ fontSize: '13.5px', fontWeight: '700', color: '#1e293b' }}>
-              Click to browse or drop formatted CSV files here
+              Click to browse or drop formatted CSV/Excel files here
             </div>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-              Accepts comma-delimited (.csv) files matching the template columns
+              Accepts comma-delimited (.csv) or Excel (.xlsx, .xls) files matching the template columns
             </div>
             
             <input 
               type="file" 
               ref={fileInputRef} 
               style={{ display: 'none' }} 
-              accept=".csv" 
+              accept=".csv,.xlsx,.xls" 
               onChange={handleFileUpload} 
             />
           </div>

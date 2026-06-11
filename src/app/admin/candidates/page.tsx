@@ -975,12 +975,14 @@ export default function CandidatesPage() {
               </div>
               
               <div className="form-group">
-                <label>Candidate Email</label>
+                <label>Candidate Email <span style={{ fontSize: '11px', color: 'var(--gray-500)', fontWeight: 400 }}>(editable — auto-filled from resume)</span></label>
                 <input 
                   type="email" 
                   className="form-control" 
                   value={candidateEmail} 
-                  readOnly 
+                  onChange={e => setCandidateEmail(e.target.value)}
+                  placeholder="Enter candidate email..."
+                  required
                 />
               </div>
 
