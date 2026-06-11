@@ -117,6 +117,13 @@ export default function CandidatesPage() {
     return matchesSearch && matchesDept && matchesSubDept;
   });
 
+  // Handle file selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
   // Handle uploading and parsing resume
   const handleUploadResume = async (e: React.FormEvent) => {
     e.preventDefault();
