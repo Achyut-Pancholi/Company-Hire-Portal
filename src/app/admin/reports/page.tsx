@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -2394,18 +2394,6 @@ const Reports = () => {
     ? Math.round(allCandidates.reduce((a: number, c: any) => a + (c.resumeScore || 0), 0) / total)
     : 0;
 
-  const donutData = [
-    { label: 'Selected', value: allCandidates.filter((c: any) => c.finalRecommendation === 'Selected').length, color: '#10b981' },
-    { label: 'Under Review', value: allCandidates.filter((c: any) => !c.finalRecommendation || c.finalRecommendation === 'Under Review').length, color: '#3b82f6' },
-    { label: 'Rejected', value: allCandidates.filter((c: any) => c.finalRecommendation === 'Rejected').length, color: '#ef4444' },
-  ];
-
-  const topSkills = (() => {
-    const freq: any = {};
-    allCandidates.forEach((c: any) => (c.skills || []).forEach((s: any) => { freq[s] = (freq[s] || 0) + 1; }));
-    return Object.entries(freq).sort((a: any, b: any) => (b[1] as number) - (a[1] as number)).slice(0, 6).map(([label, value]: any) => ({ label, value: Math.round((value / Math.max(total, 1)) * 100) }));
-  })();
-
   if (!mounted) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh', color: 'var(--text-muted)' }}>
@@ -2419,64 +2407,98 @@ const Reports = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
 
-      {/* â”€â”€ TOP STATS â”€â”€ */}
-      <div className="grid grid-cols-4 gap-6">
+      {/* ── TOP STATS ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem' }}>
         {[
-          { label: 'Total Candidates', value: total, icon: User, color: 'var(--brand-navy)', bg: 'rgba(14,45,123,0.08)' },
-          { label: 'Video Screened', value: videoComplete, icon: Zap, color: '#3b82f6', bg: 'rgba(59,130,246,0.08)' },
-          { label: 'Selected', value: selected, icon: Award, color: '#10b981', bg: 'rgba(16,185,129,0.08)' },
-          { label: 'Avg Resume Score', value: avgResume ? `${avgResume}%` : '-', icon: BarChart2, color: '#f59e0b', bg: 'rgba(245,158,11,0.08)' },
+          {
+            label: 'Total Candidates', value: total, icon: User,
+            color: 'var(--brand-navy)', bg: 'rgba(14,45,123,0.08)',
+            sub: `${filtered.length} matching filters`
+          },
+          {
+            label: 'Video Screened', value: videoComplete, icon: Video,
+            color: '#3b82f6', bg: 'rgba(59,130,246,0.08)',
+            sub: total ? `${Math.round((videoComplete / total) * 100)}% completion` : '0% completion'
+          },
+          {
+            label: 'Selected', value: selected, icon: Award,
+            color: '#10b981', bg: 'rgba(16,185,129,0.08)',
+            sub: total ? `${Math.round((selected / total) * 100)}% selection rate` : '0% rate'
+          },
+          {
+            label: 'Avg Resume Score', value: avgResume ? `${avgResume}%` : '—', icon: BarChart2,
+            color: '#f59e0b', bg: 'rgba(245,158,11,0.08)',
+            sub: avgResume >= 70 ? 'Above threshold' : 'Needs attention'
+          },
         ].map((s, i) => {
           const Icon = s.icon;
           return (
-            <div key={i} className="card" style={{ padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', borderLeft: `4px solid ${s.color}` }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div
+              key={i}
+              style={{
+                background: '#fff',
+                border: '1px solid var(--border)',
+                borderRadius: '14px',
+                padding: '1.25rem 1.5rem',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '1rem',
+                borderTop: `3px solid ${s.color}`,
+                transition: 'box-shadow 0.2s'
+              }}
+            >
+              <div style={{ width: '44px', height: '44px', borderRadius: '12px', backgroundColor: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <Icon size={20} color={s.color} />
               </div>
-              <div>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>{s.label}</p>
-                <h3 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--brand-navy)', margin: '2px 0 0' }}>{s.value}</h3>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.7rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>{s.label}</p>
+                <h3 style={{ fontSize: '1.9rem', fontWeight: '800', color: 'var(--brand-navy)', margin: '2px 0 4px', lineHeight: 1 }}>{s.value}</h3>
+                <p style={{ fontSize: '0.7rem', color: s.color, fontWeight: '600', margin: 0 }}>{s.sub}</p>
               </div>
             </div>
           );
         })}
       </div>
 
-
-      {/* â”€â”€ CANDIDATE TABLE â”€â”€ */}
-      <div className="card">
-        <div className="card-header" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h3 className="card-title" style={{ margin: 0 }}>Candidate Reports</h3>
+      {/* ── CANDIDATE TABLE ── */}
+      <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '14px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
+        {/* Header */}
+        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--gray-100)', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between', background: 'linear-gradient(180deg, #fafcff 0%, #fff 100%)' }}>
+          <div>
+            <h3 style={{ margin: 0, fontWeight: '700', fontSize: '1rem', color: 'var(--brand-navy)', letterSpacing: '-0.01em' }}>Candidate Reports</h3>
+            <p style={{ margin: '2px 0 0', fontSize: '0.72rem', color: 'var(--text-muted)' }}>{filtered.length} of {total} candidates</p>
+          </div>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
             {/* Search */}
             <div style={{ position: 'relative' }}>
-              <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)' }} />
+              <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)', pointerEvents: 'none' }} />
               <input
                 type="text" value={search} onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search candidate..."
+                placeholder="Search by name or role..."
                 className="form-input"
-                style={{ paddingLeft: '30px', width: '180px', fontSize: '0.8rem' }}
+                style={{ paddingLeft: '30px', width: '200px', fontSize: '0.8rem' }}
               />
             </div>
             {/* Job filter */}
-            <select className="form-select" value={filterJob} onChange={(e) => setFilterJob(e.target.value)} style={{ fontSize: '0.8rem', width: 'auto' }}>
+            <select className="form-select" value={filterJob} onChange={(e) => setFilterJob(e.target.value)} style={{ fontSize: '0.8rem', minWidth: '110px' }}>
               {jobOptions.map((j: any) => <option key={j}>{j}</option>)}
             </select>
             {/* Rec filter */}
-            <select className="form-select" value={filterRec} onChange={(e) => setFilterRec(e.target.value)} style={{ fontSize: '0.8rem', width: 'auto' }}>
+            <select className="form-select" value={filterRec} onChange={(e) => setFilterRec(e.target.value)} style={{ fontSize: '0.8rem', minWidth: '120px' }}>
               {recOptions.map((r: any) => <option key={r}>{r}</option>)}
             </select>
             {/* Stage filter */}
-            <select className="form-select" value={filterStage} onChange={(e) => setFilterStage(e.target.value)} style={{ fontSize: '0.8rem', width: 'auto' }}>
+            <select className="form-select" value={filterStage} onChange={(e) => setFilterStage(e.target.value)} style={{ fontSize: '0.8rem', minWidth: '130px' }}>
               {stageOptions.map((s: any) => <option key={s}>{s}</option>)}
             </select>
             {/* View toggle */}
-            <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', border: '1.5px solid var(--border)' }}>
               {[{ id: 'table', Icon: List }, { id: 'cards', Icon: LayoutGrid }].map(({ id, Icon }) => (
                 <button
                   key={id}
                   onClick={() => setViewMode(id)}
-                  style={{ padding: '6px 10px', border: 'none', cursor: 'pointer', backgroundColor: viewMode === id ? 'var(--brand-navy)' : '#fff', color: viewMode === id ? '#fff' : 'var(--gray-500)', display: 'flex', alignItems: 'center' }}
+                  style={{ padding: '6px 10px', border: 'none', cursor: 'pointer', backgroundColor: viewMode === id ? 'var(--brand-navy)' : '#fff', color: viewMode === id ? '#fff' : 'var(--gray-500)', display: 'flex', alignItems: 'center', transition: 'all 0.15s' }}
                 >
                   <Icon size={14} />
                 </button>
@@ -2486,160 +2508,116 @@ const Reports = () => {
         </div>
 
         {filtered.length === 0 ? (
-          <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-            <FileText size={40} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
-            <p style={{ fontStyle: 'italic' }}>No candidates match your filters.</p>
+          <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+            <FileText size={44} style={{ margin: '0 auto 1rem', opacity: 0.2 }} />
+            <p style={{ fontWeight: '600', margin: '0 0 4px' }}>No candidates found</p>
+            <p style={{ fontSize: '0.8rem', margin: 0 }}>Try adjusting your search or filter criteria.</p>
           </div>
         ) : viewMode === 'table' ? (
           <>
-            <div className="table-container">
-            <table className="table" style={{ width: '100%', tableLayout: 'fixed' }}>
+            <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
               <thead>
-                <tr>
-                  <th style={{ width: '25%', padding: '12px 10px', verticalAlign: 'middle' }}>Candidate Name</th>
-                  <th style={{ width: '15%', padding: '12px 10px', verticalAlign: 'middle' }}>Candidate ID</th>
-                  <th style={{ width: '11%', padding: '12px 10px', verticalAlign: 'middle' }}>Role</th>
-                  <th style={{ width: '7%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Transcript</th>
-                  <th style={{ width: '8%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Tech Video Int.</th>
-                  <th style={{ width: '17%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Stage</th>
-                  <th style={{ width: '6%', textAlign: 'center', padding: '12px 10px', verticalAlign: 'middle' }}>Remark</th>
-                  <th style={{ width: '11%', padding: '12px 10px', verticalAlign: 'middle' }}>Actions</th>
+                <tr style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)' }}>
+                  <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '0.68rem', fontWeight: '700', color: 'var(--brand-navy)', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid var(--gray-200)', whiteSpace: 'nowrap', width: '26%' }}>Candidate</th>
+                  <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.68rem', fontWeight: '700', color: 'var(--brand-navy)', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid var(--gray-200)', whiteSpace: 'nowrap', width: '9%' }}>ID</th>
+                  <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.68rem', fontWeight: '700', color: 'var(--brand-navy)', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid var(--gray-200)', whiteSpace: 'nowrap', width: '22%' }}>Role Applied</th>
+                  <th style={{ padding: '10px 12px', textAlign: 'center', fontSize: '0.68rem', fontWeight: '700', color: 'var(--brand-navy)', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid var(--gray-200)', whiteSpace: 'nowrap', width: '10%' }}>Assessments</th>
+                  <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '0.68rem', fontWeight: '700', color: 'var(--brand-navy)', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid var(--gray-200)', whiteSpace: 'nowrap', width: '18%' }}>Stage</th>
+                  <th style={{ padding: '10px 12px', textAlign: 'center', fontSize: '0.68rem', fontWeight: '700', color: 'var(--brand-navy)', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid var(--gray-200)', whiteSpace: 'nowrap', width: '6%' }}>Note</th>
+                  <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '0.68rem', fontWeight: '700', color: 'var(--brand-navy)', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid var(--gray-200)', whiteSpace: 'nowrap', width: '9%' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((c: any) => (
-                  <tr key={c.id}>
-                    <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: 'rgba(14,45,123,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-navy)', fontWeight: '800', fontSize: '0.7rem', flexShrink: 0 }}>
+                {filtered.map((c: any, idx: number) => (
+                  <tr
+                    key={c.id}
+                    style={{ borderBottom: '1px solid var(--gray-100)', transition: 'background 0.15s', backgroundColor: idx % 2 === 0 ? '#fff' : '#fafbff' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = '#f0f9ff')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = idx % 2 === 0 ? '#fff' : '#fafbff')}
+                  >
+                    {/* Candidate */}
+                    <td style={{ padding: '12px 16px', verticalAlign: 'middle' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--brand-navy) 0%, #1a42a3 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: '800', fontSize: '0.7rem', flexShrink: 0, boxShadow: '0 2px 6px rgba(14,45,123,0.25)' }}>
                           {getInitials(c.name)}
                         </div>
-                        <div style={{ minWidth: 0, overflow: 'hidden' }}>
-                          <div style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {c.name}
-                          </div>
-                          <div style={{ fontSize: '0.68rem', color: 'var(--gray-500)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</div>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontWeight: '700', color: 'var(--brand-navy)', fontSize: '0.84rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>{c.name}</div>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>{c.email}</div>
                         </div>
                       </div>
                     </td>
-                    <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--brand-teal)', backgroundColor: 'rgba(13, 148, 136, 0.1)', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
+                    {/* ID */}
+                    <td style={{ padding: '12px', verticalAlign: 'middle' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--brand-teal)', backgroundColor: 'rgba(13,148,136,0.1)', padding: '3px 8px', borderRadius: '6px', fontWeight: '700', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
                         #{c.display_id || c.unique_id || String(c.id).substring(0,6)}
                       </span>
                     </td>
-                    <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
-                      <span className="badge badge-info" style={{ fontSize: '0.68rem', whiteSpace: 'nowrap' }}>{c.jobApplied || 'â€”'}</span>
+                    {/* Role */}
+                    <td style={{ padding: '12px', verticalAlign: 'middle' }}>
+                      <span title={c.jobApplied || '—'} style={{ display: 'block', fontSize: '0.8rem', color: '#334155', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>
+                        {c.jobApplied || '—'}
+                      </span>
                     </td>
-                    <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
-                      <button
-                        className="btn btn-outline"
-                        style={{
-                          padding: '6px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          borderRadius: '8px',
-                          backgroundColor: (c.extractedData?.transcript?.length || c.transcript?.length) ? 'rgba(16,185,129,0.1)' : '#fff',
-                          color: (c.extractedData?.transcript?.length || c.transcript?.length) ? '#065f46' : 'var(--gray-700)',
-                          borderColor: (c.extractedData?.transcript?.length || c.transcript?.length) ? 'rgba(16,185,129,0.3)' : 'var(--border)',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s'
-                        }}
-                        onClick={() => triggerTranscriptUpload(c)}
-                        disabled={uploadingId === c.id}
-                        title={(c.extractedData?.transcript?.length || c.transcript?.length) ? "Transcript Uploaded" : "Upload Transcript"}
-                      >
-                        {uploadingId === c.id ? (
-                          <span style={{ fontSize: '0.72rem' }}>â³</span>
-                        ) : (
-                          <Upload size={15} />
-                        )}
-                      </button>
-                    </td>
-                    <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
-                      {uploadingVideoId === c.id ? (
-                        <div style={{ fontSize: '0.68rem', fontWeight: 'bold', color: 'var(--brand-navy)', whiteSpace: 'nowrap' }} title={uploadStatusMessage}>
-                          {uploadStatusMessage || "â³ ..."}
-                        </div>
-                      ) : (
+                    {/* Assessments — transcript + video icons */}
+                    <td style={{ padding: '12px', verticalAlign: 'middle', textAlign: 'center' }}>
+                      <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center' }}>
                         <button
-                          className="btn btn-outline"
-                          style={{
-                            padding: '6px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            borderRadius: '8px',
-                            backgroundColor: (c.extractedData?.videoUrl || c.extractedData?.video_url || c.video_url) ? 'rgba(16,185,129,0.1)' : '#fff',
-                            color: (c.extractedData?.videoUrl || c.extractedData?.video_url || c.video_url) ? '#065f46' : 'var(--gray-700)',
-                            borderColor: (c.extractedData?.videoUrl || c.extractedData?.video_url || c.video_url) ? 'rgba(16,185,129,0.3)' : 'var(--border)',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                          }}
-                          onClick={() => triggerVideoUpload(c)}
-                          title={(c.extractedData?.videoUrl || c.extractedData?.video_url || c.video_url) ? "Video Uploaded" : "Upload Video"}
+                          onClick={() => triggerTranscriptUpload(c)}
+                          disabled={uploadingId === c.id}
+                          title={(c.extractedData?.transcript?.length || c.transcript?.length) ? 'Transcript uploaded — click to update' : 'Upload transcript'}
+                          style={{ width: '28px', height: '28px', borderRadius: '7px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: (c.extractedData?.transcript?.length || c.transcript?.length) ? 'rgba(16,185,129,0.12)' : 'var(--gray-100)', color: (c.extractedData?.transcript?.length || c.transcript?.length) ? '#059669' : 'var(--gray-400)', transition: 'all 0.15s' }}
                         >
-                          <Video size={15} />
+                          {uploadingId === c.id ? <span style={{ fontSize: '0.6rem' }}>⏳</span> : <Upload size={13} />}
                         </button>
-                      )}
+                        <button
+                          onClick={() => triggerVideoUpload(c)}
+                          title={(c.extractedData?.videoUrl || c.video_url) ? 'Video uploaded — click to update' : 'Upload interview video'}
+                          style={{ width: '28px', height: '28px', borderRadius: '7px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: (c.extractedData?.videoUrl || c.video_url) ? 'rgba(59,130,246,0.12)' : 'var(--gray-100)', color: (c.extractedData?.videoUrl || c.video_url) ? '#2563eb' : 'var(--gray-400)', transition: 'all 0.15s' }}
+                        >
+                          {uploadingVideoId === c.id ? <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: 'var(--brand-navy)' }}>…</span> : <Video size={13} />}
+                        </button>
+                      </div>
                     </td>
-                    {/* Remark cell */}
-                    <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
+                    {/* Stage */}
+                    <td style={{ padding: '12px', verticalAlign: 'middle' }}>
                       <WorkflowBadge status={c.current_stage ?? c.currentStage ?? c.stage ?? 'Resume Screening'} size="sm" />
                     </td>
-                    <td style={{ textAlign: 'center', padding: '10px 8px', verticalAlign: 'middle' }}>
+                    {/* Remark */}
+                    <td style={{ padding: '12px', verticalAlign: 'middle', textAlign: 'center' }}>
                       {(() => {
                         const candidateRemark = c.remark_reports;
                         const hasRemark = !!candidateRemark;
                         return (
                           <button
-                            onClick={() => {
-                              setRemarkPopover({ candidateId: c.id, name: c.name });
-                              setRemarkText(candidateRemark || '');
-                            }}
-                            title={hasRemark ? `Remark: ${candidateRemark}` : 'Add Remark'}
-                            style={{
-                              width: '30px',
-                              height: '30px',
-                              borderRadius: '8px',
-                              border: hasRemark ? '1.5px solid #d97706' : '1.5px solid #e2e8f0',
-                              background: hasRemark ? '#f59e0b' : '#f8fafc',
-                              color: hasRemark ? '#fff' : '#94a3b8',
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              position: 'relative',
-                              transition: 'all 0.2s',
-                              boxShadow: hasRemark ? '0 2px 5px rgba(245,158,11,0.3)' : 'none',
-                            }}
+                            onClick={() => { setRemarkPopover({ candidateId: c.id, name: c.name }); setRemarkText(candidateRemark || ''); }}
+                            title={hasRemark ? `Remark: ${candidateRemark}` : 'Add remark'}
+                            style={{ width: '30px', height: '30px', borderRadius: '8px', border: hasRemark ? '1.5px solid #d97706' : '1.5px solid var(--border)', background: hasRemark ? '#f59e0b' : '#f8fafc', color: hasRemark ? '#fff' : 'var(--gray-400)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', position: 'relative', transition: 'all 0.2s', boxShadow: hasRemark ? '0 2px 5px rgba(245,158,11,0.3)' : 'none' }}
                           >
                             <MessageSquare size={13} />
-                            {hasRemark && (
-                              <span style={{
-                                position: 'absolute',
-                                top: '-4px',
-                                right: '-4px',
-                                width: '8px',
-                                height: '8px',
-                                borderRadius: '50%',
-                                background: '#10b981',
-                                border: '1.5px solid #fff',
-                              }} />
-                            )}
+                            {hasRemark && (<span style={{ position: 'absolute', top: '-4px', right: '-4px', width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', border: '1.5px solid #fff' }} />)}
                           </button>
                         );
                       })()}
                     </td>
-
-                    <td style={{ padding: '10px 8px', verticalAlign: 'middle' }}>
-                      <div style={{ display: 'flex', gap: '4px' }}>
+                    {/* Actions */}
+                    <td style={{ padding: '12px 16px', verticalAlign: 'middle' }}>
+                      <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
                         <button
                           className="btn btn-primary"
-                          style={{ padding: '4px 6px', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '3px', whiteSpace: 'nowrap' }}
+                          style={{ padding: '5px 10px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', borderRadius: '7px' }}
                           onClick={() => setSelectedCandidate(c)}
                         >
-                          <Eye size={11} /> View
+                          <Eye size={12} /> View
+                        </button>
+                        <button
+                          title={copiedId === c.id ? 'Link copied!' : 'Copy shareable report link'}
+                          onClick={() => handleCopyShareLink(c)}
+                          disabled={generatingId === c.id}
+                          style={{ width: '28px', height: '28px', border: '1.5px solid var(--border)', borderRadius: '7px', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: copiedId === c.id ? '#10b981' : 'var(--gray-500)', transition: 'all 0.15s', flexShrink: 0 }}
+                        >
+                          {copiedId === c.id ? <Check size={12} /> : <Share2 size={12} />}
                         </button>
                       </div>
                     </td>
@@ -2647,40 +2625,28 @@ const Reports = () => {
                 ))}
               </tbody>
             </table>
-          </div>
+            </div>
 
-          {/* Remark Popover Modal */}
-          {remarkPopover && (
-            <div
-              style={{
-                position: 'fixed', inset: 0,
-                backgroundColor: 'rgba(15,23,42,0.5)',
-                backdropFilter: 'blur(4px)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                zIndex: 9999, padding: '1.5rem',
-              }}
-              onClick={() => setRemarkPopover(null)}
-            >
+            {/* Remark Popover Modal */}
+            {remarkPopover && (
               <div
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                  background: '#fff', borderRadius: '16px', padding: '24px 28px',
-                  width: '100%', maxWidth: '400px',
-                  boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
-                  animation: 'slideInRemark 0.18s ease',
-                }}
+                style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1.5rem' }}
+                onClick={() => setRemarkPopover(null)}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(245,158,11,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <MessageSquare size={16} color="#d97706" />
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ background: '#fff', borderRadius: '16px', padding: '24px 28px', width: '100%', maxWidth: '400px', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(245,158,11,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <MessageSquare size={16} color="#d97706" />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#0f172a' }}>Add Remark</div>
+                      <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{remarkPopover.name}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#0f172a' }}>Remark of Reports</div>
-                    <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{remarkPopover.name}</div>
-                  </div>
-                </div>
-
-                <textarea
+                  <textarea
                   value={remarkText}
                   onChange={(e) => setRemarkText(e.target.value)}
                   placeholder="Write your remark about this candidate..."
