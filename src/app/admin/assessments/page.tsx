@@ -78,6 +78,136 @@ export default function AssessmentsPage() {
   // Native input ref for MCQ file upload
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // MCQ states
+  const [mcqQuestions, setMcqQuestions] = useState<any[]>([]);
+  const [loadingMcq, setLoadingMcq] = useState(false);
+  const [isMcqModalOpen, setIsMcqModalOpen] = useState(false);
+  const [mcqModalMode, setMcqModalMode] = useState<'add' | 'edit'>('add');
+  const [editingMcqId, setEditingMcqId] = useState<string | null>(null);
+  const [mcqModalQuestion, setMcqModalQuestion] = useState('');
+  const [mcqModalOptA, setMcqModalOptA] = useState('');
+  const [mcqModalOptB, setMcqModalOptB] = useState('');
+  const [mcqModalOptC, setMcqModalOptC] = useState('');
+  const [mcqModalOptD, setMcqModalOptD] = useState('');
+  const [mcqModalCorrect, setMcqModalCorrect] = useState<'A' | 'B' | 'C' | 'D'>('A');
+  const [mcqModalPoints, setMcqModalPoints] = useState(5);
+
+  const fetchMcqQuestions = async () => {
+    if (!isClient) return;
+    setLoadingMcq(true);
+    try {
+      const res = await fetch(`/api/mcq/questions?department=${encodeURIComponent(targetDept)}&sub_department=${encodeURIComponent(subDept)}&experience_level=${encodeURIComponent(expLevel)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setMcqQuestions(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch MCQ questions:", err);
+    } finally {
+      setLoadingMcq(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMcqQuestions();
+  }, [targetDept, subDept, expLevel, isClient]);
+
+  const handleAddMcqQuestion = () => {
+    setMcqModalMode('add');
+    setEditingMcqId(null);
+    setMcqModalQuestion('');
+    setMcqModalOptA('');
+    setMcqModalOptB('');
+    setMcqModalOptC('');
+    setMcqModalOptD('');
+    setMcqModalCorrect('A');
+    setMcqModalPoints(5);
+    setIsMcqModalOpen(true);
+  };
+
+  const handleEditMcqQuestion = (q: any) => {
+    setMcqModalMode('edit');
+    setEditingMcqId(q.id);
+    setMcqModalQuestion(q.question_text || q.questionText || '');
+    setMcqModalOptA(q.option_a || q.optionA || '');
+    setMcqModalOptB(q.option_b || q.optionB || '');
+    setMcqModalOptC(q.option_c || q.optionC || '');
+    setMcqModalOptD(q.option_d || q.optionD || '');
+    setMcqModalCorrect((q.correct_answer || q.correctAnswer || 'A').toUpperCase() as any);
+    setMcqModalPoints(q.points_value || q.pointsValue || 5);
+    setIsMcqModalOpen(true);
+  };
+
+  const handleSaveMcqModalQuestion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mcqModalQuestion.trim() || !mcqModalOptA.trim() || !mcqModalOptB.trim() || !mcqModalOptC.trim() || !mcqModalOptD.trim()) return;
+
+    try {
+      const payload: any = {
+        department: targetDept,
+        sub_department: subDept,
+        experience_level: expLevel,
+        question_text: mcqModalQuestion.trim(),
+        option_a: mcqModalOptA.trim(),
+        option_b: mcqModalOptB.trim(),
+        option_c: mcqModalOptC.trim(),
+        option_d: mcqModalOptD.trim(),
+        correct_answer: mcqModalCorrect,
+        points_value: mcqModalPoints
+      };
+
+      if (editingMcqId) {
+        payload.id = editingMcqId;
+      }
+
+      const res = await fetch('/api/mcq/questions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': 'kl_internal_admin_secret_2026_secure'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        setToast({
+          type: 'success',
+          message: editingMcqId ? 'MCQ question updated successfully.' : 'MCQ question added successfully.'
+        });
+        setIsMcqModalOpen(false);
+        fetchMcqQuestions();
+      } else {
+        const err = await res.json();
+        setToast({ type: 'error', message: err.error || 'Failed to save MCQ question.' });
+      }
+    } catch (err) {
+      console.error("Error saving MCQ question:", err);
+      setToast({ type: 'error', message: 'Error saving question.' });
+    }
+  };
+
+  const handleDeleteMcqQuestion = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this question?")) return;
+    try {
+      const res = await fetch(`/api/mcq/questions?id=${id}`, {
+        method: 'DELETE',
+        headers: {
+          'x-api-key': 'kl_internal_admin_secret_2026_secure'
+        }
+      });
+      if (res.ok) {
+        setToast({ type: 'success', message: 'Question removed successfully.' });
+        fetchMcqQuestions();
+      } else {
+        const err = await res.json();
+        setToast({ type: 'error', message: err.error || 'Failed to delete question.' });
+      }
+    } catch (err) {
+      console.error("Error deleting MCQ question:", err);
+      setToast({ type: 'error', message: 'Error deleting question.' });
+    }
+  };
+
   // Prevent server-side rendering hydration mismatches
   useEffect(() => {
     setIsClient(true);
@@ -222,19 +352,137 @@ export default function AssessmentsPage() {
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const filename = e.target.files[0].name;
-      setToast({
-        type: 'success',
-        message: `Excel Parser Connected: Successfully uploaded "${filename}". Objective questions parsed and mapped to ${subDept} (${expLevel}).`
-      });
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const text = event.target?.result as string;
+        if (!text) return;
+        
+        try {
+          const lines = text.split(/\r?\n/);
+          if (lines.length < 2) {
+            setToast({ type: 'error', message: 'The uploaded file is empty or missing headers.' });
+            return;
+          }
+          
+          const parsedQuestions = [];
+          
+          // State machine CSV parser to handle quotes and commas inside columns
+          const parseCSVLine = (line: string) => {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+              const char = line[i];
+              if (char === '"') {
+                if (inQuotes && line[i + 1] === '"') {
+                  current += '"';
+                  i++; // skip next quote
+                } else {
+                  inQuotes = !inQuotes;
+                }
+              } else if (char === ',' && !inQuotes) {
+                result.push(current.trim());
+                current = '';
+              } else {
+                current += char;
+              }
+            }
+            result.push(current.trim());
+            return result;
+          };
+
+          for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            
+            const row = parseCSVLine(line);
+            if (row.length < 6) continue;
+            
+            parsedQuestions.push({
+              question_text: row[0],
+              option_a: row[1],
+              option_b: row[2],
+              option_c: row[3],
+              option_d: row[4],
+              correct_answer: (row[5] || 'A').toUpperCase().trim(),
+              points_value: parseInt(row[6]) || 5
+            });
+          }
+          
+          if (parsedQuestions.length === 0) {
+            setToast({ type: 'error', message: 'No valid questions could be parsed from the CSV.' });
+            return;
+          }
+          
+          const res = await fetch('/api/mcq/questions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': 'kl_internal_admin_secret_2026_secure'
+            },
+            body: JSON.stringify({
+              department: targetDept,
+              sub_department: subDept,
+              experience_level: expLevel,
+              questions: parsedQuestions
+            })
+          });
+          
+          if (res.ok) {
+            setToast({
+              type: 'success',
+              message: `Successfully parsed and uploaded ${parsedQuestions.length} MCQ questions.`
+            });
+            fetchMcqQuestions();
+          } else {
+            const err = await res.json();
+            setToast({ type: 'error', message: err.error || 'Failed to upload MCQ questions.' });
+          }
+        } catch (err) {
+          console.error("Error parsing uploaded file:", err);
+          setToast({ type: 'error', message: 'Error parsing the CSV file.' });
+        }
+      };
+      reader.readAsText(file);
       e.target.value = '';
     }
   };
 
   const handleDownloadBlankTemplate = () => {
+    const headers = ["QuestionText", "OptionA", "OptionB", "OptionC", "OptionD", "CorrectAnswer", "PointsValue"];
+    const rows = [
+      [
+        "What is the primary methodology used to optimize query performance in indexed tables?",
+        "Linear scanning algorithm loops",
+        "Composite B-Tree index node mapping",
+        "Asynchronous execution threads",
+        "Explicit structural casting",
+        "B",
+        "10"
+      ],
+      [
+        "Which corporate protocol handles explicit cross-origin resource allocations natively?",
+        "CORS middleware header matrix",
+        "SMTP transport pipelines",
+        "GraphQL endpoint schema parsing",
+        "Basic base64 payload streams",
+        "A",
+        "5"
+      ]
+    ];
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + [headers.join(","), ...rows.map(e => e.map(val => `"${val.replace(/"/g, '""')}"`).join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "blank_mcq_template.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     setToast({
       type: 'success',
-      message: "Template download initialized: blank_mcq_template.xlsx schema generated successfully."
+      message: "Template download initialized: blank_mcq_template.csv generated successfully."
     });
   };
 
@@ -323,7 +571,7 @@ export default function AssessmentsPage() {
         padding: '20px',
         marginBottom: '24px',
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr)) auto',
+        gridTemplateColumns: activeTab === 'videobot' ? 'repeat(auto-fit, minmax(200px, 1fr)) auto' : 'repeat(auto-fit, minmax(200px, 1fr))',
         gap: '16px',
         alignItems: 'end',
         boxShadow: 'var(--shadow-sm)'
@@ -371,30 +619,32 @@ export default function AssessmentsPage() {
           </select>
         </div>
 
-        <button 
-          onClick={handleSaveConfig}
-          className="btn-submit"
-          style={{
-            backgroundColor: 'var(--brand-teal)',
-            color: '#ffffff',
-            border: 'none',
-            padding: '10px 24px',
-            borderRadius: '6px',
-            fontWeight: '600',
-            fontSize: '13.5px',
-            cursor: 'pointer',
-            height: '42px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 4px rgba(13, 148, 136, 0.2)',
-            transition: 'background-color 0.15s ease'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--brand-teal-hover)'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--brand-teal)'}
-        >
-          Save Configuration
-        </button>
+        {activeTab === 'videobot' && (
+          <button 
+            onClick={handleSaveConfig}
+            className="btn-submit"
+            style={{
+              backgroundColor: 'var(--brand-teal)',
+              color: '#ffffff',
+              border: 'none',
+              padding: '10px 24px',
+              borderRadius: '6px',
+              fontWeight: '600',
+              fontSize: '13.5px',
+              cursor: 'pointer',
+              height: '42px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 4px rgba(13, 148, 136, 0.2)',
+              transition: 'background-color 0.15s ease'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--brand-teal-hover)'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--brand-teal)'}
+          >
+            Save Configuration
+          </button>
+        )}
       </div>
 
       {/* PANEL A: Video Bot Screening Questions */}
@@ -577,23 +827,56 @@ export default function AssessmentsPage() {
           border: '1px solid var(--border)',
           borderRadius: '8px',
           padding: '24px',
-          boxShadow: 'var(--shadow-sm)'
+          boxShadow: 'var(--shadow-sm)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '24px'
         }}>
-          <div style={{ marginBottom: '20px' }}>
-            <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-dark)', margin: 0 }}>
-              Bulk Upload Objective Questions
-            </h3>
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
-              Map questions directly to the selected profile by uploading your formatted spreadsheet.
-            </p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+            <div>
+              <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-dark)', margin: 0 }}>
+                MCQ Question Bank Configuration
+              </h3>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                Manage the multiple-choice question pool for {targetDept} -> {subDept} ({expLevel}).
+              </p>
+            </div>
+            <button 
+              type="button"
+              onClick={handleAddMcqQuestion}
+              className="btn-outline"
+              style={{
+                padding: '8px 16px',
+                borderRadius: '6px',
+                fontWeight: '600',
+                fontSize: '12.5px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                border: '1px solid var(--border-strong)',
+                backgroundColor: '#ffffff',
+                color: 'var(--brand-navy)',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--gray-50)';
+                e.currentTarget.style.borderColor = 'var(--brand-navy)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#ffffff';
+                e.currentTarget.style.borderColor = 'var(--border-strong)';
+              }}
+            >
+              <Plus size={14} /> Add MCQ Question
+            </button>
           </div>
 
           {/* Excel Schema Preview Table */}
           <div className="excel-template-box" style={{
             border: '1px solid #cbd5e1',
             borderRadius: '8px',
-            overflow: 'hidden',
-            marginTop: '12px'
+            overflow: 'hidden'
           }}>
             <div className="excel-header-banner" style={{
               backgroundColor: '#15803d',
@@ -609,7 +892,7 @@ export default function AssessmentsPage() {
             }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <FileSpreadsheet size={16} />
-                REQUIRED EXCEL TEMPLATE STRUCTURE (.XLSX Schema Reference)
+                REQUIRED SPREADSHEET TEMPLATE (.CSV Schema Reference)
               </span>
               <button 
                 onClick={handleDownloadBlankTemplate}
@@ -630,7 +913,7 @@ export default function AssessmentsPage() {
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.3)'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'}
               >
-                <Download size={12} /> Download Blank Template
+                <Download size={12} /> Download CSV Template
               </button>
             </div>
             
@@ -662,15 +945,6 @@ export default function AssessmentsPage() {
                     <td style={{ padding: '10px', border: '1px solid #cbd5e1', color: '#334155', backgroundColor: '#ffffff', textAlign: 'center', fontWeight: 'bold' }}>B</td>
                     <td style={{ padding: '10px', border: '1px solid #cbd5e1', color: '#334155', backgroundColor: '#ffffff', textAlign: 'center' }}>10</td>
                   </tr>
-                  <tr>
-                    <td style={{ padding: '10px', border: '1px solid #cbd5e1', color: '#334155', backgroundColor: '#ffffff' }}>Which corporate protocol handles explicit cross-origin resource allocations natively?</td>
-                    <td style={{ padding: '10px', border: '1px solid #cbd5e1', color: '#334155', backgroundColor: '#ffffff' }}>CORS middleware header matrix</td>
-                    <td style={{ padding: '10px', border: '1px solid #cbd5e1', color: '#334155', backgroundColor: '#ffffff' }}>SMTP transport pipelines</td>
-                    <td style={{ padding: '10px', border: '1px solid #cbd5e1', color: '#334155', backgroundColor: '#ffffff' }}>GraphQL endpoint schema parsing</td>
-                    <td style={{ padding: '10px', border: '1px solid #cbd5e1', color: '#334155', backgroundColor: '#ffffff' }}>Basic base64 payload streams</td>
-                    <td style={{ padding: '10px', border: '1px solid #cbd5e1', color: '#334155', backgroundColor: '#ffffff', textAlign: 'center', fontWeight: 'bold' }}>A</td>
-                    <td style={{ padding: '10px', border: '1px solid #cbd5e1', color: '#334155', backgroundColor: '#ffffff', textAlign: 'center' }}>5</td>
-                  </tr>
                 </tbody>
               </table>
             </div>
@@ -683,11 +957,10 @@ export default function AssessmentsPage() {
             style={{
               border: '2px dashed #cbd5e1',
               borderRadius: '8px',
-              padding: '40px 20px',
+              padding: '30px 20px',
               textAlign: 'center',
               backgroundColor: '#f8fafc',
               cursor: 'pointer',
-              marginTop: '20px',
               transition: 'all 0.15s ease',
               display: 'flex',
               flexDirection: 'column',
@@ -703,26 +976,134 @@ export default function AssessmentsPage() {
               e.currentTarget.style.backgroundColor = '#f8fafc';
             }}
           >
-            <Upload size={36} color="#15803d" style={{ marginBottom: '12px' }} />
-            <div style={{ fontSize: '14px', fontWeight: '700', color: '#1e293b' }}>
-              Click to browse or drop formatted Excel sheets here
+            <Upload size={30} color="#15803d" style={{ marginBottom: '8px' }} />
+            <div style={{ fontSize: '13.5px', fontWeight: '700', color: '#1e293b' }}>
+              Click to browse or drop formatted CSV files here
             </div>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px' }}>
-              Supports secure parsing for .xlsx and .csv files
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+              Accepts comma-delimited (.csv) files matching the template columns
             </div>
             
             <input 
               type="file" 
               ref={fileInputRef} 
               style={{ display: 'none' }} 
-              accept=".xlsx,.xls,.csv" 
+              accept=".csv" 
               onChange={handleFileUpload} 
             />
+          </div>
+
+          {/* Questions Bank List */}
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
+            <h4 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-dark)', marginBottom: '16px' }}>
+              Existing Questions ({mcqQuestions.length})
+            </h4>
+
+            {loadingMcq ? (
+              <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)', fontSize: '13px' }}>
+                Loading questions from database...
+              </div>
+            ) : mcqQuestions.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', border: '1px dashed var(--border)', borderRadius: '8px', fontSize: '13.5px' }}>
+                No MCQ questions configured for this matrix selection. Upload a CSV template or click "+ Add MCQ Question" to create one.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {mcqQuestions.map((q, index) => (
+                  <div key={q.id || index} style={{
+                    border: '1px solid var(--border)',
+                    borderRadius: '8px',
+                    padding: '16px',
+                    backgroundColor: '#fafafb',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+                      <span style={{ fontSize: '13.5px', fontWeight: '600', color: 'var(--text-dark)' }}>
+                        Q{index + 1}. {q.question_text || q.questionText}
+                      </span>
+                      <span style={{ fontSize: '11px', fontWeight: '700', padding: '2px 8px', borderRadius: '4px', backgroundColor: '#e2e8f0', color: '#475569' }}>
+                        {q.points_value || q.pointsValue} Points
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px' }}>
+                      {['A', 'B', 'C', 'D'].map((optKey) => {
+                        const optVal = q[`option_${optKey.toLowerCase()}`] || q[`option${optKey}`];
+                        const isCorrect = (q.correct_answer || q.correctAnswer || '').toUpperCase() === optKey;
+                        return (
+                          <div key={optKey} style={{
+                            padding: '8px 12px',
+                            borderRadius: '6px',
+                            fontSize: '12.5px',
+                            border: isCorrect ? '1.5px solid #10b981' : '1px solid var(--border)',
+                            backgroundColor: isCorrect ? '#f0fdf4' : '#ffffff',
+                            color: isCorrect ? '#166534' : 'var(--text-main)',
+                            fontWeight: isCorrect ? '600' : 'normal',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}>
+                            <span style={{ fontWeight: '700' }}>{optKey}.</span>
+                            <span>{optVal}</span>
+                            {isCorrect && <span style={{ marginLeft: 'auto', fontSize: '10px', color: '#10b981', fontWeight: 'bold' }}>Correct Option</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '4px', borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleEditMcqQuestion(q)}
+                        style={{
+                          backgroundColor: '#ffffff',
+                          border: '1px solid var(--border)',
+                          borderRadius: '6px',
+                          color: 'var(--brand-navy)',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '5px 12px',
+                          fontSize: '11.5px',
+                          fontWeight: '600',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <Edit2 size={12} /> Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteMcqQuestion(q.id)}
+                        style={{
+                          backgroundColor: '#ffffff',
+                          border: '1px solid var(--border)',
+                          borderRadius: '6px',
+                          color: '#ef4444',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '5px 12px',
+                          fontSize: '11.5px',
+                          fontWeight: '600',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <Trash2 size={12} /> Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* Modal Dialog for Add/Edit Question */}
+      {/* Video Bot Modal Dialog for Add/Edit Question */}
       {isModalOpen && (
         <div className="modal-overlay active" style={{ zIndex: 99999 }}>
           <div className="modal-card" style={{ width: '100%', maxWidth: '500px', padding: '24px' }}>
@@ -750,14 +1131,6 @@ export default function AssessmentsPage() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   transition: 'all 0.15s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--gray-100)';
-                  e.currentTarget.style.color = 'var(--text-main)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = 'var(--gray-400)';
                 }}
               >
                 <X size={18} />
@@ -791,16 +1164,6 @@ export default function AssessmentsPage() {
                     boxShadow: 'var(--shadow-xs)',
                     transition: 'all 0.18s ease'
                   }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = 'var(--brand-teal)';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(13, 148, 136, 0.18), var(--shadow-sm)';
-                    e.target.style.backgroundColor = '#f0fdfa';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = 'var(--border)';
-                    e.target.style.boxShadow = 'var(--shadow-xs)';
-                    e.target.style.backgroundColor = '#ffffff';
-                  }}
                   autoFocus
                 />
               </div>
@@ -821,8 +1184,6 @@ export default function AssessmentsPage() {
                     cursor: 'pointer',
                     transition: 'all 0.15s ease'
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-50)'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ffffff'}
                 >
                   Cancel
                 </button>
@@ -839,17 +1200,186 @@ export default function AssessmentsPage() {
                     fontWeight: 600,
                     cursor: !modalValue.trim() ? 'not-allowed' : 'pointer',
                     opacity: !modalValue.trim() ? 0.6 : 1,
-                    transition: 'all 0.15s ease',
-                    boxShadow: '0 2px 4px rgba(13, 148, 136, 0.2)'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (modalValue.trim()) e.currentTarget.style.backgroundColor = 'var(--brand-teal-hover)';
-                  }}
-                  onMouseLeave={(e) => {
-                    if (modalValue.trim()) e.currentTarget.style.backgroundColor = 'var(--brand-teal)';
+                    transition: 'all 0.15s ease'
                   }}
                 >
                   {modalMode === 'add' ? 'Add Question' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MCQ Modal Dialog for Add/Edit Question */}
+      {isMcqModalOpen && (
+        <div className="modal-overlay active" style={{ zIndex: 99999 }}>
+          <div className="modal-card" style={{ width: '100%', maxWidth: '550px', padding: '24px' }}>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: 'var(--text-dark)' }}>
+                  {mcqModalMode === 'add' ? 'Add MCQ Question' : 'Edit MCQ Question'}
+                </h3>
+                <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
+                  {targetDept} - {subDept} ({expLevel}) Parameters
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMcqModalOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'var(--gray-400)',
+                  padding: '4px',
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveMcqModalQuestion} style={{ margin: 0 }}>
+              {/* Body */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '24px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-main)' }}>
+                    Question text
+                  </label>
+                  <textarea
+                    value={mcqModalQuestion}
+                    onChange={(e) => setMcqModalQuestion(e.target.value)}
+                    placeholder="Enter multiple-choice question text..."
+                    required
+                    rows={3}
+                    style={{
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      padding: '10px',
+                      borderRadius: '6px',
+                      border: '1.5px solid var(--border)',
+                      fontSize: '13px',
+                      color: 'var(--text-main)',
+                      outline: 'none',
+                      resize: 'none',
+                      fontFamily: 'inherit'
+                    }}
+                    autoFocus
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-main)' }}>Option A</label>
+                    <input
+                      type="text"
+                      value={mcqModalOptA}
+                      onChange={(e) => setMcqModalOptA(e.target.value)}
+                      required
+                      style={{ width: '100%', padding: '8px 10px', border: '1.5px solid var(--border)', borderRadius: '6px', fontSize: '13px' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-main)' }}>Option B</label>
+                    <input
+                      type="text"
+                      value={mcqModalOptB}
+                      onChange={(e) => setMcqModalOptB(e.target.value)}
+                      required
+                      style={{ width: '100%', padding: '8px 10px', border: '1.5px solid var(--border)', borderRadius: '6px', fontSize: '13px' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-main)' }}>Option C</label>
+                    <input
+                      type="text"
+                      value={mcqModalOptC}
+                      onChange={(e) => setMcqModalOptC(e.target.value)}
+                      required
+                      style={{ width: '100%', padding: '8px 10px', border: '1.5px solid var(--border)', borderRadius: '6px', fontSize: '13px' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-main)' }}>Option D</label>
+                    <input
+                      type="text"
+                      value={mcqModalOptD}
+                      onChange={(e) => setMcqModalOptD(e.target.value)}
+                      required
+                      style={{ width: '100%', padding: '8px 10px', border: '1.5px solid var(--border)', borderRadius: '6px', fontSize: '13px' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-main)' }}>Correct Answer</label>
+                    <select
+                      value={mcqModalCorrect}
+                      onChange={(e) => setMcqModalCorrect(e.target.value as any)}
+                      style={{ width: '100%', padding: '8px 10px', border: '1.5px solid var(--border)', borderRadius: '6px', fontSize: '13px', backgroundColor: '#ffffff' }}
+                    >
+                      <option value="A">Option A</option>
+                      <option value="B">Option B</option>
+                      <option value="C">Option C</option>
+                      <option value="D">Option D</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-main)' }}>Points Value</label>
+                    <input
+                      type="number"
+                      value={mcqModalPoints}
+                      onChange={(e) => setMcqModalPoints(parseInt(e.target.value) || 5)}
+                      min={1}
+                      max={100}
+                      required
+                      style={{ width: '100%', padding: '8px 10px', border: '1.5px solid var(--border)', borderRadius: '6px', fontSize: '13px' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsMcqModalOpen(false)}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border)',
+                    background: '#ffffff',
+                    color: 'var(--text-main)',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    padding: '8px 18px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    background: 'var(--brand-teal)',
+                    color: '#ffffff',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {mcqModalMode === 'add' ? 'Add MCQ' : 'Save Changes'}
                 </button>
               </div>
             </form>

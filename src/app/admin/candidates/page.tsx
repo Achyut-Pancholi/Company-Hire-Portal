@@ -39,14 +39,14 @@ export default function CandidatesPage() {
   const [selectedDept, setSelectedDept] = useState('all');
   const [selectedSubDept, setSelectedSubDept] = useState('all');
 
-  // View state: All Candidates, Video Bot Screening, Tech Scheduler
-  const [activeView, setActiveView] = useState<'candidates' | 'videobot' | 'tech'>('candidates');
+  // View state: All Candidates, Video Bot Screening, Tech Scheduler, MCQ
+  const [activeView, setActiveView] = useState<'candidates' | 'videobot' | 'tech' | 'mcq'>('candidates');
 
   useEffect(() => {
     const checkView = () => {
       const params = new URLSearchParams(window.location.search);
-      const v = params.get('view') as 'candidates' | 'videobot' | 'tech';
-      if (v === 'videobot' || v === 'tech') {
+      const v = params.get('view') as 'candidates' | 'videobot' | 'tech' | 'mcq';
+      if (v === 'videobot' || v === 'tech' || v === 'mcq') {
         setActiveView(v);
       } else {
         setActiveView('candidates');
@@ -57,7 +57,7 @@ export default function CandidatesPage() {
     return () => window.removeEventListener('popstate', checkView);
   }, []);
 
-  const handleViewChange = (view: 'candidates' | 'videobot' | 'tech') => {
+  const handleViewChange = (view: 'candidates' | 'videobot' | 'tech' | 'mcq') => {
     setActiveView(view);
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
@@ -78,9 +78,11 @@ export default function CandidatesPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStep, setUploadStep] = useState('');
   const [uploadStatus, setUploadStatus] = useState({ type: '', message: '' });
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Email Invitation Modal States
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [inviteType, setInviteType] = useState<'video' | 'mcq'>('video');
   const [activeCandidateForEmail, setActiveCandidateForEmail] = useState<any | null>(null);
   const [senders, setSenders] = useState<string[]>([]);
   const [selectedSender, setSelectedSender] = useState('');
@@ -124,14 +126,19 @@ export default function CandidatesPage() {
         if (matchedJob) qSetLabel = matchedJob.title;
       }
 
-      setEmailSubject(`Action Required: Complete your Video AI Screening with ElastiCrew — ${jobRole} Position`);
-      setEmailBody(`Hi ${activeCandidateForEmail.name},\n\nPlease complete your Video AI Screening assessment configured for the ${qSetLabel} position.\n\nThis workflow features a targeted question block. Complete it using the secure link inside your tracking workspace.\n\nBest regards,\nElastiCrew Hiring Team`);
+      if (inviteType === 'mcq') {
+        setEmailSubject(`Action Required: Complete your MCQ Objective Assessment with ElastiCrew — ${jobRole} Position`);
+        setEmailBody(`Hi ${activeCandidateForEmail.name},\n\nPlease complete your MCQ Objective Assessment configured for the ${jobRole} position.\n\nThis is a timed, multiple-choice assessment designed to evaluate your aptitude. Complete it using the secure link below:\n\n${window.location.origin}/interview/${activeCandidateForEmail.id}/mcq\n\nBest regards,\nElastiCrew Hiring Team`);
+      } else {
+        setEmailSubject(`Action Required: Complete your Video AI Screening with ElastiCrew — ${jobRole} Position`);
+        setEmailBody(`Hi ${activeCandidateForEmail.name},\n\nPlease complete your Video AI Screening assessment configured for the ${qSetLabel} position.\n\nThis workflow features a targeted question block. Complete it using the secure link inside your tracking workspace.\n\nBest regards,\nElastiCrew Hiring Team`);
+      }
     } else {
       setCandidateEmail('');
       setEmailSubject('');
       setEmailBody('');
     }
-  }, [activeCandidateForEmail, selectedQuestionSet, jobs]);
+  }, [activeCandidateForEmail, selectedQuestionSet, jobs, inviteType]);
 
   // Set default question set if candidate is selected for video Bot
   useEffect(() => {
@@ -314,12 +321,63 @@ export default function CandidatesPage() {
     }
   };
 
-  // Dispatch Video Bot Email Invite
+  // Dispatch Email Invite (Video Bot or MCQ)
   const handleSendVideoInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeCandidateForEmail || !selectedQuestionSet) return;
+    if (!activeCandidateForEmail) return;
 
     setSendingInvite(true);
+
+    if (inviteType === 'mcq') {
+      try {
+        const jobRole = activeCandidateForEmail.jobApplied || activeCandidateForEmail.job_applied || 'Common';
+        const res = await apiFetch('/api/emails/send', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: 'mcq_invite',
+            to: candidateEmail,
+            candidateId: activeCandidateForEmail.id,
+            candidateName: activeCandidateForEmail.name,
+            jobRole: jobRole,
+            subject: emailSubject,
+            bodyText: emailBody,
+            senderEmail: selectedSender || senders[0] || 'careers@elasticrew.com'
+          })
+        });
+
+        if (res.ok) {
+          // Automatically move stage to MCQ Assessment
+          await apiFetch('/api/candidates', {
+            method: 'PATCH',
+            body: JSON.stringify({
+              id: activeCandidateForEmail.id,
+              stage: 'MCQ Assessment',
+              mcq_status: 'Sent'
+            })
+          });
+          
+          refreshCandidates();
+          alert(`MCQ Invite Dispatched Successfully to ${activeCandidateForEmail.name}!`);
+          setIsEmailModalOpen(false);
+          setActiveCandidateForEmail(null);
+        } else {
+          const err = await res.json();
+          alert(err.error || "Failed to send MCQ invite");
+        }
+      } catch (e) {
+        console.error(e);
+        alert("Error sending MCQ invite");
+      } finally {
+        setSendingInvite(false);
+      }
+      return;
+    }
+
+    if (!selectedQuestionSet) {
+      setSendingInvite(false);
+      return;
+    }
+
     const matchedJob = jobs.find((j: any) => j.id === selectedQuestionSet);
     if (!matchedJob) {
       alert("Invalid Question Set / Job Role selected.");
@@ -397,6 +455,11 @@ export default function CandidatesPage() {
     if (dropdownVal === 'delete') {
       handleDeleteCandidate(candidate);
     } else if (dropdownVal === 'video') {
+      setInviteType('video');
+      setActiveCandidateForEmail(candidate);
+      setIsEmailModalOpen(true);
+    } else if (dropdownVal === 'mcq') {
+      setInviteType('mcq');
       setActiveCandidateForEmail(candidate);
       setIsEmailModalOpen(true);
     } else {
@@ -404,6 +467,41 @@ export default function CandidatesPage() {
     }
   };
 
+  // Copy invite link to clipboard helper
+  const handleCopyInvite = (candidate: any) => {
+    const inviteUrl = `${window.location.origin}/interview/${candidate.id}`;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(inviteUrl)
+        .then(() => {
+          setCopiedId(candidate.id);
+          setTimeout(() => setCopiedId(null), 2000);
+        })
+        .catch(err => {
+          console.error("Clipboard copy failed, using fallback:", err);
+          fallbackCopy(inviteUrl, candidate.id);
+        });
+    } else {
+      fallbackCopy(inviteUrl, candidate.id);
+    }
+  };
+
+  const fallbackCopy = (text: string, candidateId: string) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      setCopiedId(candidateId);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.error('Fallback copy failed', err);
+      alert(`Could not copy automatically. Here is the link:\n${text}`);
+    }
+    document.body.removeChild(textArea);
+  };
 
   // Stage Badge Render helper
   const renderStageBadge = (c: any) => {
@@ -415,6 +513,16 @@ export default function CandidatesPage() {
         return <span className="stage-tag rejected">Screening Rejected</span>;
       }
       return <span className="stage-tag interviewing">Invite Sent</span>;
+    }
+    if (c.stage === 'MCQ Assessment') {
+      const mcqStat = c.mcqStatus || c.mcq_status;
+      if (mcqStat === 'Completed') {
+        return <span className="stage-tag shortlisted">MCQ Completed ({c.mcqScore || c.mcq_score} pts)</span>;
+      }
+      if (mcqStat === 'Sent') {
+        return <span className="stage-tag interviewing">MCQ Invited</span>;
+      }
+      return <span className="stage-tag screening">MCQ Pending</span>;
     }
     if (c.stage === 'Technical Scheduler') {
       return <span className="stage-tag shortlisted">Screening Completed</span>;
@@ -441,6 +549,12 @@ export default function CandidatesPage() {
       {activeView === 'videobot' && (
         <header className="header-actions" style={{ marginBottom: '24px' }}>
           <h1 className="page-title" style={{ margin: 0 }}>Video Bot Screening</h1>
+        </header>
+      )}
+
+      {activeView === 'mcq' && (
+        <header className="header-actions" style={{ marginBottom: '24px' }}>
+          <h1 className="page-title" style={{ margin: 0 }}>MCQ Assessment</h1>
         </header>
       )}
 
@@ -519,7 +633,11 @@ export default function CandidatesPage() {
             <span>Video Bot Screening</span>
           </button>
           
-          <button type="button" onClick={() => alert("MCQ Assessment is not configured yet.")} className="sub-nav-tab text-decoration-none">
+          <button 
+            type="button" 
+            onClick={() => handleViewChange('mcq')} 
+            className={`sub-nav-tab text-decoration-none ${activeView === 'mcq' ? 'active' : ''}`}
+          >
             <svg className="tab-icon icon-blue-alt" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
             </svg>
@@ -589,19 +707,26 @@ export default function CandidatesPage() {
                           </span>
                         </td>
                         <td className="col-action">
-                          <select 
-                            className="action-dropdown"
-                            value=""
-                            onChange={e => handleDropdownAction(e.target.value, c)}
-                            style={{ width: '100%' }}
-                          >
-                            <option value="" disabled>Manage</option>
-                            <option value="video">Send Video Bot Invite</option>
-                            <option value="mcq">Send MCQ Invite</option>
-                            <option value="tech">Send Tech Invite</option>
-                            <option value="hr">Send HR Invite</option>
-                            <option value="delete" className="danger-option">Delete Candidate</option>
-                          </select>
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                            <button 
+                              className={`btn-share-invite ${copiedId === c.id ? 'copied' : ''}`}
+                              onClick={() => handleCopyInvite(c)}
+                            >
+                              {copiedId === c.id ? '✓ Copied' : 'Share Invite'}
+                            </button>
+                            <select 
+                              className="action-dropdown"
+                              value=""
+                              onChange={e => handleDropdownAction(e.target.value, c)}
+                            >
+                              <option value="" disabled>Manage</option>
+                              <option value="video">Send Video Bot Invite</option>
+                              <option value="mcq">Send MCQ Invite</option>
+                              <option value="tech">Send Tech Invite</option>
+                              <option value="hr">Send HR Invite</option>
+                              <option value="delete" className="danger-option">Delete Candidate</option>
+                            </select>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -624,6 +749,117 @@ export default function CandidatesPage() {
             <SchedulerProvider>
               <SchedulerApp />
             </SchedulerProvider>
+          </div>
+        )}
+
+        {activeView === 'mcq' && (
+          <div className="table-responsive-wrapper" style={{ marginTop: '24px' }}>
+            <div className="workspace-card" style={{ padding: '24px', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: 'var(--text-dark)' }}>MCQ Candidates Pipeline</h3>
+                <span className="count-pill" style={{ backgroundColor: 'var(--blue-50)', color: 'var(--blue-700)' }}>
+                  {filteredCandidates.filter((c: any) => c.stage === 'MCQ Assessment').length} Active
+                </span>
+              </div>
+              
+              <table className="candidate-table">
+                <thead>
+                  <tr>
+                    <th>Candidate Name</th>
+                    <th>Applied Position</th>
+                    <th>Sub Dept</th>
+                    <th>MCQ Status</th>
+                    <th>Score</th>
+                    <th>Remarks</th>
+                    <th className="col-action" style={{ textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredCandidates.filter((c: any) => c.stage === 'MCQ Assessment').length === 0 ? (
+                    <tr>
+                      <td colSpan={7} style={{ textAlign: 'center', padding: '40px', color: 'var(--gray-500)', fontStyle: 'italic' }}>
+                        No candidates are currently in the MCQ Assessment stage.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredCandidates.filter((c: any) => c.stage === 'MCQ Assessment').map((c: any) => {
+                      const mcqStat = c.mcqStatus || c.mcq_status || 'Pending';
+                      const score = c.mcqScore !== undefined && c.mcqScore !== null ? c.mcqScore : (c.mcq_score !== undefined && c.mcq_score !== null ? c.mcq_score : 'N/A');
+                      const remark = c.remarkMcq || c.remark_mcq || '';
+                      const jobRole = c.jobApplied || c.job_applied || 'Common';
+                      const inviteUrl = `${window.location.origin}/interview/${c.id}/mcq`;
+                      
+                      return (
+                        <tr key={c.id} className="candidate-row">
+                          <td>
+                            <strong 
+                              style={{ color: 'var(--text-dark)', cursor: 'pointer' }}
+                              onClick={() => setSelectedCandidate(c)}
+                            >
+                              {c.name}
+                            </strong>
+                            <div style={{ fontSize: '12px', color: 'var(--gray-500)' }}>{c.email}</div>
+                          </td>
+                          <td>{jobRole}</td>
+                          <td>{getCandidateSubDept(c)}</td>
+                          <td>
+                            {mcqStat === 'Completed' ? (
+                              <span className="stage-tag shortlisted">Completed</span>
+                            ) : mcqStat === 'Sent' ? (
+                              <span className="stage-tag interviewing">Invited</span>
+                            ) : (
+                              <span className="stage-tag screening">Pending</span>
+                            )}
+                          </td>
+                          <td>
+                            <strong>{score}</strong> {score !== 'N/A' && 'pts'}
+                          </td>
+                          <td>
+                            <span style={{ fontSize: '13px', color: 'var(--gray-600)' }}>
+                              {remark || 'No remarks yet'}
+                            </span>
+                          </td>
+                          <td className="col-action">
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                              <button 
+                                type="button"
+                                className={`btn-share-invite ${copiedId === c.id ? 'copied' : ''}`}
+                                onClick={() => {
+                                  if (navigator.clipboard && navigator.clipboard.writeText) {
+                                    navigator.clipboard.writeText(inviteUrl)
+                                      .then(() => {
+                                        setCopiedId(c.id);
+                                        setTimeout(() => setCopiedId(null), 2000);
+                                      });
+                                  } else {
+                                    alert(`Assessment Link: ${inviteUrl}`);
+                                  }
+                                }}
+                                style={{ padding: '6px 12px', fontSize: '12px' }}
+                              >
+                                {copiedId === c.id ? '✓ Copied' : 'Copy Test Link'}
+                              </button>
+                              <button
+                                type="button"
+                                className="btn-submit dispatch-btn"
+                                onClick={() => {
+                                  setInviteType('mcq');
+                                  setActiveCandidateForEmail(c);
+                                  setIsEmailModalOpen(true);
+                                }}
+                                style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                              >
+                                <Send size={12} /> Re-invite
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </section>
@@ -722,7 +958,7 @@ export default function CandidatesPage() {
         <div className="modal-overlay active">
           <div className="modal-card email-modal-card">
             <h2 className="modal-header" style={{ margin: 0, paddingBottom: '8px', borderBottom: '1px solid #f1f5f9', fontSize: '16px' }}>
-              Video Bot Invitation
+              {inviteType === 'mcq' ? 'MCQ Invitation' : 'Video Bot Invitation'}
             </h2>
             
             <form onSubmit={handleSendVideoInvite} className="modal-scrollable-form">
@@ -750,20 +986,22 @@ export default function CandidatesPage() {
                 />
               </div>
 
-              <div className="form-group">
-                <label>Select Question Set</label>
-                <select 
-                  className="form-control" 
-                  value={selectedQuestionSet}
-                  onChange={e => setSelectedQuestionSet(e.target.value)}
-                  required
-                >
-                  <option value="" disabled>Select Question Set...</option>
-                  {jobs.map((j: any) => (
-                    <option key={j.id} value={j.id}>{j.title}</option>
-                  ))}
-                </select>
-              </div>
+              {inviteType !== 'mcq' && (
+                <div className="form-group">
+                  <label>Select Question Set</label>
+                  <select 
+                    className="form-control" 
+                    value={selectedQuestionSet}
+                    onChange={e => setSelectedQuestionSet(e.target.value)}
+                    required
+                  >
+                    <option value="" disabled>Select Question Set...</option>
+                    {jobs.map((j: any) => (
+                      <option key={j.id} value={j.id}>{j.title}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div className="form-group">
                 <label>Subject</label>
