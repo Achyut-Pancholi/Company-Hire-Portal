@@ -155,13 +155,13 @@ export function getMockSupabaseClient() {
     },
     auth: {
       async getUser() {
-        return { data: { user: { email: "admin@kadellabs.com" } }, error: null };
+        return { data: { user: { email: "admin@elasticrew.com" } }, error: null };
       },
       async signOut() {
         return { error: null };
       },
       async signInWithPassword() {
-        return { data: { user: { email: "admin@kadellabs.com" } }, error: null };
+        return { data: { user: { email: "admin@elasticrew.com" } }, error: null };
       }
     }
   };

@@ -354,7 +354,7 @@ export default function PanelistSidebar() {
                       borderColor: emailError ? '#ef4444' : undefined,
                       outlineColor: emailError ? '#ef4444' : undefined
                     }}
-                    placeholder="Email (e.g. bob@kadellabs.com)"
+                    placeholder="Email (e.g. bob@elasticrew.com)"
                     value={email}
                     onChange={e => {
                       const val = e.target.value;

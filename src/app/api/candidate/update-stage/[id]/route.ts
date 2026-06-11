@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 type StageAction = "schedule" | "complete" | "select" | "reject";
 
 interface StageTransition {
-  technical_stage_status: string;
+  tech_status: string;
   current_stage: string;
   stage_order: number;
   workflow_locked: boolean;
@@ -17,26 +17,26 @@ interface StageTransition {
 
 const TRANSITIONS: Record<StageAction, StageTransition> = {
   schedule: {
-    technical_stage_status: "Scheduled",
+    tech_status: "Scheduled",
     current_stage: "Technical Scheduler",
     stage_order: 3,
     workflow_locked: false,
   },
   complete: {
-    technical_stage_status: "Completed",
+    tech_status: "Completed",
     current_stage: "Technical Evaluation",
     stage_order: 4,
     workflow_locked: false,
   },
   select: {
-    technical_stage_status: "Selected",
+    tech_status: "Selected",
     current_stage: "Report Generation",
     stage_order: 5,
     workflow_locked: true, // TERMINAL
     final_recommendation: "Selected",
   },
   reject: {
-    technical_stage_status: "Rejected",
+    tech_status: "Rejected",
     current_stage: "Rejected at Technical Stage",
     stage_order: 0,
     workflow_locked: true, // TERMINAL
@@ -44,7 +44,7 @@ const TRANSITIONS: Record<StageAction, StageTransition> = {
   },
 };
 
-// Pre-condition guard: what technical_stage_status is required before this action
+// Pre-condition guard: what tech_status is required before this action
 const PRECONDITIONS: Partial<Record<StageAction, string>> = {
   complete: "Scheduled",
   select: "Completed",
@@ -89,7 +89,7 @@ export async function POST(
 
     const { data: candidate, error: fetchError } = await supabase
       .from("candidates")
-      .select("id, video_stage_status, technical_stage_status, workflow_locked")
+      .select("id, video_status, tech_status, workflow_locked")
       .eq("id", id)
       .single();
 
@@ -109,7 +109,7 @@ export async function POST(
     }
 
     // Guard: video must be approved before technical actions
-    if (candidate.video_stage_status !== "Approved" && action === "schedule") {
+    if (candidate.video_status !== "Approved" && action === "schedule") {
       return NextResponse.json(
         {
           error: "Cannot schedule technical interview: video screening has not been approved yet.",
@@ -121,10 +121,10 @@ export async function POST(
 
     // Guard: specific pre-conditions
     const requiredPrior = PRECONDITIONS[action];
-    if (requiredPrior && candidate.technical_stage_status !== requiredPrior) {
+    if (requiredPrior && candidate.tech_status !== requiredPrior) {
       return NextResponse.json(
         {
-          error: `Cannot perform '${action}': current technical stage must be '${requiredPrior}' but is '${candidate.technical_stage_status}'.`,
+          error: `Cannot perform '${action}': current technical stage must be '${requiredPrior}' but is '${candidate.tech_status}'.`,
           code: "INVALID_STAGE_TRANSITION",
         },
         { status: 422 }

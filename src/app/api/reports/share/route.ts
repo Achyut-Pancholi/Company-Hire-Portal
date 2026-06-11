@@ -57,7 +57,7 @@ function reportEmailTemplate(
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Your Interview Report — KadelLabs</title>
+<title>Your Interview Report — ElastiCrew</title>
 </head>
 <body style="margin:0;padding:0;background:#f4f7f6;font-family:'Helvetica Neue',Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f7f6;padding:40px 20px;">
@@ -68,7 +68,7 @@ function reportEmailTemplate(
         <tr>
           <td style="background:linear-gradient(135deg,#0E2D7B 0%,#1e40af 100%);padding:32px 40px;text-align:center;">
             <div style="display:inline-block;vertical-align:middle;">
-              <span style="color:#7DBA00;font-size:22px;font-weight:900;letter-spacing:-0.5px;">Kade</span><span style="color:#fff;font-size:22px;font-weight:900;">Labs</span>
+              <span style="color:#7DBA00;font-size:22px;font-weight:900;letter-spacing:-0.5px;">Elasti</span><span style="color:#fff;font-size:22px;font-weight:900;">Crew</span>
             </div>
             <p style="color:rgba(255,255,255,0.6);margin:8px 0 0;font-size:12px;letter-spacing:0.8px;text-transform:uppercase;">Interview Report</p>
           </td>
@@ -121,8 +121,8 @@ function reportEmailTemplate(
         <tr>
           <td style="background:#f8fafc;padding:20px 40px;border-top:1px solid #e2e8f0;text-align:center;">
             <p style="color:#94a3b8;font-size:12px;margin:0;">
-              This report is shared by KadelLabs Hiring Team.<br>
-              © 2025 KadelLabs. All rights reserved.
+              This report is shared by ElastiCrew Hiring Team.<br>
+              © 2025 ElastiCrew. All rights reserved.
             </p>
           </td>
         </tr>
@@ -192,7 +192,7 @@ export async function POST(req: NextRequest) {
 
     // 6. Send email to the candidate
     if (!body.skipEmail) {
-      const fromName = process.env.MAIL_FROM_NAME || "KadelLabs";
+      const fromName = process.env.MAIL_FROM_NAME || "ElastiCrew";
       const fromEmail = process.env.MAIL_FROM || process.env.GMAIL_USER;
 
       await transporter.sendMail({

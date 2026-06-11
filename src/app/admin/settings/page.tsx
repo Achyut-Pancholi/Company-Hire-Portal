@@ -118,7 +118,7 @@ export default function SettingsPage() {
     const trimmedEmail = newEmail.trim();
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(trimmedEmail)) {
-      alert('Please enter a valid email address (e.g., careers@kadellabs.com).');
+      alert('Please enter a valid email address (e.g., careers@elasticrew.com).');
       return;
     }
 
@@ -195,7 +195,7 @@ export default function SettingsPage() {
                     type="email" 
                     required
                     className="form-input" 
-                    placeholder="careers@kadellabs.com"
+                    placeholder="careers@elasticrew.com"
                     style={{ paddingLeft: '2.5rem' }}
                     value={newEmail}
                     onChange={e => setNewEmail(e.target.value)}

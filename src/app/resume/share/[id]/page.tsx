@@ -111,13 +111,9 @@ export default function SharedResumePage() {
               </p>
             </div>
             <div>
-              <Image 
-                src="/kadellabs-logo.png" 
-                alt="Kadel Labs" 
-                width={150} 
-                height={50} 
-                className="object-contain h-12 w-auto" 
-              />
+              <div className="text-xl font-bold text-slate-900 tracking-wider">
+                ElastiCrew
+              </div>
             </div>
           </div>
 
@@ -246,7 +242,7 @@ export default function SharedResumePage() {
           
           {/* Footer */}
           <div className="mt-16 p-6 bg-slate-50 rounded-lg border border-dashed border-slate-300 text-center text-slate-500 text-sm">
-            This resume was standardized and automatically generated via the Kadel Labs Interview Platform. <br/>
+            This resume was standardized and automatically generated via the ElastiCrew Interview Platform. <br/>
             Original contact details have been omitted to promote unbiased, skills-first evaluation.
           </div>
 

@@ -10,8 +10,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   
   const getPageTitle = () => {
     if (pathname === '/admin') return 'Video Bot Screening';
-    if (pathname?.startsWith('/admin/jobpostings')) return 'Department';
-    if (pathname?.startsWith('/admin/resumeupload')) return 'Resume Upload & Parsing';
+    if (pathname?.startsWith('/admin/jobpostings')) return 'Departments';
+    if (pathname?.startsWith('/admin/candidates')) return 'Candidates';
+    if (pathname?.startsWith('/admin/assessments')) return 'Assessment Management Engine';
     if (pathname?.startsWith('/admin/video-bot-admin')) return 'Video Bot Screening';
     if (pathname?.startsWith('/admin/technicalscheduler')) return 'Technical Scheduler';
     if (pathname?.startsWith('/admin/reports')) return 'Reports & Evaluation';

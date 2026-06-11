@@ -20,7 +20,7 @@ export default function SignupDisabledPage() {
           ← Back to Login
         </Link>
         <p className="mt-8 text-xs text-white/20">
-          © {new Date().getFullYear()} Kadellabs. All rights reserved.
+          © {new Date().getFullYear()} ElastiCrew. All rights reserved.
         </p>
       </div>
     </div>

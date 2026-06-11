@@ -31,7 +31,7 @@ This timesheet summarizes the tasks and features implemented across the applicat
 - Engineered shareable, tokenized `report/[token]` routes that expire in 24-hours for read-only external client viewing.
 
 ### 5. UI/UX Polishing & Aesthetics
-- Enlarged and swapped external logos with native SVGs to align with standard aesthetics (e.g., KadelLabs logo scaling).
+- Enlarged and swapped external logos with native SVGs to align with standard aesthetics (e.g., ElastiCrew logo scaling).
 - Resolved overlapping structural defects with `z-index` cascading issues in active modal windows.
 - Refined navigation terminology by renaming "Job Postings" to "Listed Jobs", and "Video Bot Interview" to "Video Bot Screening".
 - Overhauled completion status tags to display a polished solid emerald green layout.

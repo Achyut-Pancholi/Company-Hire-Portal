@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
       }
       
       if (emails.length === 0) {
-        emails.push("careers@kadellabs.com");
+        emails.push("careers@elasticrew.com");
       }
     }
     
@@ -47,6 +47,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ emails: uniqueEmails });
   } catch (error: any) {
     console.error("Error fetching senders:", error);
-    return NextResponse.json({ emails: ["careers@kadellabs.com"] });
+    return NextResponse.json({ emails: ["careers@elasticrew.com"] });
   }
 }

@@ -10,8 +10,8 @@ import React, { createContext, useContext, useReducer, useCallback } from 'react
 
 // ─── Initial Panelists Constant ───────────────────────────────────────────────
 export const INITIAL_PANELISTS = [
-  { id: 'p1', name: 'John Doe',     role: 'Engineering Lead',  avatar: 'JD', color: '#0E2D7B', email: 'john.doe@kadellabs.com', daysAvailable: [1, 2, 3, 4, 5] },
-  { id: 'p2', name: 'Sarah Smith',  role: 'Product Manager',   avatar: 'SS', color: '#7DBA00', email: 'sarah.smith@kadellabs.com', daysAvailable: [1, 2, 3, 4, 5] }
+  { id: 'p1', name: 'John Doe',     role: 'Engineering Lead',  avatar: 'JD', color: '#0E2D7B', email: 'john.doe@elasticrew.com', daysAvailable: [1, 2, 3, 4, 5] },
+  { id: 'p2', name: 'Sarah Smith',  role: 'Product Manager',   avatar: 'SS', color: '#7DBA00', email: 'sarah.smith@elasticrew.com', daysAvailable: [1, 2, 3, 4, 5] }
 ];
 
 // ─── Action Constants ─────────────────────────────────────────────────────────
@@ -111,8 +111,8 @@ const getInitialState = () => {
       const raw = localStorage.getItem('kl_scheduler_panelists');
       if (raw) {
         storedPanelists = JSON.parse(raw).map(p => {
-          if (p.id === 'p1' && !p.email) return { ...p, email: 'john.doe@kadellabs.com', daysAvailable: p.daysAvailable || [1, 2, 3, 4, 5] };
-          if (p.id === 'p2' && !p.email) return { ...p, email: 'sarah.smith@kadellabs.com', daysAvailable: p.daysAvailable || [1, 2, 3, 4, 5] };
+          if (p.id === 'p1' && !p.email) return { ...p, email: 'john.doe@elasticrew.com', daysAvailable: p.daysAvailable || [1, 2, 3, 4, 5] };
+          if (p.id === 'p2' && !p.email) return { ...p, email: 'sarah.smith@elasticrew.com', daysAvailable: p.daysAvailable || [1, 2, 3, 4, 5] };
           if (!p.daysAvailable) return { ...p, daysAvailable: [1, 2, 3, 4, 5] };
           return p;
         });

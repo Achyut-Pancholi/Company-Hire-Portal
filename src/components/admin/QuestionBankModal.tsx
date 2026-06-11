@@ -33,7 +33,8 @@ const QuestionBankModal = ({ onClose }) => {
       'Operations': ['LnD'],
       'Engineering': ['DevOps', 'Data Science', 'SRE'],
       'HR': ['Recruitment', 'Operations'],
-      'Marketing': ['SEO', 'Content', 'Social Media']
+      'Marketing': ['SEO', 'Content', 'Social Media'],
+      'Design': ['UI/UX']
     };
     return defaults[dept] || ['General'];
   };
@@ -49,6 +50,9 @@ const QuestionBankModal = ({ onClose }) => {
       },
       'Operations': {
         'LnD': ['Manager', 'Associate Manager']
+      },
+      'Design': {
+        'UI/UX': ['Product Designer', 'UI/UX Designer', 'Graphic Designer']
       }
     };
     return (defaults[dept] && defaults[dept][subDept]) || ['General Role'];

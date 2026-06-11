@@ -22,7 +22,7 @@ export async function POST(
 
     const { data: candidate, error: fetchError } = await supabase
       .from("candidates")
-      .select("id, resume_stage_status, video_stage_status, workflow_locked")
+      .select("id, resume_status, video_status, workflow_locked")
       .eq("id", id)
       .single();
 
@@ -31,7 +31,7 @@ export async function POST(
     }
 
     // Guard: resume must be approved first
-    if (candidate.resume_stage_status !== "Approved") {
+    if (candidate.resume_status !== "Approved") {
       return NextResponse.json(
         {
           error: "Cannot approve video screening: resume has not been approved yet.",
@@ -42,10 +42,10 @@ export async function POST(
     }
 
     // Guard: duplicate action check
-    if (candidate.video_stage_status === "Approved" || candidate.video_stage_status === "Rejected") {
+    if (candidate.video_status === "Approved" || candidate.video_status === "Rejected") {
       return NextResponse.json(
         {
-          error: `Video screening has already been ${candidate.video_stage_status.toLowerCase()}.`,
+          error: `Video screening has already been ${candidate.video_status.toLowerCase()}.`,
           code: "ALREADY_PROCESSED",
         },
         { status: 409 }
@@ -58,7 +58,7 @@ export async function POST(
     const { data: updated, error: updateError } = await supabase
       .from("candidates")
       .update({
-        video_stage_status: "Approved",
+        video_status: "Approved",
         current_stage: "Technical Scheduler",
         stage_order: 3,
         workflow_locked: false, // pipeline continues

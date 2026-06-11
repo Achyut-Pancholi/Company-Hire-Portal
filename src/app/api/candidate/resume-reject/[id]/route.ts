@@ -29,7 +29,7 @@ export async function POST(
 
     const { data: candidate, error: fetchError } = await supabase
       .from("candidates")
-      .select("id, resume_stage_status, workflow_locked")
+      .select("id, resume_status, workflow_locked")
       .eq("id", id)
       .single();
 
@@ -37,10 +37,10 @@ export async function POST(
       return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
     }
 
-    if (candidate.resume_stage_status === "Approved" || candidate.resume_stage_status === "Rejected") {
+    if (candidate.resume_status === "Approved" || candidate.resume_status === "Rejected") {
       return NextResponse.json(
         {
-          error: `Candidate resume has already been ${candidate.resume_stage_status.toLowerCase()}. No further action allowed.`,
+          error: `Candidate resume has already been ${candidate.resume_status.toLowerCase()}. No further action allowed.`,
           code: "ALREADY_PROCESSED",
         },
         { status: 409 }
@@ -51,7 +51,7 @@ export async function POST(
     const { data: updated, error: updateError } = await supabase
       .from("candidates")
       .update({
-        resume_stage_status: "Rejected",
+        resume_status: "Rejected",
         current_stage: "Rejected at Resume Stage",
         stage_order: 0,
         workflow_locked: true, // TERMINAL

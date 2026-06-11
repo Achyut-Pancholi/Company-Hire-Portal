@@ -22,9 +22,9 @@ export async function generateMetadata({ params }: { params: Promise<{ token: st
     (c: any) => c.extracted_data?._reportShareToken === token
   );
 
-  if (!candidate) return { title: "Interview Report — KadelLabs" };
+  if (!candidate) return { title: "Interview Report — ElastiCrew" };
   return {
-    title: `${candidate.name} — ${candidate.job_applied} | KadelLabs Report`,
+    title: `${candidate.name} — ${candidate.job_applied} | ElastiCrew Report`,
     description: `Interview evaluation report for ${candidate.name} applying for ${candidate.job_applied}`,
     robots: "noindex, nofollow",
   };
@@ -438,11 +438,9 @@ export default async function CandidateReportPage({ params }: { params: Promise<
           {/* RIGHT SECTION: Logo & Read-only Badge */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <img 
-                src="/kadellabs-logo.png" 
-                alt="Company Logo" 
-                style={{ height: '48px', objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.9 }} 
-              />
+              <div style={{ fontSize: '1.25rem', fontWeight: '800', color: '#ffffff', letterSpacing: '-0.5px' }}>
+                ElastiCrew
+              </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem', fontWeight: '600', background: 'rgba(255,255,255,0.1)', padding: '8px 12px', borderRadius: '8px' }}>
               <Lock size={12} />
