@@ -699,7 +699,7 @@ export default function CandidatesPage() {
                 <tr>
                   <th>Date Added</th>
                   <th>Candidate Name</th>
-                  <th>Sub Dept</th>
+                  <th>Role</th>
                   <th>Pipeline Stage</th>
                   <th>ElastiCrew Resume</th>
                   <th className="col-action" style={{ textAlign: 'right' }}>Action</th>
@@ -731,7 +731,7 @@ export default function CandidatesPage() {
                             {c.name}
                           </strong>
                         </td>
-                        <td>{getCandidateSubDept(c)}</td>
+                        <td>{getCandidateSubDept(c) || c.jobApplied || c.job_applied || '—'}</td>
                         <td>{renderStageBadge(c)}</td>
                         <td>
                           <span className="resume-tag" onClick={() => setSelectedCandidate(c)}>

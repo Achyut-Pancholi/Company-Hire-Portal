@@ -358,7 +358,7 @@ const VideoBot = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Experience</label>
+              <label className="form-label">Role</label>
               <select 
                 className="form-select"
                 value={inviteRole}
@@ -368,15 +368,13 @@ const VideoBot = () => {
                   setInviteCandidateId('');
                 }}
               >
-                <option value="">Select Experience...</option>
-                <option value="Fresher">Fresher</option>
-                <option value="Junior">Junior</option>
-                <option value="Mid level">Mid level</option>
-                <option value="Senior">Senior</option>
-                <option value="Lead">Lead</option>
+                <option value="">Select Role...</option>
+                {inviteDepartment && inviteSubDepartment && getAvailableRoles(inviteDepartment, inviteSubDepartment).map((role: string) => (
+                  <option key={role} value={role}>{role}</option>
+                ))}
               </select>
               <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)', marginTop: '0.25rem', display: 'block' }}>
-                Candidate will be asked all questions for this experience level.
+                Candidate will be asked all questions for this role.
               </span>
             </div>
 
@@ -490,7 +488,7 @@ const VideoBot = () => {
             <thead>
               <tr>
                 <th>Candidate</th>
-                <th>Experience</th>
+                <th>Role</th>
                 <th>Status</th>
                 <th>Approval Status</th>
                 <th>Remark</th>
