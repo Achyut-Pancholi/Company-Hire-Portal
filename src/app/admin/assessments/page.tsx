@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CheckSquare, FileSpreadsheet, Plus, X, Upload, Download, CheckCircle, AlertCircle, Edit2, Trash2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { useAppContext } from '@/components/admin/context/AppContext';
 
 const BASELINE_FALLBACK = {
   "Operations|HR|Fresher(0)": [
@@ -58,13 +59,14 @@ const TRACK_RELATIONS = {
 };
 
 export default function AssessmentsPage() {
+  const { jobs } = useAppContext();
   const [activeTab, setActiveTab] = useState<'videobot' | 'mcq'>('videobot');
   const [isClient, setIsClient] = useState(false);
 
   // Dropdown States
-  const [targetDept, setTargetDept] = useState<'Operations' | 'Engineering'>('Operations');
+  const [targetDept, setTargetDept] = useState<string>('Operations');
   const [subDept, setSubDept] = useState<string>('HR');
-  const [expLevel, setExpLevel] = useState<string>('Fresher(0)');
+  const [role, setRole] = useState<string>('');
 
   // Questions State
   const [questions, setQuestions] = useState<string[]>([]);
@@ -222,12 +224,18 @@ export default function AssessmentsPage() {
   useEffect(() => {
     const defaultSubDept = TRACK_RELATIONS[targetDept]?.[0] || '';
     setSubDept(defaultSubDept);
+    setRole('');
   }, [targetDept]);
+
+  // Reset role when subDept changes
+  useEffect(() => {
+    setRole('');
+  }, [subDept]);
 
   // Load configured questions from localStorage or fallback
   useEffect(() => {
     if (!isClient) return;
-    const matrixKey = `${targetDept}|${subDept}|${expLevel}`;
+    const matrixKey = `${targetDept}|${subDept}|${role}`;
     const stored = localStorage.getItem('elasticrew_question_matrix');
     
     let pool: Record<string, string[]> = BASELINE_FALLBACK;
@@ -250,7 +258,7 @@ export default function AssessmentsPage() {
     ];
 
     setQuestions(setQuestionsList);
-  }, [targetDept, subDept, expLevel, isClient]);
+  }, [targetDept, subDept, role, isClient]);
 
   // Toast auto-clear
   useEffect(() => {
@@ -264,7 +272,7 @@ export default function AssessmentsPage() {
 
   // Save current questions pool to localStorage
   const handleSaveConfig = () => {
-    const matrixKey = `${targetDept}|${subDept}|${expLevel}`;
+    const matrixKey = `${targetDept}|${subDept}|${role}`;
     const stored = localStorage.getItem('elasticrew_question_matrix');
     let pool: Record<string, string[]> = { ...BASELINE_FALLBACK };
 
@@ -286,7 +294,7 @@ export default function AssessmentsPage() {
 
     setToast({
       type: 'success',
-      message: `Configuration updated successfully for ${targetDept} -> ${subDept} (${expLevel}).`
+      message: `Configuration updated successfully for ${targetDept} → ${subDept} (${role}).`
     });
   };
 
@@ -487,6 +495,12 @@ export default function AssessmentsPage() {
   }
 
   const subDeptList = TRACK_RELATIONS[targetDept] || [];
+  const roleList = Array.from(new Set(
+    jobs
+      .filter((j: any) => j.department === targetDept && (j.sub_department === subDept || !j.sub_department || subDept === 'General'))
+      .map((j: any) => j.title)
+      .filter(Boolean)
+  )) as string[];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
@@ -596,18 +610,17 @@ export default function AssessmentsPage() {
         </div>
 
         <div className="form-group" style={{ marginBottom: 0 }}>
-          <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-main)' }}>Experience Level</label>
+          <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-main)' }}>Role</label>
           <select 
-            value={expLevel} 
-            onChange={e => setExpLevel(e.target.value)}
+            value={role} 
+            onChange={e => setRole(e.target.value)}
             className="form-control"
             style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '13.5px', color: 'var(--text-dark)', outline: 'none' }}
           >
-            <option value="Fresher(0)">Fresher(0)</option>
-            <option value="Junior(1-3)">Junior(1-3)</option>
-            <option value="Mid Level(3-5)">Mid Level(3-5)</option>
-            <option value="Senior(5+)">Senior(5+)</option>
-            <option value="Lead(10+)">Lead(10+)</option>
+            <option value="">Select Role...</option>
+            {roleList.map(r => (
+              <option key={r} value={r}>{r}</option>
+            ))}
           </select>
         </div>
 
@@ -651,7 +664,7 @@ export default function AssessmentsPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
             <div>
               <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-dark)', margin: 0 }}>
-                {targetDept} - {subDept} ({expLevel}) Interview Parameters
+                {targetDept} - {subDept} {role ? `(${role})` : ''} Interview Parameters
               </h3>
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
                 Configure custom question limits seamlessly. Changes apply to newly generated invite links.
@@ -830,7 +843,7 @@ export default function AssessmentsPage() {
                 MCQ Question Bank Configuration
               </h3>
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
-                Manage the multiple-choice question pool for {targetDept} → {subDept} ({expLevel}).
+                Manage the multiple-choice question pool for {targetDept} → {subDept} {role ? `(${role})` : ''}.
               </p>
             </div>
             <button 
