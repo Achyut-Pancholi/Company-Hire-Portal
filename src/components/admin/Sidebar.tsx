@@ -28,14 +28,35 @@ const Sidebar = () => {
     }}>
       <div style={{ 
         height: '73px', 
-        backgroundColor: 'var(--brand-navy)', 
+        background: 'linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 100%)',
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'flex-start',
         borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-        padding: '0 1.5rem'
+        padding: '0 1.5rem',
+        gap: '0.625rem'
       }}>
-        <span style={{ fontSize: '1.35rem', fontWeight: '700', color: '#ffffff', letterSpacing: '-0.5px' }}>ElastiCrew</span>
+        {/* Brand icon dot */}
+        <div style={{
+          width: '32px', height: '32px',
+          borderRadius: '8px',
+          background: 'linear-gradient(135deg, var(--brand-green) 0%, #5fa300 100%)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 2px 8px rgba(125,186,0,0.4)',
+          flexShrink: 0
+        }}>
+          <span style={{ fontSize: '0.875rem', fontWeight: '800', color: '#fff' }}>EC</span>
+        </div>
+        {/* Double-shade gradient brand name */}
+        <span style={{
+          fontSize: '1.35rem',
+          fontWeight: '800',
+          letterSpacing: '-0.5px',
+          background: 'linear-gradient(135deg, #ffffff 0%, var(--brand-green) 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+        }}>ElastiCrew</span>
       </div>
       
       <nav style={{ flex: 1, padding: '1.5rem 1rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -68,17 +89,33 @@ const Sidebar = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.75rem',
-                padding: '0.75rem 1rem',
-                borderRadius: 'var(--radius-md)',
-                color: isActive ? 'white' : 'rgba(255,255,255,0.7)',
-                backgroundColor: isActive ? 'rgba(125, 186, 0, 0.2)' : 'transparent',
+                padding: '0.7rem 1rem',
+                borderRadius: 'var(--radius-lg)',
+                color: isActive ? 'white' : 'rgba(255,255,255,0.65)',
+                backgroundColor: isActive ? 'rgba(125, 186, 0, 0.18)' : 'transparent',
                 borderLeft: isActive ? '3px solid var(--brand-green)' : '3px solid transparent',
-                fontWeight: isActive ? '600' : '500',
-                transition: 'all 0.2s ease',
-                textDecoration: 'none'
+                fontWeight: isActive ? '600' : '400',
+                fontSize: '0.9rem',
+                transition: 'all 0.18s ease',
+                textDecoration: 'none',
+                boxShadow: isActive ? '0 2px 8px rgba(125,186,0,0.15)' : 'none',
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive) {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.08)';
+                  (e.currentTarget as HTMLElement).style.color = 'white';
+                  (e.currentTarget as HTMLElement).style.borderLeftColor = 'rgba(125,186,0,0.4)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+                  (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.65)';
+                  (e.currentTarget as HTMLElement).style.borderLeftColor = 'transparent';
+                }
               }}
             >
-              <item.icon size={20} color={isActive ? 'var(--brand-green)' : 'rgba(255,255,255,0.7)'} />
+              <item.icon size={18} color={isActive ? 'var(--brand-green)' : 'rgba(255,255,255,0.55)'} />
               {item.name}
             </Link>
           );

@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Video, Settings2, PlayCircle, Eye, CheckCircle, XCircle, Send, Trash2, Loader2, Mail, CheckSquare, XSquare, MessageSquare } from 'lucide-react';
+import { Video, PlayCircle, Eye, CheckCircle, XCircle, Send, Trash2, Loader2, Mail, CheckSquare, XSquare, MessageSquare } from 'lucide-react';
 import { useAppContext } from '@/components/admin/context/AppContext';
-import QuestionBankModal from '@/components/admin/QuestionBankModal';
+
 import WorkflowBadge from '@/components/admin/WorkflowBadge';
 import ConfirmActionModal from '@/components/admin/ConfirmActionModal';
 
@@ -20,8 +20,6 @@ const VideoBot = () => {
   }, [router]);
 
   const { candidates, jobs, refreshCandidates, apiFetch } = useAppContext();
-  const [showQuestionModal, setShowQuestionModal] = useState(false);
-  
   // Dashboard state
   const [interviews, setInterviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,7 +63,7 @@ const VideoBot = () => {
 
   useEffect(() => {
     fetchInterviews();
-  }, [showQuestionModal]); // refresh when modal closes
+  }, []);
 
   useEffect(() => {
     const fetchSenders = async () => {
@@ -292,9 +290,7 @@ const VideoBot = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       
-      {showQuestionModal && (
-        <QuestionBankModal onClose={() => setShowQuestionModal(false)} />
-      )}
+
 
       {confirmModal && (
         <ConfirmActionModal
@@ -486,9 +482,6 @@ const VideoBot = () => {
       <div className="card">
         <div className="card-header flex justify-between items-center">
           <h3 className="card-title">Common Interview Questions</h3>
-          <button className="btn btn-primary" style={{ padding: '0.375rem 0.75rem', fontSize: '0.875rem' }} onClick={() => setShowQuestionModal(true)}>
-            <Settings2 size={16} /> Manage Question Bank
-          </button>
         </div>
         <div className="table-container" style={{ border: 'none', borderRadius: '0' }}>
           <table className="table">
