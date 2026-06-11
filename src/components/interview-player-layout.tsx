@@ -241,7 +241,35 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
   const fullTranscriptContainerRef = useRef<HTMLDivElement>(null);
 
   const transcript = interview.transcript as TranscriptEntry[] | null;
-  const scores = interview.scores as Record<string, number> | null;
+  let scores = interview.scores as Record<string, number> | null;
+  let summary = interview.summary;
+
+  // Try to recover scores from summary if backend failed to extract it
+  if ((!scores || Object.keys(scores).length === 0) && summary && typeof summary === 'string') {
+    const scoresMatch = summary.match(/\\?"scores\\?"\s*:\s*(\{[\s\S]*?\})/);
+    if (scoresMatch) {
+      try {
+        let scoresStr = scoresMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n');
+        scores = JSON.parse(scoresStr);
+      } catch (e) {
+        console.error("Failed to parse extracted scores", e);
+      }
+    }
+    // Clean up summary string by removing the leaked scores JSON
+    const matchIndex = summary.search(/],?\s*\\?n?\s*\\?"scores\\?"/);
+    if (matchIndex !== -1) {
+        let cleaned = summary.substring(0, matchIndex);
+        if (summary.startsWith('"[') && summary.endsWith(']"')) {
+            cleaned += '"]"';
+        } else if (summary.startsWith('["') && summary.endsWith('"]')) {
+            cleaned += '"]';
+        } else if (summary.startsWith('[') && summary.endsWith(']')) {
+            cleaned += ']';
+        }
+        summary = cleaned;
+    }
+  }
+
   const hasClips = transcript && transcript.length > 0 && transcript.some((t) => t.clip_url);
 
   // Resolve active index based on clips or timestamps
@@ -618,7 +646,7 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
       )}
 
       {/* ── AI Report Section ── */}
-      {interview.summary || scores ? (
+      {summary || scores ? (
         <div className="space-y-5">
           <div className="p-6 rounded-2xl border border-[#E2E8F0] bg-white shadow-sm">
             <h3 className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2">
@@ -626,7 +654,7 @@ export function InterviewPlayerLayout({ interview }: InterviewPlayerLayoutProps)
               AI Interview Report
             </h3>
             <div className="prose prose-slate prose-sm max-w-none text-slate-600 whitespace-pre-wrap leading-relaxed">
-              <StructuredAnalysisView text={interview.summary} />
+              <StructuredAnalysisView text={summary} />
             </div>
           </div>
 
