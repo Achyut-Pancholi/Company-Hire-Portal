@@ -40,6 +40,38 @@ export async function GET(req: NextRequest) {
   }
 }
 
+const sanitizeCorrectAnswer = (val: string, optA = '', optB = '', optC = '', optD = ''): 'A' | 'B' | 'C' | 'D' => {
+  if (!val) return 'A';
+  const cleanVal = String(val).trim();
+  
+  // 1. Exact letter check (A, B, C, D) case-insensitive
+  const upper = cleanVal.toUpperCase();
+  if (['A', 'B', 'C', 'D'].includes(upper)) {
+    return upper as 'A' | 'B' | 'C' | 'D';
+  }
+  
+  // 2. Starts with pattern: "Option A", "A.", "A)", "A - ..."
+  const match = cleanVal.match(/^([A-D])\b/i) || cleanVal.match(/^option\s+([A-D])/i) || cleanVal.match(/^([A-D])[.\)-]/i);
+  if (match && match[1]) {
+    return match[1].toUpperCase() as 'A' | 'B' | 'C' | 'D';
+  }
+  
+  // 3. Exact matching of option text (if options are provided)
+  const normVal = cleanVal.toLowerCase();
+  const cleanOptA = String(optA || '').trim().toLowerCase();
+  const cleanOptB = String(optB || '').trim().toLowerCase();
+  const cleanOptC = String(optC || '').trim().toLowerCase();
+  const cleanOptD = String(optD || '').trim().toLowerCase();
+
+  if (cleanOptA && normVal === cleanOptA) return 'A';
+  if (cleanOptB && normVal === cleanOptB) return 'B';
+  if (cleanOptC && normVal === cleanOptC) return 'C';
+  if (cleanOptD && normVal === cleanOptD) return 'D';
+
+  // 4. Default fallback
+  return 'A';
+};
+
 // Add, update, or bulk replace MCQ questions
 export async function POST(req: NextRequest) {
   const authError = await requireInternalSecret(req);
@@ -79,18 +111,25 @@ export async function POST(req: NextRequest) {
       }
 
       // Map questions array to DB rows
-      const rows = questions.map((q: any) => ({
-        department,
-        sub_department,
-        experience_level,
-        question_text: q.question_text || q.questionText,
-        option_a: q.option_a || q.optionA,
-        option_b: q.option_b || q.optionB,
-        option_c: q.option_c || q.optionC,
-        option_d: q.option_d || q.optionD,
-        correct_answer: (q.correct_answer || q.correctAnswer || 'A').toUpperCase().trim(),
-        points_value: parseInt(q.points_value || q.pointsValue) || 5
-      }));
+      const rows = questions.map((q: any) => {
+        const oA = q.option_a || q.optionA || '';
+        const oB = q.option_b || q.optionB || '';
+        const oC = q.option_c || q.optionC || '';
+        const oD = q.option_d || q.optionD || '';
+        const rawAns = q.correct_answer || q.correctAnswer || 'A';
+        return {
+          department,
+          sub_department,
+          experience_level,
+          question_text: q.question_text || q.questionText,
+          option_a: oA,
+          option_b: oB,
+          option_c: oC,
+          option_d: oD,
+          correct_answer: sanitizeCorrectAnswer(rawAns, oA, oB, oC, oD),
+          points_value: parseInt(q.points_value || q.pointsValue) || 5
+        };
+      });
 
       const { data, error: insertError } = await supabase
         .from("mcq_questions_bank")
@@ -110,10 +149,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing question details" }, { status: 400 });
     }
 
-    const correctAns = correct_answer.toUpperCase().trim();
-    if (!['A', 'B', 'C', 'D'].includes(correctAns)) {
-      return NextResponse.json({ error: "correct_answer must be A, B, C, or D" }, { status: 400 });
-    }
+    const correctAns = sanitizeCorrectAnswer(correct_answer, option_a, option_b, option_c, option_d);
 
     const rowData = {
       department,
