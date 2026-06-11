@@ -108,8 +108,8 @@ const VideoBot = () => {
       const candidate = candidates.find((c: any) => c.id.toString() === inviteCandidateId);
       if (candidate) {
         const jobRole = candidate.jobApplied || 'Common';
-        setInviteSubject(`Your Interview Invitation — ${jobRole} Position`);
-        setInviteBody(`Hello ${candidate.name} 👋,\n\nYou've been invited to complete a video interview for the ${jobRole} position. Our AI-powered platform will guide you through the process.\n\nWhat to expect:\n• The AI will ask you questions using voice\n• You control when to start and stop recording each answer\n• Your webcam will be on during the interview\n• Ensure you are in a quiet, well-lit space`);
+        setInviteSubject(`ElastiCrew Video Bot Screening Invitation — ${jobRole} Position`);
+        setInviteBody(`Hello ${candidate.name} 👋,\n\nYou've been invited to complete a video interview for the ${jobRole} position. Our AI-powered platform will guide you through the process.\n\nInstructions & What to expect:\n• Questions: Asked by our AI. You have 90 seconds to answer each.\n• Recording: Starts automatically after a 10-second countdown following the question.\n• Control: Click "Submit Answer" when you are done (or wait for the timer to finish).\n• Hardware: Your webcam and microphone will be used.\n• Environment: Ensure you are in a quiet, well-lit space.\n• Strict Guidelines: This is a one-time link. Do not refresh, exit fullscreen, or switch tabs (doing so 3 times will automatically terminate your interview).`);
         setTargetEmail(candidate.email || '');
       }
     } else {
