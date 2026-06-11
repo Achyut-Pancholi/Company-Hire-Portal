@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Briefcase, FileText, BarChart, LogOut, CheckSquare, LayoutDashboard, Settings } from 'lucide-react';
+import { Briefcase, FileText, BarChart, LogOut, CheckSquare, Video, Settings } from 'lucide-react';
 
 const Sidebar = () => {
   const pathname = usePathname();
@@ -13,7 +13,7 @@ const Sidebar = () => {
     { name: 'Candidates', path: '/admin/candidates', icon: FileText },
     { name: 'Assessments', path: '/admin/assessments', icon: CheckSquare },
     { name: 'Reports', path: '/admin/reports', icon: BarChart },
-    { name: 'Dashboard', path: '/admin/video-bot-admin', icon: LayoutDashboard },
+    { name: 'Video Bot Screening', path: '/admin/video-bot-admin', icon: Video },
     { name: 'Departments', path: '/admin/jobpostings', icon: Briefcase },
     { name: 'Settings', path: '/admin/settings', icon: Settings },
   ];
