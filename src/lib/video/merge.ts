@@ -53,7 +53,7 @@ export async function uploadVideoToSupabase(
 
 /**
  * Upload a single question clip. Returns the public URL.
- * Filename: interviews/{interviewId}/clip-q{questionIndex+1}.webm
+ * Routes through server-side API to use service role key (avoids client auth issues).
  */
 export async function uploadClipToSupabase(
   blob: Blob,
@@ -63,31 +63,27 @@ export async function uploadClipToSupabase(
   anonKey: string
 ): Promise<string> {
   if (!supabaseUrl || supabaseUrl.includes("your_supabase_project_url")) {
-    // Return a deterministic mock URL per question so the player can differentiate
     return `https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4#q${questionIndex + 1}`;
   }
 
-  const filename = `interviews/${interviewId}/clip-q${questionIndex + 1}.webm`;
+  const formData = new FormData();
+  const file = new File([blob], `clip-q${questionIndex + 1}.webm`, { type: "video/webm" });
+  formData.append("video", file);
+  formData.append("interviewId", interviewId);
+  formData.append("questionIndex", String(questionIndex));
 
-  const response = await fetch(
-    `${supabaseUrl}/storage/v1/object/interview-recordings/${filename}`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${anonKey}`,
-        "Content-Type": "video/webm",
-        "x-upsert": "true",
-      },
-      body: blob,
-    }
-  );
+  const response = await fetch("/api/upload-video", {
+    method: "POST",
+    body: formData,
+  });
 
   if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`Clip upload failed (Q${questionIndex + 1}): ${err}`);
+    const err = await response.json().catch(() => ({ error: "Upload failed" }));
+    throw new Error(`Clip upload failed (Q${questionIndex + 1}): ${JSON.stringify(err)}`);
   }
 
-  return `${supabaseUrl}/storage/v1/object/public/interview-recordings/${filename}`;
+  const data = await response.json();
+  return data.videoUrl;
 }
 
 export function blobToDataUrl(blob: Blob): Promise<string> {

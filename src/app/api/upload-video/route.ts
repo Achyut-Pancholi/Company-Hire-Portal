@@ -88,12 +88,16 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const file = (formData.get('file') || formData.get('video')) as File | null;
     const candidateId = formData.get('candidateId') as string | null;
+    const interviewId = formData.get('interviewId') as string | null;
+    const questionIndex = formData.get('questionIndex') as string | null;
 
     if (!file || file.size === 0) {
       return NextResponse.json({ error: 'No file provided or file is empty' }, { status: 400 });
     }
-    if (!candidateId) {
-      return NextResponse.json({ error: 'candidateId is required' }, { status: 400 });
+
+    const entityId = candidateId || interviewId;
+    if (!entityId) {
+      return NextResponse.json({ error: 'candidateId or interviewId is required' }, { status: 400 });
     }
 
     let videoUrl = "";
@@ -102,8 +106,13 @@ export async function POST(req: NextRequest) {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
       const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY!;
       const bucketName = 'interview-recordings';
-      const fileExt    = (file.name.split('.').pop() || 'mp4').toLowerCase();
-      const uploadPath = `admin_uploads/${candidateId}_${Date.now()}.${fileExt}`;
+      const fileExt    = (file.name.split('.').pop() || 'webm').toLowerCase();
+      
+      // Build path: interviews/{id}/clip-q1.webm or admin_uploads/{id}_timestamp.ext
+      const uploadPath = questionIndex !== null
+        ? `interviews/${entityId}/clip-q${parseInt(questionIndex) + 1}.${fileExt}`
+        : `admin_uploads/${entityId}_${Date.now()}.${fileExt}`;
+      
       const uploadUrl  = `${supabaseUrl}/storage/v1/object/${bucketName}/${uploadPath}`;
 
       console.log('[upload-video] Uploading to Supabase:', uploadUrl);
@@ -136,7 +145,7 @@ export async function POST(req: NextRequest) {
       console.log('[upload-video] Success — publicUrl:', videoUrl);
     } else {
       console.log('[upload-video] Mock Supabase connection: saving video locally...');
-      const filename = `${candidateId}-${Date.now()}.mp4`;
+      const filename = `${entityId}-${Date.now()}.webm`;
       const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
 
       if (!fs.existsSync(uploadsDir)) {
