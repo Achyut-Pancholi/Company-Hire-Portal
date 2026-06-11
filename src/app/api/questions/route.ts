@@ -43,12 +43,11 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase
       .from("questions_bank")
       .insert({
-        job_role,
+        job_role: job_role === 'Common' ? (role || job_role) : job_role,
         question_text,
         is_mandatory: is_mandatory || false,
         department: department || null,
         sub_department: sub_department || null,
-        role: role || null,
       })
       .select()
       .single();

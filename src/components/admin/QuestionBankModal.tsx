@@ -20,42 +20,15 @@ const QuestionBankModal = ({ onClose }) => {
   const [selectedSubDepartment, setSelectedSubDepartment] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
   // Dynamic Departments from jobs
-  const dynamicDepartments = Array.from(new Set(jobs.map((j: any) => j.department).filter(Boolean)));
-  const availableDepartments = dynamicDepartments.length > 0 ? dynamicDepartments : ['Technology and Delivery', 'Operations', 'Engineering', 'HR', 'Marketing'];
+  const availableDepartments = Array.from(new Set(jobs.map((j: any) => j.department).filter(Boolean))) as string[];
   
   const getAvailableSubDepartments = (dept: string) => {
-    // Collect unique sub_departments from jobs
-    const subDepts = Array.from(new Set(jobs.filter((j: any) => j.department === dept && j.sub_department).map((j: any) => j.sub_department)));
-    if (subDepts.length > 0) return subDepts as string[];
-    
-    const defaults: Record<string, string[]> = {
-      'Technology and Delivery': ['Development', 'Testing'],
-      'Operations': ['LnD'],
-      'Engineering': ['DevOps', 'Data Science', 'SRE'],
-      'HR': ['Recruitment', 'Operations'],
-      'Marketing': ['SEO', 'Content', 'Social Media'],
-      'Design': ['UI/UX']
-    };
-    return defaults[dept] || ['General'];
+    const subDepts = Array.from(new Set(jobs.filter((j: any) => j.department === dept && j.sub_department).map((j: any) => j.sub_department))) as string[];
+    return subDepts.length > 0 ? subDepts : ['General'];
   };
 
   const getAvailableRoles = (dept: string, subDept: string) => {
-    const roles = Array.from(new Set(jobs.filter((j: any) => j.department === dept && (j.sub_department === subDept || !j.sub_department)).map((j: any) => j.title)));
-    if (roles.length > 0) return roles as string[];
-
-    const defaults: Record<string, Record<string, string[]>> = {
-      'Technology and Delivery': {
-        'Development': ['Senior Dev', 'TSE Intern', 'PHP Developer', 'Frontend', 'Backend'],
-        'Testing': ['Senior QA', 'QA Intern']
-      },
-      'Operations': {
-        'LnD': ['Manager', 'Associate Manager']
-      },
-      'Design': {
-        'UI/UX': ['Product Designer', 'UI/UX Designer', 'Graphic Designer']
-      }
-    };
-    return (defaults[dept] && defaults[dept][subDept]) || ['General Role'];
+    return Array.from(new Set(jobs.filter((j: any) => j.department === dept && (j.sub_department === subDept || !j.sub_department || subDept === 'General')).map((j: any) => j.title))) as string[];
   };
 
   useEffect(() => {
@@ -129,7 +102,7 @@ const QuestionBankModal = ({ onClose }) => {
   const filteredQuestions = questions.filter((q: any) => {
     if (selectedDepartment && q.department !== selectedDepartment) return false;
     if (selectedSubDepartment && q.sub_department !== selectedSubDepartment) return false;
-    if (selectedRole && q.role !== selectedRole) return false;
+    if (selectedRole && q.job_role !== selectedRole) return false;
     return true;
   });
 
@@ -288,7 +261,7 @@ const QuestionBankModal = ({ onClose }) => {
                     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
                       <span className="badge badge-gray" style={{ fontSize: '0.7rem' }}>{q.department || 'General'}</span>
                       <span className="badge badge-gray" style={{ fontSize: '0.7rem' }}>{q.sub_department || 'General'}</span>
-                      <span className="badge badge-gray" style={{ fontSize: '0.7rem' }}>{q.role || 'General'}</span>
+                      <span className="badge badge-gray" style={{ fontSize: '0.7rem' }}>{q.job_role || 'General'}</span>
                     </div>
                   </div>
                   <button 

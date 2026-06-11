@@ -49,41 +49,15 @@ const VideoBot = () => {
   const [targetEmail, setTargetEmail] = useState('');
   
   // Dynamic Departments from jobs
-  const dynamicDepartments = Array.from(new Set(jobs.map((j: any) => j.department).filter(Boolean)));
-  const availableDepartments = dynamicDepartments.length > 0 ? dynamicDepartments : ['Technology and Delivery', 'Engineering', 'HR', 'Marketing'];
+  const availableDepartments = Array.from(new Set(jobs.map((j: any) => j.department).filter(Boolean))) as string[];
   
-  const getAvailableSubDepartments = (dept) => {
-    const subDepts = Array.from(new Set(jobs.filter(j => j.department === dept && j.sub_department).map(j => j.sub_department)));
-    if (subDepts.length > 0) return subDepts;
-    
-    const defaults = {
-      'Technology and Delivery': ['Development', 'Testing'],
-      'Operations': ['LnD'],
-      'Engineering': ['DevOps', 'Data Science', 'SRE'],
-      'HR': ['Recruitment', 'Operations'],
-      'Marketing': ['SEO', 'Content', 'Social Media'],
-      'Design': ['UI/UX']
-    };
-    return defaults[dept] || ['General'];
+  const getAvailableSubDepartments = (dept: string) => {
+    const subDepts = Array.from(new Set(jobs.filter((j: any) => j.department === dept && j.sub_department).map((j: any) => j.sub_department))) as string[];
+    return subDepts.length > 0 ? subDepts : ['General'];
   };
   
-  const getAvailableRoles = (dept: any, subDept: any) => {
-    const roles = Array.from(new Set(jobs.filter((j: any) => j.department === dept && (j.sub_department === subDept || !j.sub_department)).map((j: any) => j.title)));
-    if (roles.length > 0) return roles;
-
-    const defaults: any = {
-      'Technology and Delivery': {
-        'Development': ['Senior Dev', 'TSE Intern', 'PHP Developer', 'Frontend', 'Backend'],
-        'Testing': ['Senior QA', 'QA Intern']
-      },
-      'Operations': {
-        'LnD': ['Manager', 'Associate Manager']
-      },
-      'Design': {
-        'UI/UX': ['Product Designer', 'UI/UX Designer', 'Graphic Designer']
-      }
-    };
-    return (defaults[dept] && defaults[dept][subDept]) || ['General Role'];
+  const getAvailableRoles = (dept: string, subDept: string) => {
+    return Array.from(new Set(jobs.filter((j: any) => j.department === dept && (j.sub_department === subDept || !j.sub_department || subDept === 'General')).map((j: any) => j.title))) as string[];
   };
   
   // Copied indicator state
