@@ -2481,16 +2481,28 @@ const Reports = () => {
               />
             </div>
             {/* Job filter */}
-            <select className="form-select" value={filterJob} onChange={(e) => setFilterJob(e.target.value)} style={{ fontSize: '0.8rem', minWidth: '110px' }}>
-              {jobOptions.map((j: any) => <option key={j}>{j}</option>)}
+            <select className="form-select" value={filterJob} onChange={(e) => setFilterJob(e.target.value)} style={{ fontSize: '0.8rem', minWidth: '130px' }}>
+              {jobOptions.map((j: any) => (
+                <option key={j} value={j}>
+                  {j === 'All' ? 'Role: All' : j}
+                </option>
+              ))}
             </select>
             {/* Rec filter */}
-            <select className="form-select" value={filterRec} onChange={(e) => setFilterRec(e.target.value)} style={{ fontSize: '0.8rem', minWidth: '120px' }}>
-              {recOptions.map((r: any) => <option key={r}>{r}</option>)}
+            <select className="form-select" value={filterRec} onChange={(e) => setFilterRec(e.target.value)} style={{ fontSize: '0.8rem', minWidth: '150px' }}>
+              {recOptions.map((r: any) => (
+                <option key={r} value={r}>
+                  {r === 'All' ? 'Verdict: All' : r}
+                </option>
+              ))}
             </select>
             {/* Stage filter */}
-            <select className="form-select" value={filterStage} onChange={(e) => setFilterStage(e.target.value)} style={{ fontSize: '0.8rem', minWidth: '130px' }}>
-              {stageOptions.map((s: any) => <option key={s}>{s}</option>)}
+            <select className="form-select" value={filterStage} onChange={(e) => setFilterStage(e.target.value)} style={{ fontSize: '0.8rem', minWidth: '150px' }}>
+              {stageOptions.map((s: any) => (
+                <option key={s} value={s}>
+                  {s === 'All' ? 'Stage: All' : s}
+                </option>
+              ))}
             </select>
             {/* View toggle */}
             <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', border: '1.5px solid var(--border)' }}>

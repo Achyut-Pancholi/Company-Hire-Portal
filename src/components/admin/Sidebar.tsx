@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Briefcase, FileText, BarChart, LogOut, CheckSquare, Video, Settings } from 'lucide-react';
@@ -8,7 +8,17 @@ import { Briefcase, FileText, BarChart, LogOut, CheckSquare, Video, Settings } f
 const Sidebar = () => {
   const pathname = usePathname();
   const [isLogoutHovered, setIsLogoutHovered] = useState(false);
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   
+  const [mounted, setMounted] = useState(false);
+  const [currentView, setCurrentView] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+    const currentParams = new URLSearchParams(window.location.search);
+    setCurrentView(currentParams.get('view'));
+  }, [pathname]);
+
   const navItems = [
     { name: 'Candidates', path: '/admin/candidates', icon: FileText },
     { name: 'Assessments', path: '/admin/assessments', icon: CheckSquare },
@@ -63,10 +73,7 @@ const Sidebar = () => {
         {navItems.map((item) => {
           let isActive = false;
           
-          if (typeof window !== 'undefined') {
-            const currentParams = new URLSearchParams(window.location.search);
-            const currentView = currentParams.get('view');
-            
+          if (mounted) {
             if (item.path.includes('?')) {
               const [basePath, searchStr] = item.path.split('?');
               const itemParams = new URLSearchParams(searchStr);
@@ -81,6 +88,7 @@ const Sidebar = () => {
             // Fallback for SSR
             isActive = pathname === item.path || (item.path !== '/admin' && pathname?.startsWith(item.path));
           }
+          const isHovered = hoveredItem === item.name;
           return (
             <Link
               key={item.name}
@@ -91,31 +99,19 @@ const Sidebar = () => {
                 gap: '0.75rem',
                 padding: '0.7rem 1rem',
                 borderRadius: 'var(--radius-lg)',
-                color: isActive ? 'white' : 'rgba(255,255,255,0.65)',
-                backgroundColor: isActive ? 'rgba(13, 148, 136, 0.18)' : 'transparent',
-                borderLeft: isActive ? '3px solid var(--brand-teal)' : '3px solid transparent',
+                color: isActive ? 'white' : (isHovered ? 'white' : 'rgba(255,255,255,0.65)'),
+                backgroundColor: isActive ? 'rgba(13, 148, 136, 0.18)' : (isHovered ? 'rgba(255,255,255,0.08)' : 'transparent'),
+                borderLeft: isActive ? '3px solid var(--brand-teal)' : (isHovered ? '3px solid rgba(13,148,136,0.4)' : '3px solid transparent'),
                 fontWeight: isActive ? '600' : '400',
                 fontSize: '0.9rem',
                 transition: 'all 0.18s ease',
                 textDecoration: 'none',
                 boxShadow: isActive ? '0 2px 8px rgba(13,148,136,0.15)' : 'none',
               }}
-              onMouseEnter={(e) => {
-                if (!isActive) {
-                  (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.08)';
-                  (e.currentTarget as HTMLElement).style.color = 'white';
-                  (e.currentTarget as HTMLElement).style.borderLeftColor = 'rgba(13,148,136,0.4)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive) {
-                  (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
-                  (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.65)';
-                  (e.currentTarget as HTMLElement).style.borderLeftColor = 'transparent';
-                }
-              }}
+              onMouseEnter={() => setHoveredItem(item.name)}
+              onMouseLeave={() => setHoveredItem(null)}
             >
-              <item.icon size={18} color={isActive ? 'var(--brand-teal)' : 'rgba(255,255,255,0.55)'} />
+              <item.icon size={18} color={isActive ? 'var(--brand-teal)' : (isHovered ? 'white' : 'rgba(255,255,255,0.55)')} />
               {item.name}
             </Link>
           );
