@@ -4,7 +4,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Search, Loader2, Send, X } from 'lucide-react';
 import { useAppContext } from '@/components/admin/context/AppContext';
 import StandardResume from '@/components/admin/StandardResume';
-import VideoBot from '../video-bot-admin/page';
 import { SchedulerProvider } from '../modules/scheduler/store/schedulerReducer.js';
 import dynamic from 'next/dynamic';
 
@@ -15,6 +14,18 @@ const SchedulerApp = dynamic(
     loading: () => (
       <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
         Loading scheduler component...
+      </div>
+    )
+  }
+);
+
+const VideoBot = dynamic(
+  () => import('../video-bot-admin/page'),
+  {
+    ssr: false,
+    loading: () => (
+      <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+        Loading video screening component...
       </div>
     )
   }
@@ -63,11 +74,11 @@ export default function CandidatesPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [uploadDept, setUploadDept] = useState('');
   const [uploadSubDept, setUploadSubDept] = useState('');
-  const [uploadRole, setUploadRole] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStep, setUploadStep] = useState('');
   const [uploadStatus, setUploadStatus] = useState({ type: '', message: '' });
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Email Invitation Modal States
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
@@ -174,8 +185,8 @@ export default function CandidatesPage() {
   // Handle uploading and parsing resume
   const handleUploadResume = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!uploadRole) {
-      setUploadStatus({ type: 'error', message: 'Please select a role first.' });
+    if (!uploadDept || !uploadSubDept) {
+      setUploadStatus({ type: 'error', message: 'Please select Department and Sub Department first.' });
       return;
     }
     if (!selectedFile) {
@@ -194,6 +205,9 @@ export default function CandidatesPage() {
       setUploadStatus({ type: 'error', message: 'File is too large. Maximum size is 5MB.' });
       return;
     }
+
+    const matchedJob = jobs.find((j: any) => j.department === uploadDept && (j.sub_department === uploadSubDept || (!j.sub_department && uploadSubDept === 'General')));
+    const resolvedRole = matchedJob ? matchedJob.title : (uploadSubDept || uploadDept);
 
     setIsUploading(true);
     setUploadStatus({ type: 'info', message: 'Connecting to AI parsing engine...' });
@@ -241,7 +255,7 @@ export default function CandidatesPage() {
           email: data.personalInformation?.email || 'No email provided',
           phone: data.personalInformation?.phoneNumber || 'No phone provided',
           skills: data.skillExtraction?.extractedSkills || [],
-          job_applied: uploadRole,
+          job_applied: resolvedRole,
           resume_status: 'Parsed',
           form_status: 'N/A',
           video_status: 'Pending',
@@ -272,7 +286,6 @@ export default function CandidatesPage() {
             setSelectedFile(null);
             setUploadDept('');
             setUploadSubDept('');
-            setUploadRole('');
             setUploadStatus({ type: '', message: '' });
           }, 2000);
         } else {
@@ -390,6 +403,42 @@ export default function CandidatesPage() {
     } else {
       alert(`Invite dispatched for selected step to ${candidate.name}.`);
     }
+  };
+
+  // Copy invite link to clipboard helper
+  const handleCopyInvite = (candidate: any) => {
+    const inviteUrl = `${window.location.origin}/interview/${candidate.id}`;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(inviteUrl)
+        .then(() => {
+          setCopiedId(candidate.id);
+          setTimeout(() => setCopiedId(null), 2000);
+        })
+        .catch(err => {
+          console.error("Clipboard copy failed, using fallback:", err);
+          fallbackCopy(inviteUrl, candidate.id);
+        });
+    } else {
+      fallbackCopy(inviteUrl, candidate.id);
+    }
+  };
+
+  const fallbackCopy = (text: string, candidateId: string) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      setCopiedId(candidateId);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.error('Fallback copy failed', err);
+      alert(`Could not copy automatically. Here is the link:\n${text}`);
+    }
+    document.body.removeChild(textArea);
   };
 
   // Stage Badge Render helper
@@ -576,18 +625,26 @@ export default function CandidatesPage() {
                           </span>
                         </td>
                         <td className="col-action">
-                          <select 
-                            className="action-dropdown"
-                            value=""
-                            onChange={e => handleDropdownAction(e.target.value, c)}
-                          >
-                            <option value="" disabled>Manage</option>
-                            <option value="video">Send Video Bot Invite</option>
-                            <option value="mcq">Send MCQ Invite</option>
-                            <option value="tech">Send Tech Invite</option>
-                            <option value="hr">Send HR Invite</option>
-                            <option value="delete" className="danger-option">Delete Candidate</option>
-                          </select>
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                            <button 
+                              className={`btn-share-invite ${copiedId === c.id ? 'copied' : ''}`}
+                              onClick={() => handleCopyInvite(c)}
+                            >
+                              {copiedId === c.id ? '✓ Copied' : 'Share Invite'}
+                            </button>
+                            <select 
+                              className="action-dropdown"
+                              value=""
+                              onChange={e => handleDropdownAction(e.target.value, c)}
+                            >
+                              <option value="" disabled>Manage</option>
+                              <option value="video">Send Video Bot Invite</option>
+                              <option value="mcq">Send MCQ Invite</option>
+                              <option value="tech">Send Tech Invite</option>
+                              <option value="hr">Send HR Invite</option>
+                              <option value="delete" className="danger-option">Delete Candidate</option>
+                            </select>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -628,7 +685,6 @@ export default function CandidatesPage() {
                   onChange={e => {
                     setUploadDept(e.target.value);
                     setUploadSubDept('');
-                    setUploadRole('');
                   }}
                   required
                 >
@@ -647,29 +703,12 @@ export default function CandidatesPage() {
                   disabled={!uploadDept}
                   onChange={e => {
                     setUploadSubDept(e.target.value);
-                    setUploadRole('');
                   }}
                   required
                 >
                   <option value="" disabled>Select Sub Department</option>
                   {uploadDept && getSubDepartments(uploadDept).map(sd => (
                     <option key={sd} value={sd}>{sd}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label>Target Role</label>
-                <select 
-                  className="form-control" 
-                  value={uploadRole}
-                  disabled={!uploadSubDept}
-                  onChange={e => setUploadRole(e.target.value)}
-                  required
-                >
-                  <option value="" disabled>Select Target Role</option>
-                  {uploadSubDept && getRoles(uploadDept, uploadSubDept).map(r => (
-                    <option key={r} value={r}>{r}</option>
                   ))}
                 </select>
               </div>

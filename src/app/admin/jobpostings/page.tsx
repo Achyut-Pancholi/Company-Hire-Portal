@@ -31,7 +31,7 @@ function DeletePopover({
       }}
     >
       <p style={{ fontSize: '0.85rem', color: 'var(--text-main)', margin: 0, fontWeight: 500 }}>
-        Delete this role?
+        Delete this experience?
       </p>
       <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
         <button
@@ -166,14 +166,20 @@ function DeptModal({
           </div>
 
           <div className="form-group">
-            <label className="form-label">Job Title</label>
-            <input
-              type="text"
+            <label className="form-label">Experience Level *</label>
+            <select
               className="form-input"
-              placeholder="e.g. Senior Frontend Developer"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-            />
+              required
+            >
+              <option value="" disabled>Select Experience Level</option>
+              <option value="Fresher">Fresher</option>
+              <option value="Junior">Junior</option>
+              <option value="Mid level">Mid level</option>
+              <option value="Senior">Senior</option>
+              <option value="Lead">Lead</option>
+            </select>
           </div>
         </div>
 
@@ -247,15 +253,21 @@ function RoleRow({
         )}
       </td>
 
-      {/* Job Title */}
+      {/* Experience */}
       <td style={{ fontWeight: 500 }}>
         {editing ? (
-          <input
+          <select
             className="form-input"
             style={{ padding: '0.3rem 0.6rem', fontSize: '0.875rem' }}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-          />
+          >
+            <option value="Fresher">Fresher</option>
+            <option value="Junior">Junior</option>
+            <option value="Mid level">Mid level</option>
+            <option value="Senior">Senior</option>
+            <option value="Lead">Lead</option>
+          </select>
         ) : (
           <span>{job.title}</span>
         )}
@@ -290,7 +302,7 @@ function RoleRow({
                 className="btn btn-ghost"
                 style={{ padding: '0.3rem', cursor: 'pointer' }}
                 onClick={() => setEditing(true)}
-                title="Edit role"
+                title="Edit experience"
               >
                 <Edit2 size={15} />
               </button>
@@ -299,7 +311,7 @@ function RoleRow({
                   className="btn btn-ghost"
                   style={{ padding: '0.3rem', color: 'var(--danger)', cursor: 'pointer' }}
                   onClick={() => setConfirmDelete(true)}
-                  title="Delete role"
+                  title="Delete experience"
                 >
                   <Trash2 size={15} />
                 </button>
@@ -366,7 +378,7 @@ function DeptCard({
             className="badge"
             style={{ backgroundColor: 'var(--gray-100)', color: 'var(--text-muted)', fontSize: '0.75rem' }}
           >
-            {subDepts.length} {subDepts.length === 1 ? 'role' : 'roles'}
+            {subDepts.length} {subDepts.length === 1 ? 'experience' : 'experiences'}
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={(e) => e.stopPropagation()}>
@@ -394,7 +406,7 @@ function DeptCard({
         <div style={{ borderTop: '1px solid var(--gray-100)' }}>
           {subDepts.length === 0 ? (
             <p style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-              No roles yet. Add one using "+ Add Department".
+              No experiences yet. Add one using "+ Add Department".
             </p>
           ) : (
             <div className="table-container" style={{ border: 'none', borderRadius: 0, marginBottom: 0 }}>
@@ -402,7 +414,7 @@ function DeptCard({
                 <thead>
                   <tr>
                     <th style={{ paddingLeft: '1.5rem' }}>Sub-Department</th>
-                    <th>Job Title</th>
+                    <th>Experience</th>
                     <th style={{ width: '160px' }}>Actions</th>
                   </tr>
                 </thead>
@@ -576,7 +588,7 @@ const JobPostings = () => {
               Department Configuration
             </h2>
             <p style={{ color: 'var(--text-muted)', marginTop: '0.3rem', fontSize: '0.9rem' }}>
-              Manage departments, sub-departments, and job titles used across the hiring pipeline.
+              Manage departments, sub-departments, and experience levels used across the hiring pipeline.
             </p>
           </div>
           <button
@@ -597,7 +609,7 @@ const JobPostings = () => {
           <input
             type="text"
             className="form-input"
-            placeholder="Search department, sub-department, or job title…"
+            placeholder="Search department, sub-department, or experience…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{ paddingLeft: '2.4rem', paddingRight: search ? '2.4rem' : undefined }}
