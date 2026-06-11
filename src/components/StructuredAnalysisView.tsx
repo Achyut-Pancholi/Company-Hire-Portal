@@ -30,25 +30,7 @@ export function StructuredAnalysisView({ text }: { text: string | any }) {
       const data = typeof cleanText === 'string' ? JSON.parse(cleanText) : cleanText;
       
       if (Array.isArray(data)) {
-        const positiveWords = ['good', 'great', 'excellent', 'strong', 'well', 'impressive', 'demonstrated', 'proficient', 'clear', 'effective', 'ability', 'positive'];
-        const negativeWords = ['failed', 'lack', 'difficulty', 'require', 'weak', 'poor', 'bad', 'needs', 'not', 'unable', 'struggled', 'missed', 'unclear', 'necessary'];
-        
-        data.filter(item => typeof item === 'string').forEach(item => {
-          const lower = item.toLowerCase();
-          const hasPos = positiveWords.some(w => lower.includes(w));
-          const hasNeg = negativeWords.some(w => lower.includes(w));
-          
-          if (hasNeg && !hasPos) {
-            cons.push(item);
-          } else if (hasPos && !hasNeg) {
-            pros.push(item);
-          } else if (hasPos && hasNeg) {
-             // If both, consider it neutral
-            okok.push(item);
-          } else {
-            okok.push(item);
-          }
-        });
+        summaryList = data.filter(item => typeof item === 'string').map(item => String(item));
       } else if (data && typeof data === 'object') {
         if (data.pros) pros = Array.isArray(data.pros) ? data.pros : [data.pros];
         if (data.cons) cons = Array.isArray(data.cons) ? data.cons : [data.cons];
@@ -129,7 +111,7 @@ export function StructuredAnalysisView({ text }: { text: string | any }) {
           {items.map((item, idx) => (
             <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', fontSize: '0.8rem', color: 'var(--gray-700)', lineHeight: '1.5' }}>
               <span style={{ color, marginRight: '8px', fontSize: '1.2em', lineHeight: '1' }}>•</span>
-              <span style={{ flex: 1 }}>{item.replace(/^[-\\*]\s*/, '')}</span>
+              <span style={{ flex: 1 }}>{item.replace(/^[-\\*]\s*/, '').replace(/\*+$/, '').trim()}</span>
             </li>
           ))}
         </ul>
