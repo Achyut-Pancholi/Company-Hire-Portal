@@ -38,6 +38,7 @@ export default function CandidatesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDept, setSelectedDept] = useState('all');
   const [selectedSubDept, setSelectedSubDept] = useState('all');
+  const [selectedRole, setSelectedRole] = useState('all');
 
   // View state: All Candidates, Video Bot Screening, Tech Scheduler, MCQ
   const [activeView, setActiveView] = useState<'candidates' | 'videobot' | 'tech' | 'mcq'>('candidates');
@@ -166,30 +167,30 @@ export default function CandidatesPage() {
   const getCandidateSubDept = (c: any) => {
     const job = jobs.find((j: any) => j.title === c.jobApplied || j.title === c.job_applied);
     if (job?.sub_department) return job.sub_department;
-    // fallback: check if any job's sub_department appears in the candidate's job_applied string
     const jobApplied = (c.jobApplied || c.job_applied || '').toLowerCase();
     const fallbackJob = jobs.find((j: any) => j.sub_department && jobApplied.includes(j.sub_department.toLowerCase()));
-    return fallbackJob?.sub_department || null; // null = unknown
+    return fallbackJob?.sub_department || null;
   };
   const getCandidateDept = (c: any) => {
     const job = jobs.find((j: any) => j.title === c.jobApplied || j.title === c.job_applied);
     if (job?.department) return job.department;
-    // fallback: check if any job's department appears in the candidate's job_applied string
     const jobApplied = (c.jobApplied || c.job_applied || '').toLowerCase();
     const fallbackJob = jobs.find((j: any) => j.department && jobApplied.includes(j.department.toLowerCase()));
-    return fallbackJob?.department || null; // null = unknown
+    return fallbackJob?.department || null;
   };
+  const getCandidateRole = (c: any) => c.jobApplied || c.job_applied || null;
 
-  // Filter candidates list — if dept/subdept is unknown, show the candidate anyway (fail open)
+  // Filter candidates — fail-open: if dept/subdept/role unknown, still show candidate
   const filteredCandidates = candidates.filter((c: any) => {
     const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           (c.unique_id || String(c.id)).toLowerCase().includes(searchQuery.toLowerCase());
     const candidateDept = getCandidateDept(c);
     const candidateSubDept = getCandidateSubDept(c);
-    // If filter is set but we can't resolve candidate's dept, show them (don't hide unknowns)
+    const candidateRole = getCandidateRole(c);
     const matchesDept = selectedDept === 'all' || candidateDept === null || candidateDept === selectedDept;
     const matchesSubDept = selectedSubDept === 'all' || candidateSubDept === null || candidateSubDept === selectedSubDept;
-    return matchesSearch && matchesDept && matchesSubDept;
+    const matchesRole = selectedRole === 'all' || candidateRole === null || candidateRole === selectedRole;
+    return matchesSearch && matchesDept && matchesSubDept && matchesRole;
   });
 
   // Handle file selection
@@ -592,6 +593,7 @@ export default function CandidatesPage() {
                 onChange={e => {
                   setSelectedDept(e.target.value);
                   setSelectedSubDept('all');
+                  setSelectedRole('all');
                 }}
               >
                 <option value="all">All Departments</option>
@@ -604,11 +606,26 @@ export default function CandidatesPage() {
                 className="filter-select"
                 value={selectedSubDept}
                 disabled={selectedDept === 'all'}
-                onChange={e => setSelectedSubDept(e.target.value)}
+                onChange={e => {
+                  setSelectedSubDept(e.target.value);
+                  setSelectedRole('all');
+                }}
               >
                 <option value="all">All Sub Departments</option>
                 {selectedDept !== 'all' && getSubDepartments(selectedDept).map(sd => (
                   <option key={sd} value={sd}>{sd}</option>
+                ))}
+              </select>
+
+              <select
+                className="filter-select"
+                value={selectedRole}
+                disabled={selectedSubDept === 'all'}
+                onChange={e => setSelectedRole(e.target.value)}
+              >
+                <option value="all">All Roles</option>
+                {selectedDept !== 'all' && selectedSubDept !== 'all' && getRoles(selectedDept, selectedSubDept).map(role => (
+                  <option key={role} value={role}>{role}</option>
                 ))}
               </select>
             </div>
