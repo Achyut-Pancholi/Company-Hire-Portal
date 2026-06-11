@@ -26,10 +26,10 @@ async function seed() {
 
   // 2. Insert questions bank
   const questionsData = [
-    { job_role: "Senior Frontend Engineer", question_text: "What is your approach to optimizing the performance of a large-scale React application?", is_mandatory: true },
-    { job_role: "Senior Frontend Engineer", question_text: "How do you handle state management across deeply nested components in modern React?", is_mandatory: false },
-    { job_role: "Backend Developer (Node.js)", question_text: "Explain how you handle massive concurrency and scaling in an Express application.", is_mandatory: true },
-    { job_role: "Backend Developer (Node.js)", question_text: "What is your strategy for secure and highly available token authentication?", is_mandatory: false }
+    { department: "Technology and Delivery", sub_department: "Frontend", question_text: "What is your approach to optimizing the performance of a large-scale React application?", is_mandatory: true },
+    { department: "Technology and Delivery", sub_department: "Frontend", question_text: "How do you handle state management across deeply nested components in modern React?", is_mandatory: false },
+    { department: "Technology and Delivery", sub_department: "Backend", question_text: "Explain how you handle massive concurrency and scaling in an Express application.", is_mandatory: true },
+    { department: "Technology and Delivery", sub_department: "Backend", question_text: "What is your strategy for secure and highly available token authentication?", is_mandatory: false }
   ];
   const { data: qb, error: qbErr } = await supabase.from("questions_bank").insert(questionsData).select();
   if (qbErr) {
@@ -123,7 +123,8 @@ async function seed() {
     const interviewData = {
       candidate_name: alice.name,
       candidate_email: alice.email,
-      job_role: alice.job_applied,
+      department: "Technology and Delivery",
+      sub_department: "Frontend",
       questions: [
         { id: "q1", text: "What is your approach to optimizing the performance of a large-scale React application?", isMandatory: true }
       ],

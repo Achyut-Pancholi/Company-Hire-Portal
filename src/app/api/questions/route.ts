@@ -9,7 +9,8 @@ export async function GET() {
     const { data, error } = await supabase
       .from("questions_bank")
       .select("*")
-      .order("job_role", { ascending: true })
+      .order("department", { ascending: true })
+      .order("sub_department", { ascending: true })
       .order("created_at", { ascending: true });
 
     if (error) {
@@ -24,17 +25,17 @@ export async function GET() {
   }
 }
 
-// Add a new question to a job role
+// Add a new question to a sub-department
 export async function POST(request: NextRequest) {
   const authError = await requireInternalSecret(request);
   if (authError) return authError;
   try {
     const body = await request.json();
-    const { job_role, question_text, is_mandatory, department, sub_department, role } = body;
+    const { question_text, is_mandatory, department, sub_department } = body;
 
-    if (!job_role || !question_text) {
+    if (!question_text || !sub_department) {
       return NextResponse.json(
-        { error: "job_role and question_text are required" },
+        { error: "question_text and sub_department are required" },
         { status: 400 }
       );
     }
@@ -43,11 +44,10 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase
       .from("questions_bank")
       .insert({
-        job_role: job_role === 'Common' ? (role || job_role) : job_role,
         question_text,
         is_mandatory: is_mandatory || false,
-        department: department || null,
-        sub_department: sub_department || null,
+        department: department || 'General',
+        sub_department,
       })
       .select()
       .single();

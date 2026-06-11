@@ -10,14 +10,14 @@ export async function generateMetadata({ params }: { params: Promise<{ token: st
   const supabase = await createAdminClient();
   const { data } = await supabase
     .from("interviews")
-    .select("candidate_name, job_role")
+    .select("candidate_name, sub_department")
     .eq("share_token", token)
     .single();
 
   if (!data) return { title: "Interview Review — Happy" };
   return {
-    title: `${data.candidate_name} — ${data.job_role} | Happy Interview`,
-    description: `Review video interview for ${data.candidate_name} applying for ${data.job_role}`,
+    title: `${data.candidate_name} — ${data.sub_department} | Happy Interview`,
+    description: `Review video interview for ${data.candidate_name} applying for ${data.sub_department}`,
     robots: "noindex, nofollow",
   };
 }
@@ -58,7 +58,7 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
           </div>
           <div className="flex-1">
             <h1 className="text-slate-900 font-bold text-xl">{interview.candidate_name}</h1>
-            <p className="text-slate-500 text-sm mt-0.5">{interview.job_role}</p>
+            <p className="text-slate-500 text-sm mt-0.5">{interview.sub_department}</p>
           </div>
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-600 text-white text-xs font-semibold shadow-sm">
             <CheckCircle2 className="w-3.5 h-3.5 text-white" />

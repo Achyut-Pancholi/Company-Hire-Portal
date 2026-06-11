@@ -29,7 +29,7 @@ const transporter = nodemailer.createTransport(
 
 function reportEmailTemplate(
   candidateName: string,
-  jobRole: string,
+  position: string,
   reportUrl: string,
   scores: { resume?: number; video?: number; tech?: number },
   recommendation: string
@@ -80,7 +80,7 @@ function reportEmailTemplate(
             <p style="color:#64748b;font-size:12px;margin:0 0 6px;text-transform:uppercase;letter-spacing:1px;font-weight:600;">Your Report is Ready</p>
             <h1 style="color:#0E2D7B;font-size:24px;font-weight:800;margin:0 0 14px;line-height:1.3;">Hello, ${candidateName} ðŸ‘‹</h1>
             <p style="color:#475569;font-size:15px;line-height:1.7;margin:0 0 28px;">
-              Your interview report for the <strong style="color:#0E2D7B;">${jobRole}</strong> position has been prepared and is now available for you to view.
+              Your interview report for the <strong style="color:#0E2D7B;">${position}</strong> position has been prepared and is now available for you to view.
             </p>
 
             <!-- Score Summary -->
@@ -137,7 +137,7 @@ function reportEmailTemplate(
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { candidateId, candidateEmail, candidateName, jobRole, scores, recommendation } = body;
+    const { candidateId, candidateEmail, candidateName, jobRole: position, scores, recommendation } = body;
 
     if (!candidateId || !candidateEmail) {
       return NextResponse.json({ error: "Missing candidateId or candidateEmail" }, { status: 400 });

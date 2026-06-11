@@ -114,7 +114,7 @@ export default function DashboardPage() {
     (i) =>
       i.candidate_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       i.candidate_email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      i.job_role.toLowerCase().includes(searchQuery.toLowerCase())
+      i.sub_department?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const stats = {
@@ -229,7 +229,7 @@ export default function DashboardPage() {
                       <div className="flex-1 min-w-0">
                         <p className="text-white font-medium text-sm truncate">{interview.candidate_name}</p>
                         <p className="text-white/40 text-xs mt-0.5">
-                          {interview.job_role} · {interview.candidate_email}
+                          {interview.sub_department} · {interview.candidate_email}
                         </p>
                       </div>
 

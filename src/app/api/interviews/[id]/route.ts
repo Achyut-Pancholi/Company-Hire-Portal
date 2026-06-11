@@ -263,7 +263,7 @@ Respond ONLY with the JSON object.`
               to: data.sender_email,
               senderEmail: data.sender_email,
               candidateName: data.candidate_name,
-              jobRole: data.job_role,
+              jobRole: data.sub_department,
               reviewUrl: reviewUrl,
             }),
           });

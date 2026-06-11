@@ -526,7 +526,7 @@ export default function InterviewPage() {
           type: "completion",
           to: process.env.NEXT_PUBLIC_ADMIN_EMAIL || "admin@company.com",
           candidateName: interview?.candidate_name,
-          jobRole: interview?.job_role,
+          jobRole: interview?.sub_department,
           reviewUrl: `${process.env.NEXT_PUBLIC_APP_URL}/video-bot-admin/dashboard/interviews/${id}`,
         }),
       }).catch(() => {}); // non-blocking
@@ -601,7 +601,7 @@ export default function InterviewPage() {
         icon={<CheckCircle2 className="w-14 h-14 text-emerald-500" />}
         color="emerald"
         title="Interview Complete! 🎉"
-        message={`Thank you, ${interview?.candidate_name?.split(" ")[0]}! Your interview for ${interview?.job_role} has been submitted. We'll be in touch soon.`}
+        message={`Thank you, ${interview?.candidate_name?.split(" ")[0]}! Your interview for ${interview?.sub_department} has been submitted. We'll be in touch soon.`}
         subtitle="You can now close this tab."
       />
     );
@@ -644,7 +644,7 @@ export default function InterviewPage() {
           <p className="text-slate-400 text-base mb-1">
             You&apos;re interviewing for
           </p>
-          <p className="text-slate-800 font-bold text-lg mb-8">{interview.job_role}</p>
+          <p className="text-slate-800 font-bold text-lg mb-8">{interview.sub_department}</p>
 
           <div className="p-5 rounded-2xl border border-[#E2E8F0] bg-slate-50/50 text-left space-y-3 mb-8">
             <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">What to expect</p>

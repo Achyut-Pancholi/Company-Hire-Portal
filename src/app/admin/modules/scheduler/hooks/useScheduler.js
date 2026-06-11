@@ -115,7 +115,7 @@ export const useScheduler = () => {
         candidate_id:   strictFormData.candidateId,
         candidate_name: strictFormData.candidateName,
         candidate_email:strictFormData.candidateEmail,
-        job_role:       strictFormData.jobRole,
+        sub_department:  strictFormData.position,
         round:          strictFormData.round || 1,
         template:       'technical',
         panelists:      strictFormData.panelistIds,

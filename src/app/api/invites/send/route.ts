@@ -4,26 +4,26 @@ import { getServiceSupabase } from "@/lib/supabase/server";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { candidate_name, candidate_email, job_role, department, sub_department, role, expires_at, subject, body: customBody, senderEmail } = body;
+    const { candidate_name, candidate_email, department, sub_department, expires_at, subject, body: customBody, senderEmail } = body;
 
-    if (!candidate_name || !candidate_email || !department || !sub_department || !role) {
+    if (!candidate_name || !candidate_email || !department || !sub_department) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const supabase = getServiceSupabase();
 
-    // 1. Fetch questions from the common question bank for this job role
+    // 1. Fetch questions from the common question bank for this sub-department
     const { data: questions, error: qError } = await supabase
       .from("questions_bank")
       .select("*")
-      .eq("job_role", role);
+      .eq("sub_department", sub_department);
 
     if (qError) {
       return NextResponse.json({ error: "Failed to fetch questions" }, { status: 500 });
     }
 
     if (!questions || questions.length === 0) {
-      return NextResponse.json({ error: `No questions found for ${department} - ${sub_department} - ${role}` }, { status: 400 });
+      return NextResponse.json({ error: `No questions found for ${department} - ${sub_department}` }, { status: 400 });
     }
 
     // Select all questions configured for this sub-department
@@ -41,7 +41,8 @@ export async function POST(req: NextRequest) {
       .insert({
         candidate_name,
         candidate_email,
-        job_role,
+        department,
+        sub_department,
         questions: selectedQuestions,
         status: "pending",
         expires_at: expiry,
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
         type: "invite",
         to: candidate_email,
         candidateName: candidate_name,
-        jobRole: job_role,
+        jobRole: sub_department,
         interviewId: interview.id,
         expiresAt: expiry,
         subject,
