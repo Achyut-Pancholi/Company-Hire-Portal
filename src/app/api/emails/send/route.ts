@@ -125,6 +125,95 @@ async function getTransporter(senderEmail?: string) {
   };
 }
 
+function mcqInviteEmailTemplate(
+  candidateName: string,
+  jobRole: string,
+  candidateId: string,
+  customBody?: string
+): string {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const link = `${baseUrl}/interview/${candidateId}/mcq`;
+
+  const bodyContent = customBody
+    ? customBody.replace(/\n/g, "<br />")
+    : `Hello, ${candidateName} 👋<br /><br />
+       You have been invited to complete the MCQ Objective Assessment for the <strong style="color:#0f172a;">${jobRole}</strong> position.<br /><br />
+       This is a timed, multiple-choice assessment designed to evaluate your technical aptitude and concepts related to the role. Ensure you have a stable internet connection before starting.`;
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCQ Assessment Invitation</title>
+</head>
+<body style="margin:0;padding:0;background:#f8f9fa;font-family:'Helvetica Neue',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9fa;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.06);">
+        <!-- Header -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);padding:32px 40px;text-align:center;">
+            <div style="display:inline-flex;align-items:center;gap:10px;">
+              <div style="width:32px;height:32px;background:#3b82f6;border-radius:8px;display:inline-block;vertical-align:middle;"></div>
+              <span style="color:#fff;font-size:20px;font-weight:700;vertical-align:middle;margin-left:10px;">ElastiCrew</span>
+            </div>
+            <p style="color:#93c5fd;margin:8px 0 0;font-size:13px;letter-spacing:0.5px;">MCQ Assessment Portal</p>
+          </td>
+        </tr>
+        <!-- Body -->
+        <tr>
+          <td style="padding:40px;">
+            <p style="color:#64748b;font-size:13px;margin:0 0 8px;text-transform:uppercase;letter-spacing:1px;font-weight:600;">Assessment Invitation</p>
+            <div style="color:#475569;font-size:15px;line-height:1.7;margin:0 0 24px;">
+              ${bodyContent}
+            </div>
+            
+            <!-- Info Box -->
+            <div style="background:#f1f5f9;border-radius:12px;padding:20px 24px;margin:0 0 28px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="padding:6px 0;">
+                    <span style="color:#64748b;font-size:13px;">Position</span>
+                    <div style="color:#0f172a;font-weight:600;font-size:15px;margin-top:2px;">${jobRole}</div>
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+            <!-- CTA Button -->
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center">
+                  <a href="${link}" style="display:inline-block;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;text-decoration:none;font-size:15px;font-weight:600;padding:14px 40px;border-radius:12px;letter-spacing:0.3px;">
+                    Start MCQ Test →
+                  </a>
+                </td>
+              </tr>
+            </table>
+            
+            <p style="color:#94a3b8;font-size:12px;margin:24px 0 0;text-align:center;line-height:1.6;">
+              If the button doesn't work, copy and paste this link:<br>
+              <a href="${link}" style="color:#3b82f6;word-break:break-all;">${link}</a>
+            </p>
+          </td>
+        </tr>
+        <!-- Footer -->
+        <tr>
+          <td style="background:#f8fafc;padding:20px 40px;border-top:1px solid #e2e8f0;text-align:center;">
+            <p style="color:#94a3b8;font-size:12px;margin:0;">
+              This is a secure link. Do not share it with anyone else.<br>
+              © 2026 ElastiCrew. All rights reserved.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+}
+
 function formInviteEmailTemplate(
   candidateName: string,
   jobRole: string,
@@ -382,6 +471,9 @@ export async function POST(req: NextRequest) {
     if (type === "invite") {
       subject = customSubject || `ElastiCrew Video Bot Screening Invitation — ${jobRole} Position`;
       html = inviteEmailTemplate(candidateName, jobRole, interviewId, expiresAt, bodyText);
+    } else if (type === "mcq_invite") {
+      subject = customSubject || `ElastiCrew MCQ Assessment Invitation — ${jobRole} Position`;
+      html = mcqInviteEmailTemplate(candidateName, jobRole, candidateId, bodyText);
     } else if (type === "form_invite") {
       subject = `Candidate Form — ${jobRole} Position`;
       html = formInviteEmailTemplate(candidateName, jobRole, candidateId);
