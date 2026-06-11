@@ -1,0 +1,58 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+    <meta charset="utf-8">
+    <title>HR Platform Requirements Questionnaire</title>
+    <style>
+        body { font-family: 'Calibri', 'Arial', sans-serif; margin: 40px; color: #333; }
+        h1 { color: #2C3E50; text-align: center; border-bottom: 2px solid #34495E; padding-bottom: 10px; }
+        h2 { color: #2980B9; margin-top: 30px; }
+        h3 { color: #34495E; }
+        p, li { font-size: 11pt; line-height: 1.6; }
+        ul { margin-bottom: 20px; }
+        .instruction { font-style: italic; color: #7F8C8D; margin-bottom: 30px; }
+    </style>
+</head>
+<body>
+
+    <h1>HR Platform - Requirement Gathering</h1>
+    <p class="instruction">This document outlines key technical and operational questions to clarify with HR Management before finalizing the development of the Video Interview Platform.</p>
+
+    <h2>1. Role-Based Access & Collaboration (Admin vs. Regular HR)</h2>
+    <ul>
+        <li><strong>Question Bank Creation:</strong> Should regular HRs be allowed to create and save their own custom questions, or are they strictly limited to selecting from an Admin-curated global question bank? If they can create questions, do those require Admin approval to become reusable?</li>
+        <li><strong>Interview Visibility:</strong> Can a regular HR ever view or edit an interview created by another HR? (For example, in scenarios where someone is on leave, covering a pipeline, or collaborating on a specific role).</li>
+        <li><strong>Team Management:</strong> Who manages the onboarding of new HR staff onto the platform? Is it strictly Senior HR (Admin) or can managers invite their own reports?</li>
+    </ul>
+
+    <h2>2. Candidate Experience & Interview Lifecycle</h2>
+    <ul>
+        <li><strong>Deadlines & Extensions:</strong> Who has the authority to extend the deadline of an expired interview link? Should the system send automated email reminders to candidates 24 hours before expiration?</li>
+        <li><strong>Branding & Communication:</strong> Should the interview interface and email invitations be customized per department/role, or use a standard company-wide template?</li>
+        <li><strong>Post-Interview Flow:</strong> Does the candidate receive any automated follow-up communication upon completion (e.g., "Thank you, we will get back to you by [Date]")?</li>
+    </ul>
+
+    <h2>3. Evaluation, Scoring, & Hiring Managers</h2>
+    <ul>
+        <li><strong>Scoring Rubric:</strong> How will candidates be evaluated? Do we need a standardized rating system (e.g., 1-5 stars) or specific criteria categories (e.g., Communication, Technical Skills, Cultural Fit)?</li>
+        <li><strong>Hiring Manager Access:</strong> Will non-HR Hiring Managers need access to view and score videos? If so, should they have a separate "Reviewer" role that hides HR-specific data?</li>
+        <li><strong>Collaborative Feedback:</strong> Do we need a feature for multiple interviewers to leave private comments and scores on the same candidate video without seeing each other's scores first (to prevent bias)?</li>
+    </ul>
+
+    <h2>4. Notifications & Workflow Integration</h2>
+    <ul>
+        <li><strong>Alerts:</strong> Who should be notified when a candidate completes their video interview? Just the HR who generated the link, the Hiring Manager, or both?</li>
+        <li><strong>ATS Integration:</strong> Are there plans to eventually integrate this platform with your existing Applicant Tracking System (ATS) (e.g., Workday, Greenhouse, Lever)? If so, what data needs to sync?</li>
+    </ul>
+
+    <h2>5. Analytics & Dashboard Reporting</h2>
+    <ul>
+        <li><strong>Admin Metrics:</strong> What are the top 3-5 Key Performance Indicators (KPIs) Senior HR wants to see on their global dashboard? (e.g., Average completion rate, drop-off rate, time-to-complete, interview volume by department).</li>
+        <li><strong>HR Metrics:</strong> What metrics are most useful for a regular HR's personal dashboard to track their daily pipeline health?</li>
+        <li><strong>Data Export:</strong> Do Senior HR members need the ability to export these reports (to CSV or PDF) for executive meetings?</li>
+    </ul>
+
+    <br><br>
+    <p><em>Prepared for Project Stakeholder Alignment</em></p>
+
+</body>
+</html>

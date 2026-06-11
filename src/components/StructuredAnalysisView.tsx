@@ -12,7 +12,22 @@ export function StructuredAnalysisView({ text }: { text: string | any }) {
 
     try {
       // Handle case where text is already an object or a stringified JSON
-      const data = typeof text === 'string' ? JSON.parse(text) : text;
+      let cleanText = text;
+      if (typeof text === 'string') {
+        cleanText = text.trim();
+        // Remove markdown formatting
+        cleanText = cleanText.replace(/^```[a-zA-Z]*\n?/i, '').replace(/```$/, '').trim();
+        // Try extracting JSON if there's text before or after it
+        const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          cleanText = jsonMatch[0];
+        }
+        
+        // Attempt to fix unescaped newlines inside strings (common LLM error)
+        // We replace newlines that are not preceded by a comma or bracket and not followed by a quote or bracket.
+        // A simpler way is just let it fail and then the fallback handles it.
+      }
+      const data = typeof cleanText === 'string' ? JSON.parse(cleanText) : cleanText;
       
       if (Array.isArray(data)) {
         const positiveWords = ['good', 'great', 'excellent', 'strong', 'well', 'impressive', 'demonstrated', 'proficient', 'clear', 'effective', 'ability', 'positive'];
@@ -58,7 +73,15 @@ export function StructuredAnalysisView({ text }: { text: string | any }) {
       let currentSection = "summary";
       
       lines.forEach(line => {
-        const lower = line.toLowerCase().trim();
+        const trimmed = line.trim();
+        if (!trimmed) return;
+        
+        // Filter out JSON artifacts that leaked into the text if parsing completely failed
+        if (/^[\[\]{}],?$/.test(trimmed) || /^"[a-zA-Z0-9_]+"\s*:\s*([\[{]|[\d.]+,?|true,?|false,?|null,?|"[^"]*",?)$/.test(trimmed)) {
+          return;
+        }
+
+        const lower = trimmed.toLowerCase();
         if (lower.startsWith('pros:') || lower.startsWith('strengths:') || lower === 'pros' || lower === 'strengths' || lower === 'pros / strengths' || lower === 'pros / strengths:') {
           currentSection = 'pros';
           const val = line.replace(/^(pros|strengths|pros \/ strengths):?/i, '').trim();
@@ -71,8 +94,8 @@ export function StructuredAnalysisView({ text }: { text: string | any }) {
           currentSection = 'okok';
           const val = line.replace(/^(okok|neutral|neutral points):?/i, '').trim();
           if (val) okok.push(val);
-        } else if (line.trim().startsWith('-') || line.trim().startsWith('*') || line.trim().startsWith('•')) {
-          const val = line.replace(/^[-*•]\s*/, '').trim();
+        } else if (trimmed.startsWith('-') || trimmed.startsWith('*') || trimmed.startsWith('•')) {
+          const val = trimmed.replace(/^[-*•]\s*/, '').trim();
           if (val) {
             if (currentSection === 'pros') pros.push(val);
             else if (currentSection === 'cons') cons.push(val);
