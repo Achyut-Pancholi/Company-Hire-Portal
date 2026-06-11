@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useRef } from 'react';
 import { CheckSquare, FileSpreadsheet, Plus, X, Upload, Download, CheckCircle, AlertCircle } from 'lucide-react';
@@ -401,7 +401,7 @@ export default function AssessmentsPage() {
                 className="q-entry-row"
                 style={{
                   display: 'flex',
-                  alignItems: 'center',
+                  alignItems: 'flex-start',
                   gap: '12px',
                   padding: '12px 16px',
                   backgroundColor: 'var(--gray-50)',
@@ -421,24 +421,41 @@ export default function AssessmentsPage() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  flexShrink: 0
+                  flexShrink: 0,
+                  marginTop: '6px'
                 }}>
                   {index + 1}
                 </div>
                 
-                <input 
-                  type="text" 
+                <textarea 
                   className="q-text-input" 
                   value={qText}
                   onChange={e => handleQuestionChange(index, e.target.value)}
+                  rows={2}
                   style={{
                     flexGrow: 1,
-                    border: 'none',
-                    background: 'transparent',
+                    border: '1.5px solid var(--border)',
+                    borderRadius: '8px',
+                    background: '#ffffff',
                     fontSize: '13.5px',
-                    color: 'var(--text-dark)',
+                    color: 'var(--text-main)',
                     fontWeight: '500',
-                    outline: 'none'
+                    outline: 'none',
+                    padding: '8px 12px',
+                    fontFamily: 'inherit',
+                    resize: 'none',
+                    transition: 'all 0.18s ease',
+                    boxShadow: 'var(--shadow-xs)'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = 'var(--brand-teal)';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(13, 148, 136, 0.18), var(--shadow-sm)';
+                    e.target.style.backgroundColor = '#f0fdfa';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = 'var(--border)';
+                    e.target.style.boxShadow = 'var(--shadow-xs)';
+                    e.target.style.backgroundColor = '#ffffff';
                   }}
                 />
 
@@ -454,7 +471,9 @@ export default function AssessmentsPage() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     padding: '4px',
-                    transition: 'color 0.15s ease'
+                    transition: 'color 0.15s ease',
+                    marginTop: '6px',
+                    flexShrink: 0
                   }}
                   onMouseEnter={(e) => e.currentTarget.style.color = '#ef4444'}
                   onMouseLeave={(e) => e.currentTarget.style.color = 'var(--gray-400)'}
