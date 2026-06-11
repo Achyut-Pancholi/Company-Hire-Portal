@@ -253,21 +253,20 @@ const VideoBot = () => {
   };
 
   const filteredCandidatesForDropdown = candidates.filter((c: any) => {
-    // Only show candidates where resume status = 'Approved'
-    const resumeApproved = (c.resumeStatus === 'Approved' || c.resume_status === 'Approved');
-    if (!resumeApproved) return false;
+    // If no department selected yet, show nothing
+    if (!inviteDepartment) return false;
 
-    const job = jobs.find((j: any) => j.title === c.jobApplied);
-    if (!job) return false;
+    // Match candidate's job against the jobs table to find dept
+    const job = jobs.find((j: any) => j.title === (c.jobApplied || c.job_applied));
     
-    // Strict Department check based on the selected Department
-    if (job.department !== inviteDepartment) return false;
+    // If we find a matching job, use its department; otherwise try candidate's own dept field
+    const candidateDept = job?.department || c.department;
+    if (candidateDept !== inviteDepartment) return false;
     
-    // Strict Role check
+    // Role filter (only apply when a role is selected)
     if (inviteRole && inviteRole !== 'General Role') {
-       if (job.title !== inviteRole) {
-          return false; 
-       }
+      const candidateRole = job?.title || c.jobApplied || c.job_applied;
+      if (candidateRole !== inviteRole) return false;
     }
     return true;
   });
