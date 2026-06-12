@@ -38,7 +38,6 @@ export default function CandidatesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDept, setSelectedDept] = useState('all');
   const [selectedSubDept, setSelectedSubDept] = useState('all');
-  const [selectedRole, setSelectedRole] = useState('all');
 
   // View state: All Candidates, Video Bot Screening, Tech Scheduler, MCQ
   const [activeView, setActiveView] = useState<'candidates' | 'videobot' | 'tech' | 'mcq'>('candidates');
@@ -119,20 +118,22 @@ export default function CandidatesPage() {
   useEffect(() => {
     if (activeCandidateForEmail) {
       setCandidateEmail(activeCandidateForEmail.email || '');
-      const jobRole = activeCandidateForEmail.jobApplied || activeCandidateForEmail.job_applied || 'Common';
       
-      let qSetLabel = jobRole;
+      let position = 'Common';
       if (selectedQuestionSet) {
         const matchedJob = jobs.find((j: any) => j.id === selectedQuestionSet);
-        if (matchedJob) qSetLabel = matchedJob.title;
+        if (matchedJob) position = matchedJob.sub_department || matchedJob.title;
+      } else {
+        const candidateJob = jobs.find((j: any) => j.title === (activeCandidateForEmail.jobApplied || activeCandidateForEmail.job_applied));
+        if (candidateJob) position = candidateJob.sub_department || candidateJob.title;
       }
 
       if (inviteType === 'mcq') {
-        setEmailSubject(`Action Required: Complete your MCQ Objective Assessment with ElastiCrew — ${jobRole} Position`);
-        setEmailBody(`Hi ${activeCandidateForEmail.name},\n\nPlease complete your MCQ Objective Assessment configured for the ${jobRole} position.\n\nThis is a timed, multiple-choice assessment designed to evaluate your aptitude. Complete it using the secure link below:\n\n${window.location.origin}/interview/${activeCandidateForEmail.id}/mcq\n\nBest regards,\nElastiCrew Hiring Team`);
+        setEmailSubject(`Action Required: Complete your MCQ Objective Assessment with ElastiCrew — ${position} Position`);
+        setEmailBody(`Hi ${activeCandidateForEmail.name},\n\nPlease complete your MCQ Objective Assessment configured for the ${position} position.\n\nThis is a timed, multiple-choice assessment designed to evaluate your aptitude. Complete it using the secure link below:\n\n${window.location.origin}/interview/${activeCandidateForEmail.id}/mcq\n\nBest regards,\nElastiCrew Hiring Team`);
       } else {
-        setEmailSubject(`Action Required: Complete your Video AI Screening with ElastiCrew — ${jobRole} Position`);
-        setEmailBody(`Hi ${activeCandidateForEmail.name},\n\nPlease complete your Video AI Screening assessment configured for the ${qSetLabel} position.\n\nThis workflow features a targeted question block. Complete it using the secure link inside your tracking workspace.\n\nBest regards,\nElastiCrew Hiring Team`);
+        setEmailSubject(`Action Required: Complete your Video AI Screening with ElastiCrew — ${position} Position`);
+        setEmailBody(`Hi ${activeCandidateForEmail.name},\n\nPlease complete your Video AI Screening assessment configured for the ${position} position.\n\nThis workflow features a targeted question block. Complete it using the secure link inside your tracking workspace.\n\nBest regards,\nElastiCrew Hiring Team`);
       }
     } else {
       setCandidateEmail('');
@@ -159,9 +160,7 @@ export default function CandidatesPage() {
     const subDepts = Array.from(new Set(jobs.filter((j: any) => j.department === dept && j.sub_department).map((j: any) => j.sub_department))) as string[];
     return subDepts.length > 0 ? subDepts : ['General'];
   };
-  const getRoles = (dept: string, subDept: string) => {
-    return Array.from(new Set(jobs.filter((j: any) => j.department === dept && (j.sub_department === subDept || !j.sub_department || subDept === 'General')).map((j: any) => j.title))) as string[];
-  };
+
 
   // Helper to extract candidate details
   const getCandidateSubDept = (c: any) => {
@@ -178,19 +177,15 @@ export default function CandidatesPage() {
     const fallbackJob = jobs.find((j: any) => j.department && jobApplied.includes(j.department.toLowerCase()));
     return fallbackJob?.department || null;
   };
-  const getCandidateRole = (c: any) => c.jobApplied || c.job_applied || null;
-
-  // Filter candidates — fail-open: if dept/subdept/role unknown, still show candidate
+  // Filter candidates — fail-open: if dept/subdept unknown, still show candidate
   const filteredCandidates = candidates.filter((c: any) => {
     const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           (c.unique_id || String(c.id)).toLowerCase().includes(searchQuery.toLowerCase());
     const candidateDept = getCandidateDept(c);
     const candidateSubDept = getCandidateSubDept(c);
-    const candidateRole = getCandidateRole(c);
     const matchesDept = selectedDept === 'all' || candidateDept === null || candidateDept === selectedDept;
     const matchesSubDept = selectedSubDept === 'all' || candidateSubDept === null || candidateSubDept === selectedSubDept;
-    const matchesRole = selectedRole === 'all' || candidateRole === null || candidateRole === selectedRole;
-    return matchesSearch && matchesDept && matchesSubDept && matchesRole;
+    return matchesSearch && matchesDept && matchesSubDept;
   });
 
   // Handle file selection
@@ -342,7 +337,7 @@ export default function CandidatesPage() {
 
     if (inviteType === 'mcq') {
       try {
-        const jobRole = activeCandidateForEmail.jobApplied || activeCandidateForEmail.job_applied || 'Common';
+        const position = activeCandidateForEmail.jobApplied || activeCandidateForEmail.job_applied || 'Common';
         const res = await apiFetch('/api/emails/send', {
           method: 'POST',
           body: JSON.stringify({
@@ -350,7 +345,7 @@ export default function CandidatesPage() {
             to: candidateEmail,
             candidateId: activeCandidateForEmail.id,
             candidateName: activeCandidateForEmail.name,
-            jobRole: jobRole,
+            jobRole: position,
             subject: emailSubject,
             bodyText: emailBody,
             senderEmail: selectedSender || senders[0] || 'careers@elasticrew.com'
@@ -403,10 +398,8 @@ export default function CandidatesPage() {
         body: JSON.stringify({
           candidate_name: activeCandidateForEmail.name,
           candidate_email: candidateEmail,
-          job_role: matchedJob.title,
           department: matchedJob.department,
           sub_department: matchedJob.sub_department || 'General',
-          role: matchedJob.title,
           subject: emailSubject,
           body: emailBody,
           senderEmail: selectedSender || senders[0] || 'careers@elasticrew.com'
@@ -593,7 +586,6 @@ export default function CandidatesPage() {
                 onChange={e => {
                   setSelectedDept(e.target.value);
                   setSelectedSubDept('all');
-                  setSelectedRole('all');
                 }}
               >
                 <option value="all">All Departments</option>
@@ -608,24 +600,11 @@ export default function CandidatesPage() {
                 disabled={selectedDept === 'all'}
                 onChange={e => {
                   setSelectedSubDept(e.target.value);
-                  setSelectedRole('all');
                 }}
               >
                 <option value="all">All Sub Departments</option>
                 {selectedDept !== 'all' && getSubDepartments(selectedDept).map(sd => (
                   <option key={sd} value={sd}>{sd}</option>
-                ))}
-              </select>
-
-              <select
-                className="filter-select"
-                value={selectedRole}
-                disabled={selectedSubDept === 'all'}
-                onChange={e => setSelectedRole(e.target.value)}
-              >
-                <option value="all">All Roles</option>
-                {selectedDept !== 'all' && selectedSubDept !== 'all' && getRoles(selectedDept, selectedSubDept).map(role => (
-                  <option key={role} value={role}>{role}</option>
                 ))}
               </select>
             </div>
@@ -699,7 +678,7 @@ export default function CandidatesPage() {
                 <tr>
                   <th>Date Added</th>
                   <th>Candidate Name</th>
-                  <th>Role</th>
+                  <th>Sub Department</th>
                   <th>Pipeline Stage</th>
                   <th>ElastiCrew Resume</th>
                   <th className="col-action" style={{ textAlign: 'right' }}>Action</th>
@@ -731,7 +710,7 @@ export default function CandidatesPage() {
                             {c.name}
                           </strong>
                         </td>
-                        <td>{getCandidateSubDept(c) || c.jobApplied || c.job_applied || '—'}</td>
+                        <td>{getCandidateSubDept(c) || '—'}</td>
                         <td>{renderStageBadge(c)}</td>
                         <td>
                           <span className="resume-tag" onClick={() => setSelectedCandidate(c)}>
@@ -812,7 +791,7 @@ export default function CandidatesPage() {
                       const mcqStat = c.mcqStatus || c.mcq_status || 'Pending';
                       const score = c.mcqScore !== undefined && c.mcqScore !== null ? c.mcqScore : (c.mcq_score !== undefined && c.mcq_score !== null ? c.mcq_score : 'N/A');
                       const remark = c.remarkMcq || c.remark_mcq || '';
-                      const jobRole = c.jobApplied || c.job_applied || 'Common';
+                      const position = c.jobApplied || c.job_applied || 'Common';
                       const inviteUrl = `${window.location.origin}/interview/${c.id}/mcq`;
                       
                       return (
@@ -826,7 +805,7 @@ export default function CandidatesPage() {
                             </strong>
                             <div style={{ fontSize: '12px', color: 'var(--gray-500)' }}>{c.email}</div>
                           </td>
-                          <td>{jobRole}</td>
+                          <td>{position}</td>
                           <td>{getCandidateSubDept(c)}</td>
                           <td>
                             {mcqStat === 'Completed' ? (

@@ -2,7 +2,8 @@ export interface Interview {
   id: string;
   candidate_name: string;
   candidate_email: string;
-  job_role: string;
+  department: string;
+  sub_department: string;
   questions: string[];
   status: "pending" | "completed" | "expired";
   expires_at: string;
@@ -27,7 +28,8 @@ export interface TranscriptEntry {
 export interface CreateInterviewInput {
   candidate_name: string;
   candidate_email: string;
-  job_role: string;
+  department: string;
+  sub_department: string;
   questions: string[];
   expires_at: string;
 }

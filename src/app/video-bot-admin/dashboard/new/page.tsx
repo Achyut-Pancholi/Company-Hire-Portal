@@ -13,8 +13,15 @@ import { getInterviewUrl, getShareUrl, copyToClipboard } from "@/lib/utils";
 interface CreatedInterview {
   id: string;
   candidate_name: string;
-  job_role: string;
+  sub_department: string;
   share_token: string;
+}
+
+interface Job {
+  id: string;
+  department: string;
+  sub_department: string;
+  title: string;
 }
 
 export default function NewInterviewPage() {
@@ -23,6 +30,7 @@ export default function NewInterviewPage() {
   const [created, setCreated] = useState<CreatedInterview | null>(null);
   const [copied, setCopied] = useState<"interview" | "share" | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [jobs, setJobs] = useState<Job[]>([]);
 
   // Compute default expiry (7 days from now) — kept in a function so it
   // never runs during SSR, preventing server/client Date.now() mismatch.
@@ -33,10 +41,34 @@ export default function NewInterviewPage() {
   const [form, setForm] = useState({
     candidate_name: "",
     candidate_email: "",
-    job_role: "",
+    department: "",
+    sub_department: "",
     expires_at: "",           // populated after mount to avoid SSR mismatch
     questions: ["", "", ""],
   });
+
+  // Fetch jobs for department/sub_department dropdowns
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const res = await fetch("/api/jobs");
+        if (res.ok) {
+          const data = await res.json();
+          setJobs(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch jobs:", err);
+      }
+    };
+    fetchJobs();
+  }, []);
+
+  // Derived dropdown options
+  const availableDepartments = Array.from(new Set(jobs.map((j) => j.department).filter(Boolean))) as string[];
+  const getAvailableSubDepartments = (dept: string) => {
+    const subDepts = Array.from(new Set(jobs.filter((j) => j.department === dept && j.sub_department).map((j) => j.sub_department))) as string[];
+    return subDepts.length > 0 ? subDepts : ['General'];
+  };
 
   // Set date-dependent values only on the client after hydration
   useEffect(() => {
@@ -78,7 +110,8 @@ export default function NewInterviewPage() {
     const errs: Record<string, string> = {};
     if (!form.candidate_name.trim()) errs.candidate_name = "Candidate name is required";
     if (!form.candidate_email.trim()) errs.candidate_email = "Email is required";
-    if (!form.job_role.trim()) errs.job_role = "Job role is required";
+    if (!form.department.trim()) errs.department = "Department is required";
+    if (!form.sub_department.trim()) errs.sub_department = "Sub-department is required";
     if (!form.expires_at) errs.expires_at = "Expiration date is required";
     const validQuestions = form.questions.filter((q) => q.trim());
     if (validQuestions.length < 1) errs.questions = "At least 1 question is required";
@@ -120,7 +153,7 @@ export default function NewInterviewPage() {
           type: "invite",
           to: form.candidate_email,
           candidateName: form.candidate_name,
-          jobRole: form.job_role,
+          jobRole: form.sub_department,
           interviewId: data.id,
           expiresAt: data.expires_at,
         }),
@@ -201,7 +234,7 @@ export default function NewInterviewPage() {
               Back to dashboard
             </Button>
             <Button
-              onClick={() => { setCreated(null); setForm({ candidate_name: "", candidate_email: "", job_role: "", expires_at: getDefaultExpiry(), questions: ["", "", ""] }); }}
+              onClick={() => { setCreated(null); setForm({ candidate_name: "", candidate_email: "", department: "", sub_department: "", expires_at: getDefaultExpiry(), questions: ["", "", ""] }); }}
               className="flex-1 bg-gradient-to-r from-blue-600 to-violet-600 text-white font-semibold"
             >
               Create another
@@ -262,16 +295,41 @@ export default function NewInterviewPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="role" className="text-white/60 text-xs">Job role *</Label>
-                <Input
-                  id="role"
-                  placeholder="Senior Frontend Engineer"
-                  value={form.job_role}
-                  onChange={(e) => updateForm("job_role", e.target.value)}
-                  error={errors.job_role}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus-visible:border-white/30 focus-visible:ring-white/10"
-                />
+                <Label htmlFor="department" className="text-white/60 text-xs">Department *</Label>
+                <select
+                  id="department"
+                  value={form.department}
+                  onChange={(e) => {
+                    updateForm("department", e.target.value);
+                    setForm((prev) => ({ ...prev, sub_department: "" }));
+                  }}
+                  className="flex h-10 w-full rounded-md border px-3 py-2 text-sm bg-white/5 border-white/10 text-white focus-visible:border-white/30 focus-visible:ring-white/10 focus:outline-none"
+                >
+                  <option value="" className="bg-[#0a0e1a]">Select Department...</option>
+                  {availableDepartments.map((dept) => (
+                    <option key={dept} value={dept} className="bg-[#0a0e1a]">{dept}</option>
+                  ))}
+                </select>
+                {errors.department && <p className="text-red-400 text-xs">{errors.department}</p>}
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="sub_department" className="text-white/60 text-xs">Sub-Department *</Label>
+                <select
+                  id="sub_department"
+                  value={form.sub_department}
+                  disabled={!form.department}
+                  onChange={(e) => updateForm("sub_department", e.target.value)}
+                  className="flex h-10 w-full rounded-md border px-3 py-2 text-sm bg-white/5 border-white/10 text-white focus-visible:border-white/30 focus-visible:ring-white/10 focus:outline-none disabled:opacity-50"
+                >
+                  <option value="" className="bg-[#0a0e1a]">Select Sub-Department...</option>
+                  {form.department && getAvailableSubDepartments(form.department).map((sd) => (
+                    <option key={sd} value={sd} className="bg-[#0a0e1a]">{sd}</option>
+                  ))}
+                </select>
+                {errors.sub_department && <p className="text-red-400 text-xs">{errors.sub_department}</p>}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="expires" className="text-white/60 text-xs">Link expires *</Label>
                 <Input

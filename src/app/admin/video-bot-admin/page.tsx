@@ -35,10 +35,9 @@ const VideoBot = () => {
 
   // Invite Form state
   const [inviteCandidateId, setInviteCandidateId] = useState('');
-  const [inviteJobRole, setInviteJobRole] = useState('');
   const [inviteDepartment, setInviteDepartment] = useState('');
   const [inviteSubDepartment, setInviteSubDepartment] = useState('');
-  const [inviteRole, setInviteRole] = useState('');
+
   const [sending, setSending] = useState(false);
   const [inviteSubject, setInviteSubject] = useState('');
   const [inviteBody, setInviteBody] = useState('');
@@ -52,10 +51,6 @@ const VideoBot = () => {
   const getAvailableSubDepartments = (dept: string) => {
     const subDepts = Array.from(new Set(jobs.filter((j: any) => j.department === dept && j.sub_department).map((j: any) => j.sub_department))) as string[];
     return subDepts.length > 0 ? subDepts : ['General'];
-  };
-  
-  const getAvailableRoles = (dept: string, subDept: string) => {
-    return Array.from(new Set(jobs.filter((j: any) => j.department === dept && (j.sub_department === subDept || !j.sub_department || subDept === 'General')).map((j: any) => j.title))) as string[];
   };
   
   // Copied indicator state
@@ -92,9 +87,9 @@ const VideoBot = () => {
     if (inviteCandidateId) {
       const candidate = candidates.find((c: any) => c.id.toString() === inviteCandidateId);
       if (candidate) {
-        const jobRole = candidate.jobApplied || 'Common';
-        setInviteSubject(`ElastiCrew Video Bot Screening Invitation — ${jobRole} Position`);
-        setInviteBody(`Hello ${candidate.name} 👋,\n\nYou've been invited to complete a video interview for the ${jobRole} position. Our AI-powered platform will guide you through the process.\n\nInstructions & What to expect:\n• Questions: Asked by our AI. You have 90 seconds to answer each.\n• Recording: Starts automatically after a 10-second countdown following the question.\n• Control: Click "Submit Answer" when you are done (or wait for the timer to finish).\n• Hardware: Your webcam and microphone will be used.\n• Environment: Ensure you are in a quiet, well-lit space.\n• Strict Guidelines: This is a one-time link. Do not refresh, exit fullscreen, or switch tabs (doing so 3 times will automatically terminate your interview).`);
+        const position = inviteSubDepartment || candidate.jobApplied || 'Common';
+        setInviteSubject(`ElastiCrew Video Bot Screening Invitation — ${position} Position`);
+        setInviteBody(`Hello ${candidate.name} 👋,\n\nYou've been invited to complete a video interview for the ${position} position. Our AI-powered platform will guide you through the process.\n\nInstructions & What to expect:\n• Questions: Asked by our AI. You have 90 seconds to answer each.\n• Recording: Starts automatically after a 10-second countdown following the question.\n• Control: Click "Submit Answer" when you are done (or wait for the timer to finish).\n• Hardware: Your webcam and microphone will be used.\n• Environment: Ensure you are in a quiet, well-lit space.\n• Strict Guidelines: This is a one-time link. Do not refresh, exit fullscreen, or switch tabs (doing so 3 times will automatically terminate your interview).`);
         setTargetEmail(candidate.email || '');
       }
     } else {
@@ -198,8 +193,8 @@ const VideoBot = () => {
     }
   };
 
-  const handleSendInvite = async (candidate: any, targetEmail: any, jobRole: any, department: any, subDepartment: any, role: any, subject: any, body: any, senderEmail: any) => {
-    if (!candidate || !department || !subDepartment || !role) return;
+  const handleSendInvite = async (candidate: any, targetEmail: any, department: any, subDepartment: any, subject: any, body: any, senderEmail: any) => {
+    if (!candidate || !department || !subDepartment) return;
 
     setSending(true);
     try {
@@ -208,10 +203,8 @@ const VideoBot = () => {
         body: JSON.stringify({
           candidate_name: candidate.name,
           candidate_email: targetEmail,
-          job_role: jobRole,
           department: department,
           sub_department: subDepartment,
-          role: role,
           subject: subject,
           body: body,
           senderEmail: senderEmail
@@ -261,11 +254,6 @@ const VideoBot = () => {
     const candidateDept = job?.department || c.department;
     if (candidateDept !== inviteDepartment) return false;
     
-    // Role filter (only apply when a role is selected)
-    if (inviteRole && inviteRole !== 'General Role') {
-      const candidateRole = job?.title || c.jobApplied || c.job_applied;
-      if (candidateRole !== inviteRole) return false;
-    }
     return true;
   });
 
@@ -316,7 +304,7 @@ const VideoBot = () => {
         </div>
         <div className="card-body">
           
-          <div className="grid grid-cols-4 gap-4" style={{ marginBottom: '1.5rem' }}>
+          <div className="grid grid-cols-3 gap-4" style={{ marginBottom: '1.5rem' }}>
             <div className="form-group">
               <label className="form-label">Department</label>
               <select 
@@ -326,7 +314,6 @@ const VideoBot = () => {
                   const newDept = e.target.value;
                   setInviteDepartment(newDept);
                   setInviteSubDepartment('');
-                  setInviteRole('');
                   setInviteCandidateId('');
                 }}
               >
@@ -346,7 +333,6 @@ const VideoBot = () => {
                 onChange={e => {
                   const newSub = e.target.value;
                   setInviteSubDepartment(newSub);
-                  setInviteRole('');
                   setInviteCandidateId('');
                 }}
               >
@@ -355,26 +341,8 @@ const VideoBot = () => {
                   <option key={sd} value={sd}>{sd}</option>
                 ))}
               </select>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Role</label>
-              <select 
-                className="form-select"
-                value={inviteRole}
-                disabled={!inviteSubDepartment}
-                onChange={e => {
-                  setInviteRole(e.target.value);
-                  setInviteCandidateId('');
-                }}
-              >
-                <option value="">Select Role...</option>
-                {inviteDepartment && inviteSubDepartment && getAvailableRoles(inviteDepartment, inviteSubDepartment).map((role: string) => (
-                  <option key={role} value={role}>{role}</option>
-                ))}
-              </select>
               <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)', marginTop: '0.25rem', display: 'block' }}>
-                Candidate will be asked all questions for this role.
+                Candidate will be asked all questions for this sub-department.
               </span>
             </div>
 
@@ -455,14 +423,11 @@ const VideoBot = () => {
               onClick={() => {
                 const candidate = candidates.find((c: any) => c.id.toString() === inviteCandidateId);
                 if (candidate) {
-                  const jobRole = candidate.jobApplied || 'Common';
                   handleSendInvite(
                     candidate, 
                     targetEmail, 
-                    jobRole, 
                     inviteDepartment, 
                     inviteSubDepartment,
-                    inviteRole,
                     inviteSubject,
                     inviteBody,
                     selectedSender
@@ -488,7 +453,7 @@ const VideoBot = () => {
             <thead>
               <tr>
                 <th>Candidate</th>
-                <th>Role</th>
+                <th>Sub-Department</th>
                 <th>Status</th>
                 <th>Approval Status</th>
                 <th>Remark</th>
@@ -522,7 +487,7 @@ const VideoBot = () => {
                       <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>{interview.candidate_email}</div>
                     </td>
                     <td>
-                      <span className="badge badge-gray">{interview.job_role}</span>
+                      <span className="badge badge-gray">{interview.sub_department}</span>
                     </td>
                     <td>
                       {status === 'completed' ? (

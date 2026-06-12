@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS public.jobs (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   title text NOT NULL,
   department text NOT NULL,
-  sub_department text,
+  sub_department text NOT NULL,
   description text,
   status text DEFAULT 'Active' CHECK (status IN ('Active', 'Archived')),
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -52,9 +52,8 @@ CREATE INDEX IF NOT EXISTS idx_candidates_report_share_token
 -- -------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.questions_bank (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  job_role text NOT NULL,
   department text DEFAULT 'General',
-  sub_department text DEFAULT 'General',
+  sub_department text NOT NULL DEFAULT 'General',
   question_text text NOT NULL,
   is_mandatory boolean DEFAULT false,
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -67,7 +66,8 @@ CREATE TABLE IF NOT EXISTS public.interviews (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   candidate_name text NOT NULL,
   candidate_email text NOT NULL,
-  job_role text NOT NULL,
+  department text NOT NULL DEFAULT 'General',
+  sub_department text NOT NULL DEFAULT 'General',
   questions jsonb NOT NULL DEFAULT '[]'::jsonb,
   status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed')),
   expires_at timestamp with time zone NOT NULL,

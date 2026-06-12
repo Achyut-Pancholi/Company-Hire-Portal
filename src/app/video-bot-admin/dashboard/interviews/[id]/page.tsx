@@ -155,7 +155,7 @@ export default function InterviewReviewPage() {
           </div>
           <div className="flex-1">
             <h1 className="text-slate-900 font-bold text-lg">{interview.candidate_name}</h1>
-            <p className="text-slate-500 text-sm">{interview.candidate_email} · {interview.job_role}</p>
+            <p className="text-slate-500 text-sm">{interview.candidate_email} · {interview.sub_department}</p>
           </div>
           <Badge 
             className={
