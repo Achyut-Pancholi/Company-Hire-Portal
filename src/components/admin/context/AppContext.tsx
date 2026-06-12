@@ -27,6 +27,7 @@ export const apiFetch = (path, options: any = {}) => {
 export const AppProvider = ({ children }) => {
   const [jobs, setJobs] = useState([]);
   const [candidates, setCandidates] = useState([]);
+  const [candidatesCount, setCandidatesCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
 
   const fetchJobs = async () => {
@@ -41,14 +42,25 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const fetchCandidates = async () => {
+  const fetchCandidates = async (page = 1, limit = 20, search = "", department = "all", subDepartment = "all") => {
     try {
-      const res = await apiFetch(`/api/candidates?t=${Date.now()}`);
+      const queryParams = new URLSearchParams({
+        t: Date.now().toString(),
+        page: page.toString(),
+        limit: limit.toString(),
+      });
+      if (search) queryParams.append("search", search);
+      if (department !== "all") queryParams.append("department", department);
+      if (subDepartment !== "all") queryParams.append("sub_department", subDepartment);
+
+      const res = await apiFetch(`/api/candidates?${queryParams.toString()}`);
       if (res.ok) {
-        const data = await res.json();
-        const mapped = data.map(c => {
+        const result = await res.json();
+        const dataList = Array.isArray(result) ? result : (result.data || []);
+        const count = result.count || 0;
+        
+        const mapped = dataList.map(c => {
           const ext = c.extracted_data || {};
-          // Resolve the technical video URL from all possible storage locations in extracted_data
           const technicalVideoUrl = (
             ext.videoUrl ||
             ext.video_url ||
@@ -58,7 +70,6 @@ export const AppProvider = ({ children }) => {
           );
           return {
             ...c,
-            // Map snake_case from DB to camelCase expected by existing React UI
             jobApplied: c.job_applied,
             resumeStatus: c.resume_status,
             formStatus: c.form_status,
@@ -70,22 +81,26 @@ export const AppProvider = ({ children }) => {
             techScore: c.tech_score,
             finalRecommendation: c.final_recommendation,
             extractedData: c.extracted_data,
-            // Expose the technical video URL at top-level for easy access
             videoUrl: technicalVideoUrl || undefined,
             video_url: technicalVideoUrl || undefined,
           };
         });
         setCandidates(mapped);
-        return mapped;
+        setCandidatesCount(count);
+        return { data: mapped, count };
       }
     } catch (e) {
       console.error("Error fetching candidates:", e);
+      return { data: [], count: 0 };
     }
   };
 
   useEffect(() => {
     fetchJobs();
-    fetchCandidates();
+    // We do not fetchCandidates here on mount anymore if the page components
+    // are going to control their own pagination state.
+    // Actually, keeping a default fetch is fine for generic cache.
+    fetchCandidates(1, 20);
   }, []);
 
   return (

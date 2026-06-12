@@ -17,10 +17,16 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = getServiceSupabase();
 
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "20");
+    const search = searchParams.get("search") || "";
+    const department = searchParams.get("department");
+    const sub_department = searchParams.get("sub_department");
+
     if (id) {
       const { data, error } = await supabase
         .from("candidates")
-        .select("*")
+        .select("*, jobs(*)")
         .eq("id", id)
         .single();
 
@@ -32,17 +38,35 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(data);
     }
 
-    const { data, error } = await supabase
+    let query = supabase
       .from("candidates")
-      .select("*")
-      .order("created_at", { ascending: false });
+      .select("*, jobs!inner(*)", { count: "exact" });
+
+    if (search) {
+      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
+    }
+
+    if (department && department !== 'all') {
+      query = query.eq('jobs.department', department);
+    }
+    
+    if (sub_department && sub_department !== 'all') {
+      query = query.eq('jobs.sub_department', sub_department);
+    }
+
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    const { data, count, error } = await query
+      .order("created_at", { ascending: false })
+      .range(from, to);
 
     if (error) {
       console.error("Error fetching candidates:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json({ data, count, page, limit });
   } catch (error: any) {
     console.error("Internal Server Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

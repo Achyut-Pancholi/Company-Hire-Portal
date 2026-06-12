@@ -4,6 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Video, PlayCircle, Eye, CheckCircle, XCircle, Send, Trash2, Loader2, Mail, CheckSquare, XSquare, MessageSquare } from 'lucide-react';
 import { useAppContext } from '@/components/admin/context/AppContext';
+import Pagination from '@/components/admin/Pagination';
+import SearchableDropdown from '@/components/admin/SearchableDropdown';
+import { useDebounce } from '@/hooks/useDebounce';
 
 import WorkflowBadge from '@/components/admin/WorkflowBadge';
 import ConfirmActionModal from '@/components/admin/ConfirmActionModal';
@@ -22,6 +25,11 @@ const VideoBot = () => {
   const { candidates, jobs, refreshCandidates, apiFetch } = useAppContext();
   // Dashboard state
   const [interviews, setInterviews] = useState<any[]>([]);
+  const [interviewsCount, setInterviewsCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 500);
+  const pageSize = 20;
   const [loading, setLoading] = useState(true);
 
   // Workflow states
@@ -57,8 +65,13 @@ const VideoBot = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchInterviews();
-  }, []);
+    fetchInterviews(currentPage, debouncedSearch);
+  }, [currentPage, debouncedSearch]);
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch]);
 
   useEffect(() => {
     const fetchSenders = async () => {
@@ -133,11 +146,18 @@ const VideoBot = () => {
     }
   };
 
-  const fetchInterviews = async () => {
+  const fetchInterviews = async (page = 1, search = '') => {
     try {
-      const res = await apiFetch('/api/interviews/list');
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: pageSize.toString(),
+      });
+      if (search) queryParams.append('search', search);
+
+      const res = await apiFetch(`/api/interviews/list?${queryParams.toString()}`);
       const data = await res.json();
-      setInterviews(data || []);
+      setInterviews(data.data || []);
+      setInterviewsCount(data.count || 0);
     } catch (e) {
       console.error(e);
     }
@@ -657,6 +677,17 @@ const VideoBot = () => {
               })}
             </tbody>
           </table>
+        </div>
+        
+        {/* Pagination Controls */}
+        <div style={{ padding: '0 20px 20px 20px' }}>
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={Math.ceil((interviewsCount || 0) / pageSize)}
+            onPageChange={(page) => setCurrentPage(page)}
+            totalCount={interviewsCount}
+            pageSize={pageSize}
+          />
         </div>
       </div>
       {/* Remark Popover Modal */}

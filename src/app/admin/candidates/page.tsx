@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Search, Loader2, Send, X } from 'lucide-react';
 import { useAppContext } from '@/components/admin/context/AppContext';
 import StandardResume from '@/components/admin/StandardResume';
+import Pagination from '@/components/admin/Pagination';
+import SearchableDropdown from '@/components/admin/SearchableDropdown';
+import { useDebounce } from '@/hooks/useDebounce';
 import { SchedulerProvider } from '../modules/scheduler/store/schedulerReducer.js';
 import dynamic from 'next/dynamic';
 
@@ -32,12 +35,16 @@ const VideoBot = dynamic(
 );
 
 export default function CandidatesPage() {
-  const { jobs, candidates, refreshCandidates, apiFetch } = useAppContext();
+  const { jobs, candidates, candidatesCount, refreshCandidates, apiFetch } = useAppContext();
   
   // Page Search and Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDept, setSelectedDept] = useState('all');
   const [selectedSubDept, setSelectedSubDept] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 20;
+
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
   // View state: All Candidates, Video Bot Screening, Tech Scheduler, MCQ
   const [activeView, setActiveView] = useState<'candidates' | 'videobot' | 'tech' | 'mcq'>('candidates');
@@ -168,6 +175,15 @@ export default function CandidatesPage() {
     return subDepts.length > 0 ? subDepts : ['General'];
   };
 
+  useEffect(() => {
+    refreshCandidates(currentPage, pageSize, debouncedSearch, selectedDept, selectedSubDept);
+  }, [currentPage, debouncedSearch, selectedDept, selectedSubDept]);
+
+  // Reset to page 1 when search or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, selectedDept, selectedSubDept]);
+
 
   // Helper to extract candidate details
   const getCandidateSubDept = (c: any) => {
@@ -192,16 +208,8 @@ export default function CandidatesPage() {
     const fallbackJob = jobs.find((j: any) => j.department && jobApplied.includes(j.department.toLowerCase()));
     return fallbackJob?.department || c.department || null;
   };
-  // Filter candidates — fail-open: if dept/subdept unknown, still show candidate
-  const filteredCandidates = candidates.filter((c: any) => {
-    const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          (c.unique_id || String(c.id)).toLowerCase().includes(searchQuery.toLowerCase());
-    const candidateDept = getCandidateDept(c);
-    const candidateSubDept = getCandidateSubDept(c);
-    const matchesDept = selectedDept === 'all' || candidateDept === null || candidateDept === selectedDept;
-    const matchesSubDept = selectedSubDept === 'all' || candidateSubDept === null || candidateSubDept === selectedSubDept;
-    return matchesSearch && matchesDept && matchesSubDept;
-  });
+  // Filter candidates — now handled via backend API, so we just use the candidates from context
+  const filteredCandidates = candidates;
 
   // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -633,33 +641,25 @@ export default function CandidatesPage() {
               />
             </div>
             <div className="filter-group">
-              <select 
-                className="filter-select" 
-                value={selectedDept}
-                onChange={e => {
-                  setSelectedDept(e.target.value);
+              <SearchableDropdown 
+                options={['all', ...availableDepartments]}
+                value={selectedDept === 'all' ? 'All Departments' : selectedDept}
+                placeholder="Select Department"
+                onChange={(val) => {
+                  setSelectedDept(val === 'All Departments' ? 'all' : val);
                   setSelectedSubDept('all');
                 }}
-              >
-                <option value="all">All Departments</option>
-                {availableDepartments.map(dept => (
-                  <option key={dept} value={dept}>{dept}</option>
-                ))}
-              </select>
+              />
               
-              <select 
-                className="filter-select"
-                value={selectedSubDept}
+              <SearchableDropdown 
+                options={['all', ...getSubDepartments(selectedDept)]}
+                value={selectedSubDept === 'all' ? 'All Sub Departments' : selectedSubDept}
+                placeholder="Select Sub Department"
                 disabled={selectedDept === 'all'}
-                onChange={e => {
-                  setSelectedSubDept(e.target.value);
+                onChange={(val) => {
+                  setSelectedSubDept(val === 'All Sub Departments' ? 'all' : val);
                 }}
-              >
-                <option value="all">All Sub Departments</option>
-                {selectedDept !== 'all' && getSubDepartments(selectedDept).map(sd => (
-                  <option key={sd} value={sd}>{sd}</option>
-                ))}
-              </select>
+              />
             </div>
           </div>
         )}
@@ -792,6 +792,17 @@ export default function CandidatesPage() {
                 )}
               </tbody>
             </table>
+            
+            {/* Pagination Controls */}
+            <div style={{ padding: '0 20px 20px 20px' }}>
+              <Pagination 
+                currentPage={currentPage}
+                totalPages={Math.ceil((candidatesCount || 0) / pageSize)}
+                onPageChange={(page) => setCurrentPage(page)}
+                totalCount={candidatesCount}
+                pageSize={pageSize}
+              />
+            </div>
           </div>
         )}
 
