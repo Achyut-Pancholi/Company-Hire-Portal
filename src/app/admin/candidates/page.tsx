@@ -168,14 +168,14 @@ export default function CandidatesPage() {
     if (job?.sub_department) return job.sub_department;
     const jobApplied = (c.jobApplied || c.job_applied || '').toLowerCase();
     const fallbackJob = jobs.find((j: any) => j.sub_department && jobApplied.includes(j.sub_department.toLowerCase()));
-    return fallbackJob?.sub_department || null;
+    return fallbackJob?.sub_department || c.jobApplied || c.job_applied || null;
   };
   const getCandidateDept = (c: any) => {
     const job = jobs.find((j: any) => j.title === c.jobApplied || j.title === c.job_applied);
     if (job?.department) return job.department;
     const jobApplied = (c.jobApplied || c.job_applied || '').toLowerCase();
     const fallbackJob = jobs.find((j: any) => j.department && jobApplied.includes(j.department.toLowerCase()));
-    return fallbackJob?.department || null;
+    return fallbackJob?.department || c.department || null;
   };
   // Filter candidates — fail-open: if dept/subdept unknown, still show candidate
   const filteredCandidates = candidates.filter((c: any) => {

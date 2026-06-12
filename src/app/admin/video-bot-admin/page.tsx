@@ -244,15 +244,28 @@ const VideoBot = () => {
   };
 
   const filteredCandidatesForDropdown = candidates.filter((c: any) => {
-    // If no department selected yet, show nothing
     if (!inviteDepartment) return false;
 
-    // Match candidate's job against the jobs table to find dept
-    const job = jobs.find((j: any) => j.title === (c.jobApplied || c.job_applied));
+    const jobApplied = (c.jobApplied || c.job_applied || '').toLowerCase();
     
-    // If we find a matching job, use its department; otherwise try candidate's own dept field
-    const candidateDept = job?.department || c.department;
+    const exactJob = jobs.find((j: any) => j.title === (c.jobApplied || c.job_applied));
+    const fallbackJob = jobs.find((j: any) => 
+      (j.sub_department && jobApplied.includes(j.sub_department.toLowerCase())) ||
+      (j.department && jobApplied.includes(j.department.toLowerCase()))
+    );
+
+    const matchedJob = exactJob || fallbackJob;
+    const candidateDept = matchedJob?.department || c.department;
+    const candidateSubDept = matchedJob?.sub_department || c.sub_department;
+
+    // If candidate has no recognizable department, show them so they can be assigned
+    if (!candidateDept) return true;
+
     if (candidateDept !== inviteDepartment) return false;
+    
+    if (inviteSubDepartment && candidateSubDept && candidateSubDept !== inviteSubDepartment) {
+      return false;
+    }
     
     return true;
   });
