@@ -349,40 +349,30 @@ const VideoBot = () => {
           <div className="grid grid-cols-3 gap-4" style={{ marginBottom: '1.5rem' }}>
             <div className="form-group">
               <label className="form-label">Department</label>
-              <select 
-                className="form-select" 
+              <SearchableDropdown 
+                options={availableDepartments}
                 value={inviteDepartment}
-                onChange={e => {
-                  const newDept = e.target.value;
+                onChange={(newDept) => {
                   setInviteDepartment(newDept);
                   setInviteSubDepartment('');
                   setInviteCandidateId('');
                 }}
-              >
-                <option value="">Select Department...</option>
-                {availableDepartments.map((d: any) => (
-                  <option key={d} value={d}>{d}</option>
-                ))}
-              </select>
+                placeholder="Select Department..."
+              />
             </div>
 
             <div className="form-group">
               <label className="form-label">Sub-Department</label>
-              <select 
-                className="form-select"
+              <SearchableDropdown 
+                options={inviteDepartment ? getAvailableSubDepartments(inviteDepartment) : []}
                 value={inviteSubDepartment}
-                disabled={!inviteDepartment}
-                onChange={e => {
-                  const newSub = e.target.value;
+                onChange={(newSub) => {
                   setInviteSubDepartment(newSub);
                   setInviteCandidateId('');
                 }}
-              >
-                <option value="">Select Sub-Department...</option>
-                {inviteDepartment && (getAvailableSubDepartments(inviteDepartment)).map((sd: any) => (
-                  <option key={sd} value={sd}>{sd}</option>
-                ))}
-              </select>
+                placeholder="Select Sub-Department..."
+                disabled={!inviteDepartment}
+              />
               <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)', marginTop: '0.25rem', display: 'block' }}>
                 Candidate will be asked all questions for this sub-department.
               </span>
@@ -390,12 +380,16 @@ const VideoBot = () => {
 
             <div className="form-group">
               <label className="form-label">Select Candidate</label>
-              <select className="form-select" value={inviteCandidateId} onChange={e => setInviteCandidateId(e.target.value)}>
-                <option value="">Choose candidate...</option>
-                {filteredCandidatesForDropdown.map((c: any) => (
-                  <option key={c.id} value={c.id}>{c.name} ({c.jobApplied || 'No Sub-Department'})</option>
-                ))}
-              </select>
+              <SearchableDropdown 
+                options={filteredCandidatesForDropdown.map((c: any) => ({
+                  value: c.id.toString(),
+                  label: `${c.name} (${c.jobApplied || 'No Sub-Department'})`
+                }))}
+                value={inviteCandidateId}
+                onChange={(val) => setInviteCandidateId(val)}
+                placeholder="Choose candidate..."
+                disabled={!inviteSubDepartment}
+              />
               {filteredCandidatesForDropdown.length === 0 && (
                 <span style={{ fontSize: '0.75rem', color: 'var(--danger)', marginTop: '0.25rem', display: 'block' }}>
                   No candidates found for this department.

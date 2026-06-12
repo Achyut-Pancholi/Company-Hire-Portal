@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase/server";
 import { requireInternalSecret } from "@/lib/auth";
 
+export const dynamic = 'force-dynamic';
+
 // Fetch all global questions
 export async function GET() {
   try {
