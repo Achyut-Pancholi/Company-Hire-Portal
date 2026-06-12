@@ -96,6 +96,43 @@ export async function DELETE(request: NextRequest) {
   }
 }
 
+export async function PATCH(request: NextRequest) {
+  const authError = await requireInternalSecret(request);
+  if (authError) return authError;
+  try {
+    const body = await request.json();
+    const { id, question_text, is_mandatory, department, sub_department } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: "question id is required" }, { status: 400 });
+    }
+
+    const updates: any = {};
+    if (question_text !== undefined) updates.question_text = question_text;
+    if (is_mandatory !== undefined) updates.is_mandatory = is_mandatory;
+    if (department !== undefined) updates.department = department;
+    if (sub_department !== undefined) updates.sub_department = sub_department;
+
+    const supabase = getServiceSupabase();
+    const { data, error } = await supabase
+      .from("questions_bank")
+      .update(updates)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error updating question:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+  } catch (error: any) {
+    console.error("Internal Server Error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,

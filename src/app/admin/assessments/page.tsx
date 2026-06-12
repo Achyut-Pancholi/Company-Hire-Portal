@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { CheckSquare, FileSpreadsheet, Plus, X, Upload, Download, CheckCircle, AlertCircle, Edit2, Trash2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useAppContext } from '@/components/admin/context/AppContext';
+import SearchableDropdown from '@/components/admin/SearchableDropdown';
 
 const BASELINE_FALLBACK = {
   "Operations|HR": [
@@ -74,13 +75,13 @@ export default function AssessmentsPage() {
   const [subDept, setSubDept] = useState<string>('');
 
   // Questions State
-  const [questions, setQuestions] = useState<string[]>([]);
+  const [questions, setQuestions] = useState<any[]>([]);
   const [toast, setToast] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [modalValue, setModalValue] = useState('');
 
   // Native input ref for MCQ file upload
@@ -253,7 +254,7 @@ export default function AssessmentsPage() {
         const filtered = allQuestions.filter((q: any) => 
           q.department === targetDept && q.sub_department === subDept
         );
-        setQuestions(filtered.map((q: any) => q.question_text));
+        setQuestions(filtered);
       }
     } catch (e) {
       console.error("Failed to fetch video bot questions:", e);
@@ -274,90 +275,40 @@ export default function AssessmentsPage() {
     }
   }, [toast]);
 
-  // Save current questions to database (questions_bank table)
-  const handleSaveConfig = async () => {
-    // Filter out empty entries
-    const cleanedQuestions = questions.map(q => q.trim()).filter(Boolean);
-
+  // Delete question
+  const handleDeleteQuestion = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this question?")) return;
     try {
-      // 1. Delete existing questions for this dept + sub_dept
-      const existingRes = await fetch(`/api/questions`, {
+      const res = await fetch(`/api/questions?id=${id}`, {
+        method: 'DELETE',
         headers: { 'x-api-key': 'kl_internal_admin_secret_2026_secure' }
       });
-      if (existingRes.ok) {
-        const allQuestions = await existingRes.json();
-        const toDelete = allQuestions.filter((q: any) => 
-          q.department === targetDept && q.sub_department === subDept
-        );
-        // Delete old questions
-        for (const q of toDelete) {
-          await fetch(`/api/questions?id=${q.id}`, {
-            method: 'DELETE',
-            headers: { 'x-api-key': 'kl_internal_admin_secret_2026_secure' }
-          });
-        }
+      if (res.ok) {
+        setQuestions(questions.filter(q => q.id !== id));
+        setToast({ type: 'success', message: 'Question deleted successfully.' });
+      } else {
+        const err = await res.json();
+        setToast({ type: 'error', message: err.error || 'Failed to delete question.' });
       }
-
-      // 2. Insert all current questions
-      for (const qText of cleanedQuestions) {
-        await fetch('/api/questions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': 'kl_internal_admin_secret_2026_secure'
-          },
-          body: JSON.stringify({
-            department: targetDept,
-            sub_department: subDept,
-            question_text: qText,
-            is_mandatory: false
-          })
-        });
-      }
-
-      setQuestions(cleanedQuestions);
-      setToast({
-        type: 'success',
-        message: `Configuration saved to database for ${targetDept} → ${subDept}. (${cleanedQuestions.length} questions)`
-      });
     } catch (err) {
-      console.error("Error saving questions to DB:", err);
-      setToast({
-        type: 'error',
-        message: 'Failed to save questions to database.'
-      });
+      console.error("Error deleting question:", err);
+      setToast({ type: 'error', message: 'Error deleting question.' });
     }
-  };
-
-  // Inline question changes
-  const handleQuestionChange = (index: number, val: string) => {
-    const nextQ = [...questions];
-    nextQ[index] = val;
-    setQuestions(nextQ);
-  };
-
-  // Delete question
-  const handleDeleteQuestion = (index: number) => {
-    const nextQ = questions.filter((_, i) => i !== index);
-    setQuestions(nextQ);
-    setToast({
-      type: 'success',
-      message: 'Question removed from list.'
-    });
   };
 
   // Open modal to add a new question
   const handleAddQuestion = () => {
     setModalMode('add');
     setModalValue('');
+    setEditingQuestionId(null);
     setIsModalOpen(true);
   };
 
   // Open modal to edit an existing question
-  const handleOpenEditModal = (index: number) => {
+  const handleOpenEditModal = (question: any) => {
     setModalMode('edit');
-    setEditingIndex(index);
-    setModalValue(questions[index]);
+    setEditingQuestionId(question.id);
+    setModalValue(question.question_text);
     setIsModalOpen(true);
   };
 
@@ -367,7 +318,6 @@ export default function AssessmentsPage() {
     if (!modalValue.trim()) return;
 
     if (modalMode === 'add') {
-      // Save directly to DB
       try {
         const res = await fetch('/api/questions', {
           method: 'POST',
@@ -383,8 +333,9 @@ export default function AssessmentsPage() {
           })
         });
         if (res.ok) {
-          setQuestions([...questions, modalValue.trim()]);
-          setToast({ type: 'success', message: 'Question added and saved to database.' });
+          const newQ = await res.json();
+          setQuestions([...questions, newQ]);
+          setToast({ type: 'success', message: 'Question added successfully.' });
         } else {
           const err = await res.json();
           setToast({ type: 'error', message: err.error || 'Failed to add question.' });
@@ -392,17 +343,35 @@ export default function AssessmentsPage() {
       } catch (err) {
         setToast({ type: 'error', message: 'Error adding question.' });
       }
-    } else if (modalMode === 'edit' && editingIndex !== null) {
-      // For edit, update local state - user clicks "Save Configuration" to persist all changes
-      const nextQ = [...questions];
-      nextQ[editingIndex] = modalValue.trim();
-      setQuestions(nextQ);
-      setToast({ type: 'success', message: 'Question updated. Click "Save Configuration" to persist changes.' });
+    } else if (modalMode === 'edit' && editingQuestionId) {
+      try {
+        const res = await fetch('/api/questions', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': 'kl_internal_admin_secret_2026_secure'
+          },
+          body: JSON.stringify({
+            id: editingQuestionId,
+            question_text: modalValue.trim()
+          })
+        });
+        if (res.ok) {
+          const updatedQ = await res.json();
+          setQuestions(questions.map(q => q.id === editingQuestionId ? updatedQ : q));
+          setToast({ type: 'success', message: 'Question updated successfully.' });
+        } else {
+          const err = await res.json();
+          setToast({ type: 'error', message: err.error || 'Failed to update question.' });
+        }
+      } catch (err) {
+        setToast({ type: 'error', message: 'Error updating question.' });
+      }
     }
 
     setIsModalOpen(false);
     setModalValue('');
-    setEditingIndex(null);
+    setEditingQuestionId(null);
   };
 
   // MCQ Spreadsheet actions
@@ -627,58 +596,27 @@ export default function AssessmentsPage() {
       }}>
         <div className="form-group" style={{ marginBottom: 0 }}>
           <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-main)' }}>Target Department</label>
-          <select 
-            value={targetDept} 
-            onChange={e => setTargetDept(e.target.value)}
-            className="form-control"
-            style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '13.5px', color: 'var(--text-dark)', outline: 'none' }}
-          >
-            {availableDepartments.map(dept => (
-              <option key={dept} value={dept}>{dept}</option>
-            ))}
-          </select>
+          <SearchableDropdown 
+            options={availableDepartments}
+            value={targetDept}
+            onChange={(val) => {
+              setTargetDept(val);
+              setSubDept(getSubDepartments(val)[0] || '');
+            }}
+            placeholder="Select Department"
+          />
         </div>
 
         <div className="form-group" style={{ marginBottom: 0 }}>
           <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-main)' }}>Sub-Department Track</label>
-          <select 
-            value={subDept} 
-            onChange={e => setSubDept(e.target.value)}
-            className="form-control"
-            style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '13.5px', color: 'var(--text-dark)', outline: 'none' }}
-          >
-            {subDeptList.map(track => (
-              <option key={track} value={track}>{track}</option>
-            ))}
-          </select>
+          <SearchableDropdown 
+            options={subDeptList}
+            value={subDept}
+            onChange={(val) => setSubDept(val)}
+            placeholder="Select Sub Department"
+          />
         </div>
 
-        {activeTab === 'videobot' && (
-          <button 
-            onClick={handleSaveConfig}
-            className="btn-submit"
-            style={{
-              backgroundColor: 'var(--brand-teal)',
-              color: '#ffffff',
-              border: 'none',
-              padding: '10px 24px',
-              borderRadius: '6px',
-              fontWeight: '600',
-              fontSize: '13.5px',
-              cursor: 'pointer',
-              height: '42px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 2px 4px rgba(13, 148, 136, 0.2)',
-              transition: 'background-color 0.15s ease'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--brand-teal-hover)'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--brand-teal)'}
-          >
-            Save Configuration
-          </button>
-        )}
       </div>
 
       {/* PANEL A: Video Bot Screening Questions */}
@@ -732,9 +670,9 @@ export default function AssessmentsPage() {
 
           {/* Question stack */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {questions.map((qText, index) => (
+            {questions.map((q, index) => (
               <div 
-                key={index} 
+                key={q.id || index} 
                 className="q-entry-row"
                 style={{
                   display: 'flex',
@@ -772,7 +710,7 @@ export default function AssessmentsPage() {
                   lineHeight: '1.6',
                   wordBreak: 'break-word'
                 }}>
-                  {qText}
+                  {q.question_text}
                 </div>
 
                 <div style={{
@@ -783,7 +721,7 @@ export default function AssessmentsPage() {
                 }}>
                   <button 
                     type="button"
-                    onClick={() => handleOpenEditModal(index)}
+                    onClick={() => handleOpenEditModal(q)}
                     title="Edit Question"
                     style={{
                       backgroundColor: '#ffffff',
@@ -799,27 +737,20 @@ export default function AssessmentsPage() {
                       fontWeight: '600',
                       transition: 'all 0.15s ease'
                     }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'var(--gray-50)';
-                      e.currentTarget.style.borderColor = 'var(--brand-navy)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = '#ffffff';
-                      e.currentTarget.style.borderColor = 'var(--border)';
-                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-50)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ffffff'}
                   >
-                    <Edit2 size={13} />
-                    Edit
+                    <Edit2 size={12} /> Edit
                   </button>
                   <button 
                     type="button"
-                    onClick={() => handleDeleteQuestion(index)}
+                    onClick={() => handleDeleteQuestion(q.id)}
                     title="Delete Question"
                     style={{
                       backgroundColor: '#ffffff',
-                      border: '1px solid var(--border)',
+                      border: '1px solid var(--danger-light)',
                       borderRadius: '6px',
-                      color: '#ef4444',
+                      color: 'var(--danger)',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -829,17 +760,10 @@ export default function AssessmentsPage() {
                       fontWeight: '600',
                       transition: 'all 0.15s ease'
                     }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#fef2f2';
-                      e.currentTarget.style.borderColor = '#fca5a5';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = '#ffffff';
-                      e.currentTarget.style.borderColor = 'var(--border)';
-                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fee2e2'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ffffff'}
                   >
-                    <Trash2 size={13} />
-                    Delete
+                    <Trash2 size={12} /> Delete
                   </button>
                 </div>
               </div>
