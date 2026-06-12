@@ -8,9 +8,11 @@ import { useAppContext } from '@/components/admin/context/AppContext';
 function DeletePopover({
   onConfirm,
   onCancel,
+  message = "Delete this sub-department?",
 }: {
   onConfirm: () => void;
   onCancel: () => void;
+  message?: string;
 }) {
   return (
     <div
@@ -31,7 +33,7 @@ function DeletePopover({
       }}
     >
       <p style={{ fontSize: '0.85rem', color: 'var(--text-main)', margin: 0, fontWeight: 500 }}>
-        Delete this sub-department?
+        {message}
       </p>
       <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
         <button
@@ -295,16 +297,19 @@ function DeptCard({
   deptName,
   subDepts,
   onEditParent,
+  onDeleteParent,
   onSaveSubDept,
   onDeleteSubDept,
 }: {
   deptName: string;
   subDepts: any[];
   onEditParent: () => void;
+  onDeleteParent: () => void;
   onSaveSubDept: (id: string, subDept: string) => Promise<void>;
   onDeleteSubDept: (job: any) => Promise<void>;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [confirmDeleteParent, setConfirmDeleteParent] = useState(false);
 
   return (
     <div
@@ -350,6 +355,23 @@ function DeptCard({
           >
             <Edit2 size={14} /> Edit
           </button>
+          <div style={{ position: 'relative' }}>
+            <button
+              className="btn btn-ghost"
+              style={{ padding: '0.35rem 0.65rem', fontSize: '0.8rem', color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+              onClick={() => setConfirmDeleteParent(true)}
+              title="Delete department"
+            >
+              <Trash2 size={14} /> Delete
+            </button>
+            {confirmDeleteParent && (
+              <DeletePopover
+                onConfirm={() => { setConfirmDeleteParent(false); onDeleteParent(); }}
+                onCancel={() => setConfirmDeleteParent(false)}
+                message="Delete entire department?"
+              />
+            )}
+          </div>
           <button
             className="btn btn-ghost"
             style={{ padding: '0.35rem', color: 'var(--gray-400)' }}
@@ -518,6 +540,17 @@ const JobPostings = () => {
     }
   };
 
+  // Delete parent department
+  const handleDeleteParentDept = async (deptName: string) => {
+    try {
+      const res = await apiFetch(`/api/jobs?department=${encodeURIComponent(deptName)}`, { method: 'DELETE' });
+      if ((res as any).ok !== false) refreshJobs();
+      else alert('Failed to delete department');
+    } catch {
+      alert('Error deleting department');
+    }
+  };
+
   // Open modal to edit department name
   const handleEditParent = (deptName: string, subDepts: any[]) => {
     const first = subDepts[0];
@@ -595,6 +628,7 @@ const JobPostings = () => {
                 deptName={deptName}
                 subDepts={subDepts}
                 onEditParent={() => handleEditParent(deptName, subDepts)}
+                onDeleteParent={() => handleDeleteParentDept(deptName)}
                 onSaveSubDept={handleSaveSubDept}
                 onDeleteSubDept={handleDeleteSubDept}
               />

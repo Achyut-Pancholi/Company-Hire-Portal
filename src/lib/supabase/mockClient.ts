@@ -39,6 +39,7 @@ class QueryBuilder {
   private data: any[];
   private currentQuery: any[];
   private isSingle = false;
+  private pendingMutation: { type: 'insert' | 'update' | 'delete', payload?: any } | null = null;
 
   constructor(tableName: string) {
     this.tableName = tableName;
@@ -82,64 +83,61 @@ class QueryBuilder {
   }
 
   insert(rowData: any) {
-    const db = readDb();
-    const table = db[this.tableName] || [];
-    
-    // Add default fields
-    const newRecord = {
-      id: rowData.id || `${this.tableName.slice(0, -1)}-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      created_at: new Date().toISOString(),
-      ...rowData,
-    };
-    
-    table.push(newRecord);
-    db[this.tableName] = table;
-    writeDb(db);
-
-    this.currentQuery = [newRecord];
+    this.pendingMutation = { type: 'insert', payload: rowData };
     return this;
   }
 
   update(updates: any) {
-    const db = readDb();
-    const table = db[this.tableName] || [];
-    
-    // We update all matched items in current query
-    const matchedIds = this.currentQuery.map((item) => item.id);
-    const updatedRecords: any[] = [];
-
-    const updatedTable = table.map((item: any) => {
-      if (matchedIds.includes(item.id)) {
-        const updated = { ...item, ...updates };
-        updatedRecords.push(updated);
-        return updated;
-      }
-      return item;
-    });
-
-    db[this.tableName] = updatedTable;
-    writeDb(db);
-
-    this.currentQuery = updatedRecords;
+    this.pendingMutation = { type: 'update', payload: updates };
     return this;
   }
 
   delete() {
-    const db = readDb();
-    const table = db[this.tableName] || [];
-    
-    const matchedIds = this.currentQuery.map((item) => item.id);
-    const remainingTable = table.filter((item: any) => !matchedIds.includes(item.id));
-
-    db[this.tableName] = remainingTable;
-    writeDb(db);
-
+    this.pendingMutation = { type: 'delete' };
     return this;
   }
 
   // Thenable trigger to support await on queries directly
   async then(resolve: any, reject: any) {
     try {
+      if (this.pendingMutation) {
+        const db = readDb();
+        const table = db[this.tableName] || [];
+        
+        if (this.pendingMutation.type === 'insert') {
+          const rowData = this.pendingMutation.payload;
+          const newRecord = {
+            id: rowData.id || `${this.tableName.slice(0, -1)}-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            created_at: new Date().toISOString(),
+            ...rowData,
+          };
+          table.push(newRecord);
+          db[this.tableName] = table;
+          writeDb(db);
+          this.currentQuery = [newRecord];
+        } else if (this.pendingMutation.type === 'update') {
+          const matchedIds = this.currentQuery.map((item) => item.id);
+          const updatedRecords: any[] = [];
+          const updatedTable = table.map((item: any) => {
+            if (matchedIds.includes(item.id)) {
+              const updated = { ...item, ...this.pendingMutation!.payload };
+              updatedRecords.push(updated);
+              return updated;
+            }
+            return item;
+          });
+          db[this.tableName] = updatedTable;
+          writeDb(db);
+          this.currentQuery = updatedRecords;
+        } else if (this.pendingMutation.type === 'delete') {
+          const matchedIds = this.currentQuery.map((item) => item.id);
+          const remainingTable = table.filter((item: any) => !matchedIds.includes(item.id));
+          db[this.tableName] = remainingTable;
+          writeDb(db);
+          this.currentQuery = [];
+        }
+      }
+
       const resultData = this.isSingle ? this.currentQuery[0] : this.currentQuery;
       resolve({ data: resultData, error: null });
     } catch (e) {

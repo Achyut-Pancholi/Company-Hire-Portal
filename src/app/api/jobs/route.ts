@@ -102,13 +102,22 @@ export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
+    const departmentName = searchParams.get("department");
     
-    if (!id) {
-      return NextResponse.json({ error: "job id is required" }, { status: 400 });
+    if (!id && !departmentName) {
+      return NextResponse.json({ error: "job id or department is required" }, { status: 400 });
     }
 
     const supabase = getServiceSupabase();
-    const { error } = await supabase.from("jobs").delete().eq("id", id);
+    let error;
+
+    if (departmentName) {
+      const { error: deptError } = await supabase.from("jobs").delete().eq("department", departmentName);
+      error = deptError;
+    } else {
+      const { error: idError } = await supabase.from("jobs").delete().eq("id", id);
+      error = idError;
+    }
 
     if (error) {
       console.error("Error deleting job:", error);

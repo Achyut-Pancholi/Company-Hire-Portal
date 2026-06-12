@@ -84,6 +84,7 @@ export async function POST(request: NextRequest) {
       phone,
       skills,
       job_applied,
+      job_id,
       resume_status,
       form_status,
       video_status,
@@ -105,6 +106,20 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = getServiceSupabase();
+    
+    let resolvedJobId = job_id;
+    if (!resolvedJobId && job_applied) {
+      const { data: jobMatch } = await supabase
+        .from("jobs")
+        .select("id")
+        .eq("title", job_applied)
+        .limit(1)
+        .single();
+      if (jobMatch) {
+        resolvedJobId = jobMatch.id;
+      }
+    }
+
     const { data, error } = await supabase
       .from("candidates")
       .insert({
@@ -113,6 +128,7 @@ export async function POST(request: NextRequest) {
         phone,
         skills: skills || [],
         job_applied,
+        job_id: resolvedJobId,
         resume_status: resume_status || "Pending",
         form_status: form_status || "Pending",
         video_status: video_status || "Pending",
