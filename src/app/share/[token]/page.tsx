@@ -42,7 +42,7 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
       {/* Nav */}
       <div className="border-b border-[#E2E8F0] bg-white px-6 py-4 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-4">
-          <Logo href="/" size="sm" />
+          <Logo href="/" size="sm" theme="light" />
           <span className="px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-xs font-semibold">
             Candidate Review
           </span>

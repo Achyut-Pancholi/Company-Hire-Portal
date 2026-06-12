@@ -48,7 +48,7 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-transparent to-violet-600/10 pointer-events-none" />
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-blue-600/8 rounded-full blur-[100px] pointer-events-none" />
 
-        <Logo href="/" size="lg" />
+        <Logo href="/" size="lg" theme="dark" />
 
         <div className="relative">
           <h2 className="text-4xl font-bold text-white leading-tight mb-4">

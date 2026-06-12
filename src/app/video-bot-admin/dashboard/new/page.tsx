@@ -253,7 +253,7 @@ export default function NewInterviewPage() {
         <Link href="/admin/dashboard" className="text-white/40 hover:text-white transition-colors">
           <ArrowLeft className="w-4 h-4" />
         </Link>
-        <Logo href="/admin/dashboard" size="sm" />
+        <Logo href="/admin/dashboard" size="sm" theme="dark" />
         <span className="text-white/20">/</span>
         <span className="text-white/60 text-sm">New Interview</span>
       </div>

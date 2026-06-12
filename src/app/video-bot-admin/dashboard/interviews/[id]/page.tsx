@@ -114,7 +114,7 @@ export default function InterviewReviewPage() {
           <a href={PORTAL_URL} className="text-slate-500 hover:text-slate-800 transition-colors">
             <ArrowLeft className="w-4 h-4" />
           </a>
-          <Logo href={PORTAL_URL} size="md" />
+          <Logo href={PORTAL_URL} size="md" theme="light" />
           <span className="text-slate-300">/</span>
           <span className="text-slate-600 text-sm font-semibold">Interview Review</span>
         </div>
