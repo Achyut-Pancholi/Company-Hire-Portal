@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Search } from 'lucide-react';
 
+export type DropdownOption = string | { label: string; value: string };
+
 interface SearchableDropdownProps {
-  options: string[];
+  options: DropdownOption[];
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -31,9 +33,15 @@ export default function SearchableDropdown({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const getLabel = (opt: DropdownOption) => typeof opt === 'string' ? opt : opt.label;
+  const getValue = (opt: DropdownOption) => typeof opt === 'string' ? opt : opt.value;
+
   const filteredOptions = options.filter(option =>
-    option.toLowerCase().includes(searchTerm.toLowerCase())
+    getLabel(option).toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const selectedOption = options.find(opt => getValue(opt) === value);
+  const displayLabel = selectedOption ? getLabel(selectedOption) : (value || placeholder);
 
   return (
     <div ref={dropdownRef} style={{ position: 'relative', width: '100%', minWidth: '200px' }}>
@@ -52,7 +60,7 @@ export default function SearchableDropdown({
         }}
       >
         <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {value || placeholder}
+          {displayLabel}
         </span>
         <ChevronDown size={16} color="var(--text-muted, #64748b)" />
       </div>
@@ -96,30 +104,34 @@ export default function SearchableDropdown({
           
           <div style={{ overflowY: 'auto', flex: 1 }}>
             {filteredOptions.length > 0 ? (
-              filteredOptions.map((option, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => {
-                    onChange(option);
-                    setIsOpen(false);
-                    setSearchTerm('');
-                  }}
-                  style={{
-                    padding: '8px 12px',
-                    cursor: 'pointer',
-                    background: value === option ? 'var(--primary-light, #eff6ff)' : 'transparent',
-                    color: value === option ? 'var(--primary-color, #2563eb)' : 'var(--text-primary, #0f172a)',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (value !== option) e.currentTarget.style.background = 'var(--bg-hover, #f1f5f9)';
-                  }}
-                  onMouseLeave={(e) => {
-                    if (value !== option) e.currentTarget.style.background = 'transparent';
-                  }}
-                >
-                  {option}
-                </div>
-              ))
+              filteredOptions.map((option, idx) => {
+                const optValue = getValue(option);
+                const optLabel = getLabel(option);
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => {
+                      onChange(optValue);
+                      setIsOpen(false);
+                      setSearchTerm('');
+                    }}
+                    style={{
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      background: value === optValue ? 'var(--primary-light, #eff6ff)' : 'transparent',
+                      color: value === optValue ? 'var(--primary-color, #2563eb)' : 'var(--text-primary, #0f172a)',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (value !== optValue) e.currentTarget.style.background = 'var(--bg-hover, #f1f5f9)';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (value !== optValue) e.currentTarget.style.background = 'transparent';
+                    }}
+                  >
+                    {optLabel}
+                  </div>
+                );
+              })
             ) : (
               <div style={{ padding: '8px 12px', color: 'var(--text-muted, #64748b)', fontStyle: 'italic', fontSize: '0.9rem' }}>
                 No results found
