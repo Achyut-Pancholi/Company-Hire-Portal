@@ -12,11 +12,11 @@ export async function GET(request: Request) {
     
     let query = supabase
       .from("interviews")
-      .select("*, candidates!inner(name, email, jobs(department, sub_department))", { count: "exact" });
+      .select("*", { count: "exact" });
 
     if (search) {
-      // Basic search on candidate name
-      query = query.or(`candidates.name.ilike.%${search}%,candidates.email.ilike.%${search}%`);
+      // Basic search on candidate name and email
+      query = query.or(`candidate_name.ilike.%${search}%,candidate_email.ilike.%${search}%`);
     }
 
     const from = (page - 1) * limit;
