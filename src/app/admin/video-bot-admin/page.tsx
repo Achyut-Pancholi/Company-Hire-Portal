@@ -246,17 +246,26 @@ const VideoBot = () => {
   const filteredCandidatesForDropdown = candidates.filter((c: any) => {
     if (!inviteDepartment) return false;
 
-    const jobApplied = (c.jobApplied || c.job_applied || '').toLowerCase();
-    
-    const exactJob = jobs.find((j: any) => j.title === (c.jobApplied || c.job_applied));
-    const fallbackJob = jobs.find((j: any) => 
-      (j.sub_department && jobApplied.includes(j.sub_department.toLowerCase())) ||
-      (j.department && jobApplied.includes(j.department.toLowerCase()))
-    );
+    let candidateDept = c.department;
+    let candidateSubDept = c.sub_department;
 
-    const matchedJob = exactJob || fallbackJob;
-    const candidateDept = matchedJob?.department || c.department;
-    const candidateSubDept = matchedJob?.sub_department || c.sub_department;
+    if (c.job_id) {
+      const job = jobs.find((j: any) => j.id === c.job_id);
+      if (job) {
+        candidateDept = job.department;
+        candidateSubDept = job.sub_department;
+      }
+    } else {
+      const jobApplied = (c.jobApplied || c.job_applied || '').toLowerCase();
+      const exactJob = jobs.find((j: any) => j.title === (c.jobApplied || c.job_applied));
+      const fallbackJob = jobs.find((j: any) => 
+        (j.sub_department && jobApplied.includes(j.sub_department.toLowerCase())) ||
+        (j.department && jobApplied.includes(j.department.toLowerCase()))
+      );
+      const matchedJob = exactJob || fallbackJob;
+      candidateDept = matchedJob?.department || candidateDept;
+      candidateSubDept = matchedJob?.sub_department || candidateSubDept;
+    }
 
     // If candidate has no recognizable department, show them so they can be assigned
     if (!candidateDept) return true;

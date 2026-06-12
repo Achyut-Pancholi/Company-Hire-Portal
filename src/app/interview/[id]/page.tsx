@@ -629,7 +629,7 @@ export default function InterviewPage() {
         icon={<CheckCircle2 className="w-14 h-14 text-emerald-500" />}
         color="emerald"
         title="Interview Complete! 🎉"
-        message={`Thank you, ${interview?.candidate_name?.split(" ")[0]}! Your interview for ${interview?.sub_department} has been submitted. We'll be in touch soon.`}
+        message={`Thank you, ${interview?.candidate_name ? interview.candidate_name.split(" ")[0] : "Candidate"}! Your interview for ${interview?.sub_department || "this position"} has been submitted. We'll be in touch soon.`}
         subtitle="You can now close this tab."
       />
     );

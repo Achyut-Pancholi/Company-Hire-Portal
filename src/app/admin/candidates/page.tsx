@@ -164,6 +164,10 @@ export default function CandidatesPage() {
 
   // Helper to extract candidate details
   const getCandidateSubDept = (c: any) => {
+    if (c.job_id) {
+      const job = jobs.find((j: any) => j.id === c.job_id);
+      if (job?.sub_department) return job.sub_department;
+    }
     const job = jobs.find((j: any) => j.title === c.jobApplied || j.title === c.job_applied);
     if (job?.sub_department) return job.sub_department;
     const jobApplied = (c.jobApplied || c.job_applied || '').toLowerCase();
@@ -171,6 +175,10 @@ export default function CandidatesPage() {
     return fallbackJob?.sub_department || c.jobApplied || c.job_applied || null;
   };
   const getCandidateDept = (c: any) => {
+    if (c.job_id) {
+      const job = jobs.find((j: any) => j.id === c.job_id);
+      if (job?.department) return job.department;
+    }
     const job = jobs.find((j: any) => j.title === c.jobApplied || j.title === c.job_applied);
     if (job?.department) return job.department;
     const jobApplied = (c.jobApplied || c.job_applied || '').toLowerCase();
@@ -269,6 +277,7 @@ export default function CandidatesPage() {
           phone: data.personalInformation?.phoneNumber || 'No phone provided',
           skills: data.skillExtraction?.extractedSkills || [],
           job_applied: resolvedRole,
+          job_id: matchedJob ? matchedJob.id : null,
           resume_status: 'Parsed',
           form_status: 'N/A',
           video_status: 'Pending',
