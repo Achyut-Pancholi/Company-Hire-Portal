@@ -86,6 +86,7 @@ export default function CandidatesPage() {
   const [activeCandidateForEmail, setActiveCandidateForEmail] = useState<any | null>(null);
   const [senders, setSenders] = useState<string[]>([]);
   const [selectedSender, setSelectedSender] = useState('');
+  const [candidateName, setCandidateName] = useState('');
   const [candidateEmail, setCandidateEmail] = useState('');
   const [selectedQuestionSet, setSelectedQuestionSet] = useState('');
   const [emailSubject, setEmailSubject] = useState('Action Required: Complete your Video AI Screening with ElastiCrew');
@@ -116,31 +117,37 @@ export default function CandidatesPage() {
 
   // Update email message details dynamically based on selected candidate and question set
   useEffect(() => {
-    if (activeCandidateForEmail) {
-      setCandidateEmail(activeCandidateForEmail.email || '');
+    const latestCandidate = activeCandidateForEmail
+      ? (candidates.find((c: any) => c.id === activeCandidateForEmail.id) || activeCandidateForEmail)
+      : null;
+
+    if (latestCandidate) {
+      setCandidateEmail(latestCandidate.email || '');
+      setCandidateName(latestCandidate.name || '');
       
       let position = 'Common';
       if (selectedQuestionSet) {
         const matchedJob = jobs.find((j: any) => j.id === selectedQuestionSet);
         if (matchedJob) position = matchedJob.sub_department || matchedJob.title;
       } else {
-        const candidateJob = jobs.find((j: any) => j.title === (activeCandidateForEmail.jobApplied || activeCandidateForEmail.job_applied));
+        const candidateJob = jobs.find((j: any) => j.title === (latestCandidate.jobApplied || latestCandidate.job_applied));
         if (candidateJob) position = candidateJob.sub_department || candidateJob.title;
       }
 
       if (inviteType === 'mcq') {
         setEmailSubject(`Action Required: Complete your MCQ Objective Assessment with ElastiCrew — ${position} Position`);
-        setEmailBody(`Hi ${activeCandidateForEmail.name},\n\nPlease complete your MCQ Objective Assessment configured for the ${position} position.\n\nThis is a timed, multiple-choice assessment designed to evaluate your aptitude. Complete it using the secure link below:\n\n${window.location.origin}/interview/${activeCandidateForEmail.id}/mcq\n\nBest regards,\nElastiCrew Hiring Team`);
+        setEmailBody(`Hi ${latestCandidate.name},\n\nPlease complete your MCQ Objective Assessment configured for the ${position} position.\n\nThis is a timed, multiple-choice assessment designed to evaluate your aptitude. Complete it using the secure link below:\n\n${window.location.origin}/interview/${latestCandidate.id}/mcq\n\nBest regards,\nElastiCrew Hiring Team`);
       } else {
         setEmailSubject(`Action Required: Complete your Video AI Screening with ElastiCrew — ${position} Position`);
-        setEmailBody(`Hi ${activeCandidateForEmail.name},\n\nPlease complete your Video AI Screening assessment configured for the ${position} position.\n\nThis workflow features a targeted question block. Complete it using the secure link inside your tracking workspace.\n\nBest regards,\nElastiCrew Hiring Team`);
+        setEmailBody(`Hi ${latestCandidate.name},\n\nPlease complete your Video AI Screening assessment configured for the ${position} position.\n\nThis workflow features a targeted question block. Complete it using the secure link inside your tracking workspace.\n\nBest regards,\nElastiCrew Hiring Team`);
       }
     } else {
       setCandidateEmail('');
+      setCandidateName('');
       setEmailSubject('');
       setEmailBody('');
     }
-  }, [activeCandidateForEmail, selectedQuestionSet, jobs, inviteType]);
+  }, [activeCandidateForEmail, candidates, selectedQuestionSet, jobs, inviteType]);
 
   // Set default question set if candidate is selected for video Bot
   useEffect(() => {
@@ -340,20 +347,41 @@ export default function CandidatesPage() {
   // Dispatch Email Invite (Video Bot or MCQ)
   const handleSendVideoInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeCandidateForEmail) return;
+    const latestCandidate = activeCandidateForEmail
+      ? (candidates.find((c: any) => c.id === activeCandidateForEmail.id) || activeCandidateForEmail)
+      : null;
+
+    if (!latestCandidate) return;
 
     setSendingInvite(true);
 
     if (inviteType === 'mcq') {
       try {
-        const position = activeCandidateForEmail.jobApplied || activeCandidateForEmail.job_applied || 'Common';
+        const position = latestCandidate.jobApplied || latestCandidate.job_applied || 'Common';
+        
+        // Update candidate email/name in database if edited in modal
+        if (candidateEmail !== latestCandidate.email || candidateName !== latestCandidate.name) {
+          try {
+            await apiFetch('/api/candidates', {
+              method: 'PATCH',
+              body: JSON.stringify({
+                id: latestCandidate.id,
+                email: candidateEmail,
+                name: candidateName
+              })
+            });
+          } catch (patchErr) {
+            console.error("Failed to update candidate details:", patchErr);
+          }
+        }
+
         const res = await apiFetch('/api/emails/send', {
           method: 'POST',
           body: JSON.stringify({
             type: 'mcq_invite',
             to: candidateEmail,
-            candidateId: activeCandidateForEmail.id,
-            candidateName: activeCandidateForEmail.name,
+            candidateId: latestCandidate.id,
+            candidateName: candidateName,
             jobRole: position,
             subject: emailSubject,
             bodyText: emailBody,
@@ -366,14 +394,14 @@ export default function CandidatesPage() {
           await apiFetch('/api/candidates', {
             method: 'PATCH',
             body: JSON.stringify({
-              id: activeCandidateForEmail.id,
+              id: latestCandidate.id,
               stage: 'MCQ Assessment',
               mcq_status: 'Sent'
             })
           });
           
           refreshCandidates();
-          alert(`MCQ Invite Dispatched Successfully to ${activeCandidateForEmail.name}!`);
+          alert(`MCQ Invite Dispatched Successfully to ${candidateName}!`);
           setIsEmailModalOpen(false);
           setActiveCandidateForEmail(null);
         } else {
@@ -402,10 +430,26 @@ export default function CandidatesPage() {
     }
 
     try {
+      // Update candidate email/name in database if edited in modal
+      if (candidateEmail !== latestCandidate.email || candidateName !== latestCandidate.name) {
+        try {
+          await apiFetch('/api/candidates', {
+            method: 'PATCH',
+            body: JSON.stringify({
+              id: latestCandidate.id,
+              email: candidateEmail,
+              name: candidateName
+            })
+          });
+        } catch (patchErr) {
+          console.error("Failed to update candidate details:", patchErr);
+        }
+      }
+
       const res = await apiFetch('/api/invites/send', {
         method: 'POST',
         body: JSON.stringify({
-          candidate_name: activeCandidateForEmail.name,
+          candidate_name: candidateName,
           candidate_email: candidateEmail,
           department: matchedJob.department,
           sub_department: matchedJob.sub_department || 'General',
@@ -420,7 +464,7 @@ export default function CandidatesPage() {
         await apiFetch('/api/candidates', {
           method: 'PATCH',
           body: JSON.stringify({
-            id: activeCandidateForEmail.id,
+            id: latestCandidate.id,
             stage: 'Video Bot Screening',
             video_status: 'Pending'
           })
@@ -990,6 +1034,22 @@ export default function CandidatesPage() {
                 </select>
               </div>
               
+              <div className="form-group">
+                <label>Candidate Name <span style={{ fontSize: '11px', color: 'var(--gray-500)', fontWeight: 400 }}>(editable)</span></label>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  value={candidateName} 
+                  onChange={e => {
+                    const newName = e.target.value;
+                    setCandidateName(newName);
+                    setEmailBody(prev => prev.replace(/Hi [^,\n]+,/, `Hi ${newName},`));
+                  }}
+                  placeholder="Enter candidate name..."
+                  required
+                />
+              </div>
+
               <div className="form-group">
                 <label>Candidate Email <span style={{ fontSize: '11px', color: 'var(--gray-500)', fontWeight: 400 }}>(editable — auto-filled from resume)</span></label>
                 <input 
