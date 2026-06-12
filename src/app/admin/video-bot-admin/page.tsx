@@ -102,7 +102,7 @@ const VideoBot = () => {
       if (candidate) {
         const position = inviteSubDepartment || candidate.jobApplied || 'Common';
         setInviteSubject(`ElastiCrew Video Bot Screening Invitation — ${position} Position`);
-        setInviteBody(`Hello ${candidate.name} 👋,\n\nYou've been invited to complete a video interview for the ${position} position. Our AI-powered platform will guide you through the process.\n\nInstructions & What to expect:\n• Questions: Asked by our AI. You have 90 seconds to answer each.\n• Recording: Starts automatically after a 10-second countdown following the question.\n• Control: Click "Submit Answer" when you are done (or wait for the timer to finish).\n• Hardware: Your webcam and microphone will be used.\n• Environment: Ensure you are in a quiet, well-lit space.\n• Strict Guidelines: This is a one-time link. Do not refresh, exit fullscreen, or switch tabs (doing so 3 times will automatically terminate your interview).`);
+        setInviteBody(`Hello ${candidate.name} 👋,\n\nYou've been invited to complete a video screening for the ${position} position. Our AI-powered platform will guide you through the process.\n\nInstructions & What to expect:\n• Questions: Asked by our AI. You have 90 seconds to answer each.\n• Recording: Starts automatically after a 10-second countdown following the question.\n• Control: Click "Submit Answer" when you are done (or wait for the timer to finish).\n• Hardware: Your webcam and microphone will be used.\n• Environment: Ensure you are in a quiet, well-lit space.\n• Strict Guidelines: This is a one-time link. Do not refresh, exit fullscreen, or switch tabs (doing so 3 times will automatically terminate your screening).`);
         setTargetEmail(candidate.email || '');
       }
     } else {
@@ -300,20 +300,20 @@ const VideoBot = () => {
   });
 
   const handleDeleteInterview = async (id: any) => {
-    if (!window.confirm("Are you sure you want to delete this interview record?")) return;
+    if (!window.confirm("Are you sure you want to delete this screening record?")) return;
 
     try {
       const res = await apiFetch(`/api/interviews/${id}`, {
         method: 'DELETE'
       });
       if (res.ok) {
-        alert("Interview deleted successfully!");
+        alert("Screening deleted successfully!");
         fetchInterviews();
       } else {
-        alert("Failed to delete interview");
+        alert("Failed to delete screening");
       }
     } catch (e) {
-      alert("Error deleting interview");
+      alert("Error deleting screening");
     }
   };
 
@@ -482,7 +482,7 @@ const VideoBot = () => {
       {/* Unified Dashboard Table */}
       <div className="card">
         <div className="card-header flex justify-between items-center">
-          <h3 className="card-title">Common Interview Questions</h3>
+          <h3 className="card-title">Common Screening Questions</h3>
         </div>
         <div className="table-container" style={{ border: 'none', borderRadius: '0' }}>
           <table className="table">
@@ -499,11 +499,11 @@ const VideoBot = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>Loading interviews...</td>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>Loading screenings...</td>
                 </tr>
               ) : interviews.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--gray-500)' }}>No interviews found. Send one!</td>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--gray-500)' }}>No screenings found. Send one!</td>
                 </tr>
               ) : interviews.map(interview => {
                 const isExpired = new Date(interview.expires_at) < new Date();
@@ -606,7 +606,7 @@ const VideoBot = () => {
                               className="btn btn-primary" 
                               style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', textDecoration: 'none' }}
                             >
-                              <Eye size={14}/> View Interview
+                              <Eye size={14}/> View Screening
                             </a>
                             
                             {/* Dropdown status select for video screening */}
@@ -658,7 +658,7 @@ const VideoBot = () => {
                         )}
                         <button 
                           className="btn btn-ghost" 
-                          title="Delete Interview" 
+                          title="Delete Screening" 
                           style={{ padding: '0.25rem', color: 'var(--danger)' }}
                           onClick={() => handleDeleteInterview(interview.id)}
                         >

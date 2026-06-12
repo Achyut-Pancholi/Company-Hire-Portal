@@ -69,9 +69,9 @@ export default function InterviewPage() {
     const load = async () => {
       try {
         const res = await fetch(`/api/interviews/${id}`, { cache: "no-store" });
-        if (!res.ok) { setStage("error"); setError("Interview not found."); return; }
+        if (!res.ok) { setStage("error"); setError("Screening not found."); return; }
         const { data } = await res.json();
-        if (!data) { setStage("error"); setError("Interview not found."); return; }
+        if (!data) { setStage("error"); setError("Screening not found."); return; }
 
         if (data.status === "completed") { setStage("already-completed"); return; }
         if (data.scores?.in_progress === true) { setStage("in-progress-blocked"); return; }
@@ -87,7 +87,7 @@ export default function InterviewPage() {
         setStage("welcome");
       } catch {
         setStage("error");
-        setError("Failed to load the interview. Please try again.");
+        setError("Failed to load the screening. Please try again.");
       }
     };
     load();
@@ -328,12 +328,12 @@ export default function InterviewPage() {
         body: JSON.stringify({ scores: { in_progress: true } })
       });
       if (!patchRes.ok) {
-        alert("Failed to start the interview session. Please check your connection and try again.");
+        alert("Failed to start the screening session. Please check your connection and try again.");
         return;
       }
     } catch (err) {
       console.error("Failed to update status:", err);
-      alert("Failed to start the interview session. Please check your connection and try again.");
+      alert("Failed to start the screening session. Please check your connection and try again.");
       return;
     }
 
@@ -563,7 +563,7 @@ export default function InterviewPage() {
     } catch (err) {
       console.error(err);
       setStage("error");
-      setError("Failed to process your interview. Please contact support.");
+      setError("Failed to process your screening. Please contact support.");
     }
   };
 
@@ -585,7 +585,7 @@ export default function InterviewPage() {
         icon={<AlertCircle className="w-10 h-10 text-amber-500" />}
         color="amber"
         title="Link Expired"
-        message="This interview link has expired. Please contact your recruiter for a new link."
+        message="This screening link has expired. Please contact your recruiter for a new link."
       />
     );
   }
@@ -596,7 +596,7 @@ export default function InterviewPage() {
         icon={<CheckCircle2 className="w-10 h-10 text-emerald-500" />}
         color="emerald"
         title="Already Completed"
-        message="This interview has already been completed. Thank you for your time!"
+        message="This screening has already been completed. Thank you for your time!"
       />
     );
   }
@@ -607,7 +607,7 @@ export default function InterviewPage() {
         icon={<AlertCircle className="w-10 h-10 text-red-500" />}
         color="red"
         title="Session Already Started"
-        message="This interview session has already been started. To ensure fairness, refreshing or leaving the page during the interview is not permitted."
+        message="This screening session has already been started. To ensure fairness, refreshing or leaving the page during the screening is not permitted."
       />
     );
   }
@@ -628,8 +628,8 @@ export default function InterviewPage() {
       <FullScreenMessage
         icon={<CheckCircle2 className="w-14 h-14 text-emerald-500" />}
         color="emerald"
-        title="Interview Complete! 🎉"
-        message={`Thank you, ${interview?.candidate_name ? interview.candidate_name.split(" ")[0] : "Candidate"}! Your interview for ${interview?.sub_department || "this position"} has been submitted. We'll be in touch soon.`}
+        title="Screening Complete! 🎉"
+        message={`Thank you, ${interview?.candidate_name ? interview.candidate_name.split(" ")[0] : "Candidate"}! Your screening for ${interview?.sub_department || "this position"} has been submitted. We'll be in touch soon.`}
         subtitle="You can now close this tab."
       />
     );
@@ -642,7 +642,7 @@ export default function InterviewPage() {
           <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center mx-auto mb-6 shadow-sm">
             <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">Processing your interview</h2>
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">Processing your screening</h2>
           <p className="text-slate-500 text-sm mb-6 font-medium">
             Uploading and processing your answer clips...
           </p>
@@ -665,12 +665,12 @@ export default function InterviewPage() {
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-500/20">
             <Video className="w-8 h-8 text-white" />
           </div>
-          <p className="text-blue-600 text-xs font-bold uppercase tracking-wider mb-3">Video Interview</p>
+          <p className="text-blue-600 text-xs font-bold uppercase tracking-wider mb-3">Video Screening</p>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">
             Hello, {interview.candidate_name.split(" ")[0]} 👋
           </h1>
           <p className="text-slate-400 text-base mb-1">
-            You&apos;re interviewing for
+            You&apos;re screening for
           </p>
           <p className="text-slate-800 font-bold text-lg mb-8">{interview.sub_department}</p>
 
@@ -682,7 +682,7 @@ export default function InterviewPage() {
               "Your webcam and microphone will be used",
               "Ensure you're in a quiet, well-lit space",
               "WARNING: This is a one-time link — do not refresh the page",
-              "WARNING: Do not exit fullscreen or switch tabs. Doing so 3 times will terminate the interview.",
+              "WARNING: Do not exit fullscreen or switch tabs. Doing so 3 times will terminate the screening.",
             ].map((item) => (
               <div key={item} className="flex items-center gap-3">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
@@ -717,7 +717,7 @@ export default function InterviewPage() {
           </div>
           <h2 className="text-2xl font-bold text-slate-900 mb-2">Camera & Microphone Access</h2>
           <p className="text-slate-500 text-sm mb-8">
-            We need access to your camera and microphone to record your interview answers. When prompted, click &quot;Allow&quot;.
+            We need access to your camera and microphone to record your screening answers. When prompted, click &quot;Allow&quot;.
           </p>
 
           {error && (
@@ -809,7 +809,7 @@ export default function InterviewPage() {
                 className="w-full h-12 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/20"
               >
                 <Play className="w-4 h-4 mr-2" />
-                Begin Interview
+                Begin Screening
               </Button>
             </div>
           </div>
@@ -979,7 +979,7 @@ export default function InterviewPage() {
               You have switched tabs or exited full screen. This is a violation of the test rules. 
               <br/><br/>
               <span className="font-bold text-white text-xl">Strike: {strikes} of 3.</span> 
-              <br/>On your 3rd strike, your interview will be terminated automatically.
+              <br/>On your 3rd strike, your screening will be terminated automatically.
             </p>
             <Button onClick={() => {
               if (document.documentElement.requestFullscreen) {

@@ -129,7 +129,7 @@ export default function CandidateFormPage() {
           <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-left">
             <span className="text-blue-400 text-xs font-semibold uppercase tracking-wider block mb-1">What's Next?</span>
             <p className="text-white/70 text-xs leading-normal">
-              Our team will review your details. You will receive an invitation email containing the link to complete your AI video interview shortly.
+              Our team will review your details. You will receive an invitation email containing the link to complete your AI video screening shortly.
             </p>
           </div>
         </div>
