@@ -507,7 +507,8 @@ const VideoBot = () => {
                 </tr>
               ) : interviews.map(interview => {
                 const isExpired = new Date(interview.expires_at) < new Date();
-                const status = interview.status === "completed" ? "completed" : (isExpired ? "expired" : "pending");
+                const isFailed = interview.status === "failed" || (interview.status !== "completed" && interview.scores?.in_progress === true && isExpired);
+                const status = interview.status === "completed" ? "completed" : (isFailed ? "failed" : (isExpired ? "expired" : "pending"));
                 const matchedCandidate = candidates.find((c: any) => {
                   const cleanName = (n: string) => (n || "").toLowerCase().replace(/[^a-z0-9]/g, "").trim();
                   const matchesEmail = c.email && interview.candidate_email && c.email.trim().toLowerCase() === interview.candidate_email.trim().toLowerCase();
@@ -528,6 +529,8 @@ const VideoBot = () => {
                     <td>
                       {status === 'completed' ? (
                         <span className="badge badge-success">Completed</span>
+                      ) : status === 'failed' ? (
+                        <span className="badge badge-error" style={{ backgroundColor: '#fee2e2', color: '#b91c1c' }}>Failed</span>
                       ) : status === 'expired' ? (
                          <span className="badge badge-error" style={{ backgroundColor: '#fee2e2', color: '#991b1b' }}>Expired</span>
                       ) : (
