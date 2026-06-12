@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CheckSquare, FileSpreadsheet, Plus, X, Upload, Download, CheckCircle, AlertCircle, Edit2, Trash2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { useAppContext } from '@/components/admin/context/AppContext';
 
 const BASELINE_FALLBACK = {
   "Operations|HR": [
@@ -56,18 +57,21 @@ const BASELINE_FALLBACK = {
   ]
 };
 
-const TRACK_RELATIONS = {
-  "Operations": ["HR", "Logistics", "Compliance"],
-  "Engineering": ["Full Stack", "DevOps", "Data Platform"]
-};
-
 export default function AssessmentsPage() {
+  const { jobs } = useAppContext();
   const [activeTab, setActiveTab] = useState<'videobot' | 'mcq'>('videobot');
   const [isClient, setIsClient] = useState(false);
 
+  // Dynamic departments/sub-departments from jobs table (same as all other pages)
+  const availableDepartments = Array.from(new Set(jobs.map((j: any) => j.department).filter(Boolean))) as string[];
+  const getSubDepartments = (dept: string) => {
+    const subDepts = Array.from(new Set(jobs.filter((j: any) => j.department === dept && j.sub_department).map((j: any) => j.sub_department))) as string[];
+    return subDepts.length > 0 ? subDepts : ['General'];
+  };
+
   // Dropdown States
-  const [targetDept, setTargetDept] = useState<string>('Operations');
-  const [subDept, setSubDept] = useState<string>('HR');
+  const [targetDept, setTargetDept] = useState<string>('');
+  const [subDept, setSubDept] = useState<string>('');
 
   // Questions State
   const [questions, setQuestions] = useState<string[]>([]);
@@ -223,36 +227,41 @@ export default function AssessmentsPage() {
 
   // Sync sub-departments when department changes
   useEffect(() => {
-    const defaultSubDept = TRACK_RELATIONS[targetDept]?.[0] || '';
-    setSubDept(defaultSubDept);
-  }, [targetDept]);
-
-  // Load configured questions from localStorage or fallback
-  useEffect(() => {
-    if (!isClient) return;
-    const matrixKey = `${targetDept}|${subDept}`;
-    const stored = localStorage.getItem('elasticrew_question_matrix');
-    
-    let pool: Record<string, string[]> = BASELINE_FALLBACK;
-    if (stored) {
-      try {
-        pool = JSON.parse(stored);
-      } catch (e) {
-        console.error("Failed to parse elasticrew_question_matrix", e);
+    if (!targetDept) {
+      // Set initial department from jobs
+      if (availableDepartments.length > 0) {
+        setTargetDept(availableDepartments[0]);
       }
-    } else {
-      localStorage.setItem('elasticrew_question_matrix', JSON.stringify(BASELINE_FALLBACK));
+      return;
     }
+    const subs = getSubDepartments(targetDept);
+    if (subs.length > 0 && !subs.includes(subDept)) {
+      setSubDept(subs[0]);
+    }
+  }, [targetDept, jobs]);
 
-    const setQuestionsList = pool[matrixKey] || [
-      "Please describe your technical background and experience level with core development tools.",
-      "How do you ensure data accuracy and track exceptions within your workflow pipelines?",
-      "Describe a challenging technical constraint you encountered and how you resolved it.",
-      "How do you approach learning a completely new structural framework or corporate protocol?",
-      "What methods do you employ to collaborate cleanly and share documentation within distributed engineering teams?"
-    ];
+  // Load configured questions from database (questions_bank table)
+  const fetchVideoBotQuestions = async () => {
+    if (!isClient || !targetDept || !subDept) return;
+    try {
+      const res = await fetch(`/api/questions`, {
+        headers: { 'x-api-key': 'kl_internal_admin_secret_2026_secure' }
+      });
+      if (res.ok) {
+        const allQuestions = await res.json();
+        // Filter questions for current dept + sub_dept
+        const filtered = allQuestions.filter((q: any) => 
+          q.department === targetDept && q.sub_department === subDept
+        );
+        setQuestions(filtered.map((q: any) => q.question_text));
+      }
+    } catch (e) {
+      console.error("Failed to fetch video bot questions:", e);
+    }
+  };
 
-    setQuestions(setQuestionsList);
+  useEffect(() => {
+    fetchVideoBotQuestions();
   }, [targetDept, subDept, isClient]);
 
   // Toast auto-clear
@@ -265,32 +274,59 @@ export default function AssessmentsPage() {
     }
   }, [toast]);
 
-  // Save current questions pool to localStorage
-  const handleSaveConfig = () => {
-    const matrixKey = `${targetDept}|${subDept}`;
-    const stored = localStorage.getItem('elasticrew_question_matrix');
-    let pool: Record<string, string[]> = { ...BASELINE_FALLBACK };
-
-    if (stored) {
-      try {
-        pool = JSON.parse(stored);
-      } catch (e) {
-        console.error("Failed to parse elasticrew_question_matrix on save", e);
-      }
-    }
-
+  // Save current questions to database (questions_bank table)
+  const handleSaveConfig = async () => {
     // Filter out empty entries
     const cleanedQuestions = questions.map(q => q.trim()).filter(Boolean);
-    pool[matrixKey] = cleanedQuestions;
-    localStorage.setItem('elasticrew_question_matrix', JSON.stringify(pool));
-    
-    // Sync state
-    setQuestions(cleanedQuestions);
 
-    setToast({
-      type: 'success',
-      message: `Configuration updated successfully for ${targetDept} → ${subDept}.`
-    });
+    try {
+      // 1. Delete existing questions for this dept + sub_dept
+      const existingRes = await fetch(`/api/questions`, {
+        headers: { 'x-api-key': 'kl_internal_admin_secret_2026_secure' }
+      });
+      if (existingRes.ok) {
+        const allQuestions = await existingRes.json();
+        const toDelete = allQuestions.filter((q: any) => 
+          q.department === targetDept && q.sub_department === subDept
+        );
+        // Delete old questions
+        for (const q of toDelete) {
+          await fetch(`/api/questions?id=${q.id}`, {
+            method: 'DELETE',
+            headers: { 'x-api-key': 'kl_internal_admin_secret_2026_secure' }
+          });
+        }
+      }
+
+      // 2. Insert all current questions
+      for (const qText of cleanedQuestions) {
+        await fetch('/api/questions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': 'kl_internal_admin_secret_2026_secure'
+          },
+          body: JSON.stringify({
+            department: targetDept,
+            sub_department: subDept,
+            question_text: qText,
+            is_mandatory: false
+          })
+        });
+      }
+
+      setQuestions(cleanedQuestions);
+      setToast({
+        type: 'success',
+        message: `Configuration saved to database for ${targetDept} → ${subDept}. (${cleanedQuestions.length} questions)`
+      });
+    } catch (err) {
+      console.error("Error saving questions to DB:", err);
+      setToast({
+        type: 'error',
+        message: 'Failed to save questions to database.'
+      });
+    }
   };
 
   // Inline question changes
@@ -325,25 +361,43 @@ export default function AssessmentsPage() {
     setIsModalOpen(true);
   };
 
-  // Save question from modal
-  const handleSaveModalQuestion = (e: React.FormEvent) => {
+  // Save question from modal (add or edit)
+  const handleSaveModalQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!modalValue.trim()) return;
 
     if (modalMode === 'add') {
-      setQuestions([...questions, modalValue.trim()]);
-      setToast({
-        type: 'success',
-        message: 'Question added successfully.'
-      });
+      // Save directly to DB
+      try {
+        const res = await fetch('/api/questions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': 'kl_internal_admin_secret_2026_secure'
+          },
+          body: JSON.stringify({
+            department: targetDept,
+            sub_department: subDept,
+            question_text: modalValue.trim(),
+            is_mandatory: false
+          })
+        });
+        if (res.ok) {
+          setQuestions([...questions, modalValue.trim()]);
+          setToast({ type: 'success', message: 'Question added and saved to database.' });
+        } else {
+          const err = await res.json();
+          setToast({ type: 'error', message: err.error || 'Failed to add question.' });
+        }
+      } catch (err) {
+        setToast({ type: 'error', message: 'Error adding question.' });
+      }
     } else if (modalMode === 'edit' && editingIndex !== null) {
+      // For edit, update local state - user clicks "Save Configuration" to persist all changes
       const nextQ = [...questions];
       nextQ[editingIndex] = modalValue.trim();
       setQuestions(nextQ);
-      setToast({
-        type: 'success',
-        message: 'Question updated successfully.'
-      });
+      setToast({ type: 'success', message: 'Question updated. Click "Save Configuration" to persist changes.' });
     }
 
     setIsModalOpen(false);
@@ -489,7 +543,7 @@ export default function AssessmentsPage() {
     );
   }
 
-  const subDeptList = TRACK_RELATIONS[targetDept] || [];
+  const subDeptList = getSubDepartments(targetDept);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
@@ -575,12 +629,13 @@ export default function AssessmentsPage() {
           <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '6px', color: 'var(--text-main)' }}>Target Department</label>
           <select 
             value={targetDept} 
-            onChange={e => setTargetDept(e.target.value as any)}
+            onChange={e => setTargetDept(e.target.value)}
             className="form-control"
             style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '13.5px', color: 'var(--text-dark)', outline: 'none' }}
           >
-            <option value="Operations">Operations</option>
-            <option value="Engineering">Engineering</option>
+            {availableDepartments.map(dept => (
+              <option key={dept} value={dept}>{dept}</option>
+            ))}
           </select>
         </div>
 

@@ -129,7 +129,7 @@ export default function DashboardPage() {
       {/* Sidebar */}
       <div className="fixed left-0 top-0 h-full w-[220px] border-r border-white/[0.06] bg-[#080c14] flex flex-col p-4">
         <div className="flex items-center gap-2.5 mb-8 px-2">
-          <Logo href="/admin/dashboard" size="sm" />
+          <Logo href="/admin/dashboard" size="sm" theme="dark" />
         </div>
 
         <nav className="flex-1 space-y-1">

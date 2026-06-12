@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Folder, FolderOpen, Search, X, ChevronDown, ChevronRight, Check } from 'lucide-react';
 import { useAppContext } from '@/components/admin/context/AppContext';
 
@@ -31,7 +31,7 @@ function DeletePopover({
       }}
     >
       <p style={{ fontSize: '0.85rem', color: 'var(--text-main)', margin: 0, fontWeight: 500 }}>
-        Delete this experience?
+        Delete this sub-department?
       </p>
       <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
         <button
@@ -59,7 +59,7 @@ function DeletePopover({
   );
 }
 
-// ── Add / Edit modal ─────────────────────────────────────────────────────────
+// ── Add / Edit modal (Department + Sub-Department only) ──────────────────────
 function DeptModal({
   open,
   onClose,
@@ -70,20 +70,18 @@ function DeptModal({
 }: {
   open: boolean;
   onClose: () => void;
-  onSave: (data: { department: string; subDepartment: string; title: string }) => void;
-  initialData?: { department: string; subDepartment: string; title: string } | null;
+  onSave: (data: { department: string; subDepartment: string }) => void;
+  initialData?: { department: string; subDepartment: string } | null;
   uniqueDepartments: string[];
   isSaving: boolean;
 }) {
   const [department, setDepartment] = useState('');
   const [subDepartment, setSubDepartment] = useState('');
-  const [title, setTitle] = useState('');
 
   useEffect(() => {
     if (open) {
       setDepartment(initialData?.department ?? '');
       setSubDepartment(initialData?.subDepartment ?? '');
-      setTitle(initialData?.title ?? '');
     }
   }, [open, initialData]);
 
@@ -124,7 +122,7 @@ function DeptModal({
           }}
         >
           <h3 style={{ fontWeight: 700, color: 'var(--brand-navy)', margin: 0, fontSize: '1.05rem' }}>
-            {initialData ? 'Edit Department Entry' : 'Add Department Entry'}
+            {initialData ? 'Edit Entry' : 'Add Sub-Department'}
           </h3>
           <button
             onClick={onClose}
@@ -155,31 +153,14 @@ function DeptModal({
           </div>
 
           <div className="form-group">
-            <label className="form-label">Sub-Department Name</label>
+            <label className="form-label">Sub-Department Name *</label>
             <input
               type="text"
               className="form-input"
-              placeholder="e.g. Frontend, Backend, UI/UX"
+              placeholder="e.g. Frontend, Backend, UI/UX, QA"
               value={subDepartment}
               onChange={(e) => setSubDepartment(e.target.value)}
             />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Experience Level *</label>
-            <select
-              className="form-input"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-            >
-              <option value="" disabled>Select Experience Level</option>
-              <option value="Fresher">Fresher</option>
-              <option value="Junior">Junior</option>
-              <option value="Mid level">Mid level</option>
-              <option value="Senior">Senior</option>
-              <option value="Lead">Lead</option>
-            </select>
           </div>
         </div>
 
@@ -198,10 +179,10 @@ function DeptModal({
           </button>
           <button
             className="btn btn-primary"
-            disabled={isSaving || !department.trim()}
-            onClick={() => onSave({ department, subDepartment, title })}
+            disabled={isSaving || !department.trim() || !subDepartment.trim()}
+            onClick={() => onSave({ department, subDepartment })}
           >
-            {isSaving ? 'Saving…' : 'Save & Activate'}
+            {isSaving ? 'Saving…' : 'Save'}
           </button>
         </div>
       </div>
@@ -209,25 +190,24 @@ function DeptModal({
   );
 }
 
-// ── Inline-editable row ───────────────────────────────────────────────────────
-function RoleRow({
+// ── Inline-editable row (Sub-Department only) ────────────────────────────────
+function SubDeptRow({
   job,
   onSave,
   onDelete,
 }: {
   job: any;
-  onSave: (id: string, subDept: string, title: string) => Promise<void>;
+  onSave: (id: string, subDept: string) => Promise<void>;
   onDelete: (job: any) => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
   const [subDept, setSubDept] = useState(job.sub_department || '');
-  const [title, setTitle] = useState(job.title || '');
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const handleSave = async () => {
     setSaving(true);
-    await onSave(job.id, subDept, title);
+    await onSave(job.id, subDept);
     setSaving(false);
     setEditing(false);
   };
@@ -253,26 +233,6 @@ function RoleRow({
         )}
       </td>
 
-      {/* Experience */}
-      <td style={{ fontWeight: 500 }}>
-        {editing ? (
-          <select
-            className="form-input"
-            style={{ padding: '0.3rem 0.6rem', fontSize: '0.875rem' }}
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          >
-            <option value="Fresher">Fresher</option>
-            <option value="Junior">Junior</option>
-            <option value="Mid level">Mid level</option>
-            <option value="Senior">Senior</option>
-            <option value="Lead">Lead</option>
-          </select>
-        ) : (
-          <span>{job.title}</span>
-        )}
-      </td>
-
       {/* Actions */}
       <td style={{ position: 'relative' }}>
         <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
@@ -290,7 +250,7 @@ function RoleRow({
               <button
                 className="btn btn-ghost"
                 style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
-                onClick={() => { setEditing(false); setSubDept(job.sub_department || ''); setTitle(job.title || ''); }}
+                onClick={() => { setEditing(false); setSubDept(job.sub_department || ''); }}
                 title="Cancel"
               >
                 <X size={14} /> Cancel
@@ -302,7 +262,7 @@ function RoleRow({
                 className="btn btn-ghost"
                 style={{ padding: '0.3rem', cursor: 'pointer' }}
                 onClick={() => setEditing(true)}
-                title="Edit experience"
+                title="Edit sub-department"
               >
                 <Edit2 size={15} />
               </button>
@@ -311,7 +271,7 @@ function RoleRow({
                   className="btn btn-ghost"
                   style={{ padding: '0.3rem', color: 'var(--danger)', cursor: 'pointer' }}
                   onClick={() => setConfirmDelete(true)}
-                  title="Delete experience"
+                  title="Delete sub-department"
                 >
                   <Trash2 size={15} />
                 </button>
@@ -335,14 +295,14 @@ function DeptCard({
   deptName,
   subDepts,
   onEditParent,
-  onSaveRole,
-  onDeleteRole,
+  onSaveSubDept,
+  onDeleteSubDept,
 }: {
   deptName: string;
   subDepts: any[];
   onEditParent: () => void;
-  onSaveRole: (id: string, subDept: string, title: string) => Promise<void>;
-  onDeleteRole: (job: any) => Promise<void>;
+  onSaveSubDept: (id: string, subDept: string) => Promise<void>;
+  onDeleteSubDept: (job: any) => Promise<void>;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -355,7 +315,7 @@ function DeptCard({
         overflow: 'visible',
       }}
     >
-      {/* Card header – always visible */}
+      {/* Card header */}
       <div
         style={{
           display: 'flex',
@@ -378,7 +338,7 @@ function DeptCard({
             className="badge"
             style={{ backgroundColor: 'var(--gray-100)', color: 'var(--text-muted)', fontSize: '0.75rem' }}
           >
-            {subDepts.length} {subDepts.length === 1 ? 'experience' : 'experiences'}
+            {subDepts.length} {subDepts.length === 1 ? 'sub-department' : 'sub-departments'}
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={(e) => e.stopPropagation()}>
@@ -406,7 +366,7 @@ function DeptCard({
         <div style={{ borderTop: '1px solid var(--gray-100)' }}>
           {subDepts.length === 0 ? (
             <p style={{ padding: '1.25rem 1.5rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-              No experiences yet. Add one using "+ Add Department".
+              No sub-departments yet. Click "+ Add Sub-Department" to get started.
             </p>
           ) : (
             <div className="table-container" style={{ border: 'none', borderRadius: 0, marginBottom: 0 }}>
@@ -414,17 +374,16 @@ function DeptCard({
                 <thead>
                   <tr>
                     <th style={{ paddingLeft: '1.5rem' }}>Sub-Department</th>
-                    <th>Experience</th>
                     <th style={{ width: '160px' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {subDepts.map((job: any) => (
-                    <RoleRow
+                    <SubDeptRow
                       key={job.id}
                       job={job}
-                      onSave={onSaveRole}
-                      onDelete={onDeleteRole}
+                      onSave={onSaveSubDept}
+                      onDelete={onDeleteSubDept}
                     />
                   ))}
                 </tbody>
@@ -444,7 +403,7 @@ const JobPostings = () => {
 
   // modal state
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingJob, setEditingJob] = useState<any>(null);  // null = new entry
+  const [editingJob, setEditingJob] = useState<any>(null);
 
   // search
   const [search, setSearch] = useState('');
@@ -466,24 +425,23 @@ const JobPostings = () => {
   }, {});
 
   // Filter by search query
-  const filteredEntries = Object.entries(grouped).filter(([deptName, roles]) => {
+  const filteredEntries = Object.entries(grouped).filter(([deptName, items]) => {
     const q = search.toLowerCase();
     if (!q) return true;
     if (deptName.toLowerCase().includes(q)) return true;
-    return roles.some(
-      (r: any) =>
-        (r.sub_department || '').toLowerCase().includes(q) ||
-        (r.title || '').toLowerCase().includes(q)
+    return items.some(
+      (r: any) => (r.sub_department || '').toLowerCase().includes(q)
     );
   });
 
   // Save (create or update)
-  const handleSave = async (data: { department: string; subDepartment: string; title: string }) => {
+  const handleSave = async (data: { department: string; subDepartment: string }) => {
     setIsSaving(true);
     try {
       let res;
       if (editingJob) {
         if (editingJob.isParentEdit) {
+          // Rename department across all rows
           const jobsToUpdate = jobs.filter((j: any) => j.department === editingJob.oldDeptName);
           await Promise.all(
             jobsToUpdate.map((j: any) =>
@@ -492,32 +450,31 @@ const JobPostings = () => {
                 body: JSON.stringify({
                   id: j.id,
                   department: data.department.trim(),
-                  ...(j.id === editingJob.id
-                    ? { sub_department: data.subDepartment.trim(), title: data.title.trim() }
-                    : {}),
                 }),
               })
             )
           );
           res = { ok: true };
         } else {
+          // Edit a single sub-department row
           res = await apiFetch('/api/jobs', {
             method: 'PATCH',
             body: JSON.stringify({
               id: editingJob.id,
               department: data.department.trim(),
               sub_department: data.subDepartment.trim(),
-              title: data.title.trim(),
+              title: data.subDepartment.trim(),
             }),
           });
         }
       } else {
+        // Create new sub-department entry
         res = await apiFetch('/api/jobs', {
           method: 'POST',
           body: JSON.stringify({
             department: data.department.trim(),
             sub_department: data.subDepartment.trim(),
-            title: data.title.trim(),
+            title: data.subDepartment.trim(),
           }),
         });
       }
@@ -527,37 +484,37 @@ const JobPostings = () => {
         refreshJobs();
       } else {
         const err = await (res as any).json?.();
-        alert(err?.error || 'Failed to save department');
+        alert(err?.error || 'Failed to save');
       }
     } catch {
-      alert('Error saving department');
+      alert('Error saving');
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Inline role save
-  const handleSaveRole = async (id: string, subDept: string, title: string) => {
+  // Inline sub-department save
+  const handleSaveSubDept = async (id: string, subDept: string) => {
     try {
       const res = await apiFetch('/api/jobs', {
         method: 'PATCH',
-        body: JSON.stringify({ id, sub_department: subDept.trim(), title: title.trim() }),
+        body: JSON.stringify({ id, sub_department: subDept.trim(), title: subDept.trim() }),
       });
       if ((res as any).ok !== false) refreshJobs();
-      else alert('Failed to update role');
+      else alert('Failed to update sub-department');
     } catch {
-      alert('Error updating role');
+      alert('Error updating sub-department');
     }
   };
 
-  // Delete role
-  const handleDeleteRole = async (job: any) => {
+  // Delete sub-department
+  const handleDeleteSubDept = async (job: any) => {
     try {
       const res = await apiFetch(`/api/jobs?id=${job.id}`, { method: 'DELETE' });
       if ((res as any).ok !== false) refreshJobs();
-      else alert('Failed to delete role');
+      else alert('Failed to delete sub-department');
     } catch {
-      alert('Error deleting role');
+      alert('Error deleting sub-department');
     }
   };
 
@@ -571,7 +528,6 @@ const JobPostings = () => {
 
   return (
     <>
-      {/* keyframe for modal slide-up */}
       <style>{`
         @keyframes slideUp {
           from { opacity: 0; transform: translateY(16px); }
@@ -581,14 +537,14 @@ const JobPostings = () => {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
 
-        {/* ── Page header ─────────────────────────────────────────────────── */}
+        {/* Page header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--brand-navy)', margin: 0 }}>
               Department Configuration
             </h2>
             <p style={{ color: 'var(--text-muted)', marginTop: '0.3rem', fontSize: '0.9rem' }}>
-              Manage departments, sub-departments, and experience levels used across the hiring pipeline.
+              Manage departments and sub-departments used across the hiring pipeline.
             </p>
           </div>
           <button
@@ -596,11 +552,11 @@ const JobPostings = () => {
             style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
             onClick={() => { setEditingJob(null); setModalOpen(true); }}
           >
-            <Plus size={16} /> Add Department
+            <Plus size={16} /> Add Sub-Department
           </button>
         </div>
 
-        {/* ── Search bar ──────────────────────────────────────────────────── */}
+        {/* Search bar */}
         <div style={{ position: 'relative', maxWidth: '420px' }}>
           <Search
             size={16}
@@ -609,7 +565,7 @@ const JobPostings = () => {
           <input
             type="text"
             className="form-input"
-            placeholder="Search department, sub-department, or experience…"
+            placeholder="Search department or sub-department…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{ paddingLeft: '2.4rem', paddingRight: search ? '2.4rem' : undefined }}
@@ -624,12 +580,12 @@ const JobPostings = () => {
           )}
         </div>
 
-        {/* ── Department cards ─────────────────────────────────────────────── */}
+        {/* Department cards */}
         {filteredEntries.length === 0 ? (
           <div className="card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
             {search
               ? `No departments match "${search}".`
-              : 'No departments configured. Click "+ Add Department" to get started.'}
+              : 'No departments configured. Click "+ Add Sub-Department" to get started.'}
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -639,15 +595,15 @@ const JobPostings = () => {
                 deptName={deptName}
                 subDepts={subDepts}
                 onEditParent={() => handleEditParent(deptName, subDepts)}
-                onSaveRole={handleSaveRole}
-                onDeleteRole={handleDeleteRole}
+                onSaveSubDept={handleSaveSubDept}
+                onDeleteSubDept={handleDeleteSubDept}
               />
             ))}
           </div>
         )}
       </div>
 
-      {/* ── Add / Edit Modal ─────────────────────────────────────────────────── */}
+      {/* Add / Edit Modal */}
       <DeptModal
         open={modalOpen}
         onClose={() => { setModalOpen(false); setEditingJob(null); }}
@@ -657,7 +613,6 @@ const JobPostings = () => {
             ? {
                 department: editingJob.isParentEdit ? editingJob.oldDeptName : (editingJob.department || ''),
                 subDepartment: editingJob.sub_department || '',
-                title: editingJob.title || '',
               }
             : null
         }

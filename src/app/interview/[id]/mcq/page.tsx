@@ -281,7 +281,7 @@ export default function MCQAssessmentPage() {
         <div className="max-w-2xl w-full bg-[#0b132b] rounded-3xl border border-teal-500/10 shadow-2xl p-8 md:p-12 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl pointer-events-none" />
           <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/5">
-            <Logo />
+            <Logo theme="dark" />
             <span className="text-xs font-bold text-teal-400 bg-teal-400/10 px-3 py-1 rounded-full tracking-widest uppercase">MCQ PORTAL</span>
           </div>
 
@@ -338,7 +338,7 @@ export default function MCQAssessmentPage() {
         {/* Top Header */}
         <header className="border-b border-white/5 bg-[#080d1a] py-4 px-6 flex items-center justify-between sticky top-0 z-50">
           <div className="flex items-center gap-4">
-            <Logo />
+            <Logo theme="dark" />
             <div className="h-6 w-[1px] bg-white/10 hidden md:block" />
             <span className="text-sm text-white/60 hidden md:block">{candidate.job_applied}</span>
           </div>

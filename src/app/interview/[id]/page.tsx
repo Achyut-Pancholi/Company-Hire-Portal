@@ -93,6 +93,26 @@ export default function InterviewPage() {
     load();
   }, [id]);
 
+  // Global handler to prevent unhandled rejection crashes from browser APIs (like SpeechSynthesis or Fullscreen)
+  useEffect(() => {
+    const handleRejection = (event: PromiseRejectionEvent) => {
+      console.error("Intercepted unhandled promise rejection:", event.reason);
+      
+      // Prevent Next.js from showing the crash overlay for harmless browser/extension events
+      if (
+        event.reason instanceof Event ||
+        (event.reason && typeof event.reason === "object" && "type" in event.reason) ||
+        String(event.reason) === "[object Event]"
+      ) {
+        console.warn("Preventing default behavior for unhandled Event rejection to avoid app crash.");
+        event.preventDefault();
+      }
+    };
+
+    window.addEventListener("unhandledrejection", handleRejection);
+    return () => window.removeEventListener("unhandledrejection", handleRejection);
+  }, []);
+
   // Draw canvas loop
   const drawFrame = useCallback(() => {
     const canvas = canvasRef.current;
@@ -327,19 +347,23 @@ export default function InterviewPage() {
   };
 
   const handleEarlyTermination = async () => {
-    let chunk: RecordingChunk;
-    if (isRecordingRef.current) {
-       chunk = await stopRecording();
-    } else {
-       chunk = {
-         question: interview!.questions[currentQuestionIndex],
-         questionIndex: currentQuestionIndex,
-         blob: new Blob(currentClipChunksRef.current, { type: "video/webm" }),
-         duration: 0,
-       };
-    }
+    try {
+      let chunk: RecordingChunk;
+      if (isRecordingRef.current) {
+         chunk = await stopRecording();
+      } else {
+         chunk = {
+           question: interview!.questions[currentQuestionIndex],
+           questionIndex: currentQuestionIndex,
+           blob: new Blob(currentClipChunksRef.current, { type: "video/webm" }),
+           duration: 0,
+         };
+      }
 
-    await processAndUpload([...allChunks, chunk]);
+      await processAndUpload([...allChunks, chunk]);
+    } catch (err) {
+      console.error("Error in handleEarlyTermination:", err);
+    }
   };
 
   useEffect(() => {
@@ -441,18 +465,22 @@ export default function InterviewPage() {
   };
 
   const handleSubmitAnswer = async () => {
-    const chunk = await stopRecording();
-    setAllChunks((prev) => [...prev, chunk]);
-    const nextIndex = currentQuestionIndex + 1;
-    const isLast = !interview || nextIndex >= interview.questions.length;
+    try {
+      const chunk = await stopRecording();
+      setAllChunks((prev) => [...prev, chunk]);
+      const nextIndex = currentQuestionIndex + 1;
+      const isLast = !interview || nextIndex >= interview.questions.length;
 
-    if (isLast) {
-      await processAndUpload([...allChunks, chunk]);
-    } else {
-      setCurrentQuestionIndex(nextIndex);
-      if (interview) {
-        await speakQuestion(interview.questions[nextIndex]);
+      if (isLast) {
+        await processAndUpload([...allChunks, chunk]);
+      } else {
+        setCurrentQuestionIndex(nextIndex);
+        if (interview) {
+          await speakQuestion(interview.questions[nextIndex]);
+        }
       }
+    } catch (err) {
+      console.error("Error in handleSubmitAnswer:", err);
     }
   };
 
@@ -807,7 +835,7 @@ export default function InterviewPage() {
 
         {/* Header */}
         <div className="px-6 py-4 border-b border-[#E2E8F0] bg-white flex items-center justify-between shadow-sm">
-          <Logo href="/" size="sm" />
+          <Logo href="/" size="sm" theme="light" />
           <div className="flex items-center gap-2 text-slate-400 text-sm font-semibold">
             <span>Question {currentQuestionIndex + 1} of {interview.questions.length}</span>
           </div>

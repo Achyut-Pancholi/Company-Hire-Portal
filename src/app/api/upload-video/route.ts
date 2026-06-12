@@ -88,55 +88,59 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const file = (formData.get('file') || formData.get('video')) as File | null;
     const candidateId = formData.get('candidateId') as string | null;
+    const interviewId = formData.get('interviewId') as string | null;
+    const questionIndex = formData.get('questionIndex') as string | null;
 
     if (!file || file.size === 0) {
       return NextResponse.json({ error: 'No file provided or file is empty' }, { status: 400 });
     }
-    if (!candidateId) {
-      return NextResponse.json({ error: 'candidateId is required' }, { status: 400 });
+
+    const entityId = candidateId || interviewId;
+    if (!entityId) {
+      return NextResponse.json({ error: 'candidateId or interviewId is required' }, { status: 400 });
     }
 
     let videoUrl = "";
 
     if (isSupabaseConfigured()) {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-      const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+      const supabase = getServiceSupabase();
       const bucketName = 'interview-recordings';
-      const fileExt    = (file.name.split('.').pop() || 'mp4').toLowerCase();
-      const uploadPath = `admin_uploads/${candidateId}_${Date.now()}.${fileExt}`;
-      const uploadUrl  = `${supabaseUrl}/storage/v1/object/${bucketName}/${uploadPath}`;
-
-      console.log('[upload-video] Uploading to Supabase:', uploadUrl);
+      const fileExt    = (file.name.split('.').pop() || 'webm').toLowerCase();
+      
+      // Build path: interviews/{id}/clip-q1.webm or admin_uploads/{id}_timestamp.ext
+      const uploadPath = questionIndex !== null
+        ? `interviews/${entityId}/clip-q${parseInt(questionIndex) + 1}.${fileExt}`
+        : `admin_uploads/${entityId}_${Date.now()}.${fileExt}`;
+      
+      console.log('[upload-video] Uploading to Supabase using SDK client:', uploadPath);
       console.log('[upload-video] File:', file.name, 'Size:', file.size, 'Type:', file.type);
 
-      const fileBuffer = await file.arrayBuffer();
+      const fileBuffer = Buffer.from(await file.arrayBuffer());
 
-      const supabaseRes = await fetch(uploadUrl, {
-        method:  'PUT',
-        headers: {
-          Authorization:  `Bearer ${serviceKey}`,
-          'x-upsert':     'true',
-          'Content-Type': file.type || 'video/mp4',
-          'Content-Length': String(fileBuffer.byteLength),
-        },
-        body: fileBuffer,
-      });
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from(bucketName)
+        .upload(uploadPath, fileBuffer, {
+          contentType: file.type || 'video/webm',
+          upsert: true
+        });
 
-      const responseText = await supabaseRes.text();
-      console.log('[upload-video] Supabase status:', supabaseRes.status, responseText);
-
-      if (!supabaseRes.ok) {
+      if (uploadError) {
+        console.error('[upload-video] Supabase SDK upload error:', uploadError);
         return NextResponse.json(
-          { error: `Supabase upload failed: ${supabaseRes.status} — ${responseText}` },
-          { status: supabaseRes.status },
+          { error: `Supabase upload failed: ${uploadError.message}` },
+          { status: 500 }
         );
       }
 
-      videoUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${uploadPath}`;
+      const { data: publicUrlData } = supabase.storage
+        .from(bucketName)
+        .getPublicUrl(uploadPath);
+
+      videoUrl = publicUrlData?.publicUrl || "";
       console.log('[upload-video] Success — publicUrl:', videoUrl);
     } else {
       console.log('[upload-video] Mock Supabase connection: saving video locally...');
-      const filename = `${candidateId}-${Date.now()}.mp4`;
+      const filename = `${entityId}-${Date.now()}.webm`;
       const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
 
       if (!fs.existsSync(uploadsDir)) {
