@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS public.interviews (
   department text NOT NULL DEFAULT 'General',
   sub_department text NOT NULL DEFAULT 'General',
   questions jsonb NOT NULL DEFAULT '[]'::jsonb,
-  status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed')),
+  status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'failed')),
   expires_at timestamp with time zone NOT NULL,
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
   completed_at timestamp with time zone,
