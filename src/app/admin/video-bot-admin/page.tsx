@@ -484,15 +484,15 @@ const VideoBot = () => {
         <div className="card-header flex justify-between items-center">
           <h3 className="card-title">Common Screening Questions</h3>
         </div>
-        <div className="table-container" style={{ border: 'none', borderRadius: '0' }}>
-          <table className="table">
+        <div className="table-container" style={{ border: 'none', borderRadius: '0', overflowX: 'auto' }}>
+          <table className="table" style={{ minWidth: '1100px' }}>
             <thead>
               <tr>
                 <th>Candidate</th>
                 <th>Sub-Department</th>
                 <th>Screening Status</th>
                 <th>Approval Status</th>
-                <th>Remark</th>
+                <th style={{ textAlign: 'center' }}>Remark</th>
                 <th>Actions</th>
               </tr>
             </thead>
