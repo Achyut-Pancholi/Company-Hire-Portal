@@ -592,26 +592,6 @@ const VideoBot = () => {
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                         {status === 'completed' ? (
                           <>
-                            <button 
-                              className="btn btn-outline" 
-                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', minWidth: '110px' }}
-                              onClick={() => {
-                                const url = `${NEXT_JS_URL}/share/${interview.share_token}`;
-                                copyToClipboard(url, `share-${interview.id}`);
-                              }}
-                            >
-                              {copiedId === `share-${interview.id}` ? "Copied!" : "Copy Share Link"}
-                            </button>
-                            <a 
-                              href={`${NEXT_JS_URL}/video-bot-admin/dashboard/interviews/${interview.id}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="btn btn-primary" 
-                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', textDecoration: 'none' }}
-                            >
-                              <Eye size={14}/> View Screening
-                            </a>
-                            
                             {/* Dropdown status select for video screening */}
                             {matchedCandidate && (
                               <select
@@ -646,6 +626,25 @@ const VideoBot = () => {
                                 <option value="Rejected">Rejected</option>
                               </select>
                             )}
+                            <button 
+                              className="btn btn-outline" 
+                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', minWidth: '110px' }}
+                              onClick={() => {
+                                const url = `${NEXT_JS_URL}/share/${interview.share_token}`;
+                                copyToClipboard(url, `share-${interview.id}`);
+                              }}
+                            >
+                              {copiedId === `share-${interview.id}` ? "Copied!" : "Copy Share Link"}
+                            </button>
+                            <a 
+                              href={`${NEXT_JS_URL}/video-bot-admin/dashboard/interviews/${interview.id}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn btn-primary" 
+                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', textDecoration: 'none' }}
+                            >
+                              <Eye size={14}/> View Screening
+                            </a>
                           </>
                         ) : (
                           <button 

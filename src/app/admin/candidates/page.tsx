@@ -941,38 +941,28 @@ export default function CandidatesPage() {
             <form onSubmit={handleUploadResume}>
               <div className="form-group">
                 <label>Department</label>
-                <select 
-                  className="form-control" 
-                  value={uploadDept} 
-                  onChange={e => {
-                    setUploadDept(e.target.value);
+                <SearchableDropdown
+                  options={availableDepartments}
+                  value={uploadDept}
+                  onChange={(val) => {
+                    setUploadDept(val);
                     setUploadSubDept('');
                   }}
-                  required
-                >
-                  <option value="" disabled>Select Department</option>
-                  {availableDepartments.map(dept => (
-                    <option key={dept} value={dept}>{dept}</option>
-                  ))}
-                </select>
+                  placeholder="Select Department"
+                />
               </div>
               
               <div className="form-group">
                 <label>Sub Department</label>
-                <select 
-                  className="form-control" 
+                <SearchableDropdown
+                  options={uploadDept ? getSubDepartments(uploadDept) : []}
                   value={uploadSubDept}
                   disabled={!uploadDept}
-                  onChange={e => {
-                    setUploadSubDept(e.target.value);
+                  onChange={(val) => {
+                    setUploadSubDept(val);
                   }}
-                  required
-                >
-                  <option value="" disabled>Select Sub Department</option>
-                  {uploadDept && getSubDepartments(uploadDept).map(sd => (
-                    <option key={sd} value={sd}>{sd}</option>
-                  ))}
-                </select>
+                  placeholder="Select Sub Department"
+                />
               </div>
 
               <div className="form-group">
