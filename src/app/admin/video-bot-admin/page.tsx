@@ -490,7 +490,7 @@ const VideoBot = () => {
               <tr>
                 <th>Candidate</th>
                 <th>Sub-Department</th>
-                <th>Status</th>
+                <th>Screening Status</th>
                 <th>Approval Status</th>
                 <th>Remark</th>
                 <th>Actions</th>
