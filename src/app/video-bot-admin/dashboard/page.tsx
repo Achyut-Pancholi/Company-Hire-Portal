@@ -237,7 +237,7 @@ export default function DashboardPage() {
                       <Badge variant={status}>
                         {status === "completed" && <CheckCircle2 className="w-3 h-3" />}
                         {status === "pending" && <Clock className="w-3 h-3" />}
-                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                        {status === "completed" ? "Screening Completed" : status === "failed" ? "Screening Failed" : status === "expired" ? "Link Expired" : "Screening Pending"}
                       </Badge>
 
                       {/* Date */}

@@ -528,13 +528,13 @@ const VideoBot = () => {
                     </td>
                     <td>
                       {status === 'completed' ? (
-                        <span className="badge badge-success">Completed</span>
+                        <span className="badge badge-success">Screening Completed</span>
                       ) : status === 'failed' ? (
-                        <span className="badge badge-error" style={{ backgroundColor: '#fee2e2', color: '#b91c1c' }}>Failed</span>
+                        <span className="badge badge-error" style={{ backgroundColor: '#fee2e2', color: '#b91c1c' }}>Screening Failed</span>
                       ) : status === 'expired' ? (
-                         <span className="badge badge-error" style={{ backgroundColor: '#fee2e2', color: '#991b1b' }}>Expired</span>
+                         <span className="badge badge-error" style={{ backgroundColor: '#fee2e2', color: '#991b1b' }}>Link Expired</span>
                       ) : (
-                        <span className="badge badge-warning">Pending</span>
+                        <span className="badge badge-warning">Screening Pending</span>
                       )}
                     </td>
                     <td>
