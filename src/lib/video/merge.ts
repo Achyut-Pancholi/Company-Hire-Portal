@@ -66,24 +66,63 @@ export async function uploadClipToSupabase(
     return `https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4#q${questionIndex + 1}`;
   }
 
-  const formData = new FormData();
-  const file = new File([blob], `clip-q${questionIndex + 1}.webm`, { type: "video/webm" });
-  formData.append("video", file);
-  formData.append("interviewId", interviewId);
-  formData.append("questionIndex", String(questionIndex));
+  try {
+    const filename = `clip-q${questionIndex + 1}.webm`;
+    
+    // 1. Get signed upload URL
+    const directUrlRes = await fetch(`/api/upload-video?candidateId=${interviewId}&filename=${encodeURIComponent(filename)}`);
+    
+    if (!directUrlRes.ok) {
+      throw new Error(`Failed to get upload URL: ${directUrlRes.status}`);
+    }
+    
+    const directUrlData = await directUrlRes.json();
 
-  const response = await fetch("/api/upload-video", {
-    method: "POST",
-    body: formData,
-  });
+    if (directUrlData.success && directUrlData.directUpload) {
+      // 2. Direct upload to Supabase
+      const publicUrl = await new Promise<string>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", directUrlData.uploadUrl, true);
+        xhr.setRequestHeader("Content-Type", "video/webm");
 
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({ error: "Upload failed" }));
-    throw new Error(`Clip upload failed (Q${questionIndex + 1}): ${JSON.stringify(err)}`);
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(directUrlData.publicUrl);
+          } else {
+            reject(new Error(`Direct upload failed: ${xhr.status} - ${xhr.responseText || 'No response'}`));
+          }
+        };
+
+        xhr.onerror = () => reject(new Error("Network error during direct upload to storage"));
+        xhr.send(blob);
+      });
+
+      return publicUrl;
+    } else {
+      // 3. Fallback to POST
+      const formData = new FormData();
+      const file = new File([blob], filename, { type: "video/webm" });
+      formData.append("video", file);
+      formData.append("interviewId", interviewId);
+      formData.append("questionIndex", String(questionIndex));
+
+      const response = await fetch("/api/upload-video", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: "Upload failed" }));
+        throw new Error(`Clip upload failed (Q${questionIndex + 1}): ${JSON.stringify(err)}`);
+      }
+
+      const data = await response.json();
+      return data.videoUrl;
+    }
+  } catch (err: any) {
+    console.error("uploadClipToSupabase error:", err);
+    throw err;
   }
-
-  const data = await response.json();
-  return data.videoUrl;
 }
 
 export function blobToDataUrl(blob: Blob): Promise<string> {
