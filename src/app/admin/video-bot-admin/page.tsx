@@ -485,7 +485,16 @@ const VideoBot = () => {
           <h3 className="card-title">Common Screening Questions</h3>
         </div>
         <div className="table-container" style={{ border: 'none', borderRadius: '0', overflowX: 'auto' }}>
-          <table className="table" style={{ minWidth: '1100px' }}>
+          <style>{`
+            .compact-table th, .compact-table td {
+              padding: 0.5rem 0.5rem !important;
+              font-size: 0.8rem !important;
+            }
+            .compact-table th {
+              font-size: 0.65rem !important;
+            }
+          `}</style>
+          <table className="table compact-table" style={{ width: '100%', minWidth: '920px', tableLayout: 'auto' }}>
             <thead>
               <tr>
                 <th>Candidate</th>
@@ -515,7 +524,8 @@ const VideoBot = () => {
                   const matchesName = c.name && interview.candidate_name && cleanName(c.name) === cleanName(interview.candidate_name);
                   return matchesEmail || matchesName;
                 });
-                const videoStageStatus = matchedCandidate?.videoStatus ?? matchedCandidate?.video_status ?? 'Pending';
+                const rawVideoStatus = matchedCandidate?.videoStatus ?? matchedCandidate?.video_status ?? 'Pending';
+                const videoStageStatus = (rawVideoStatus === 'Completed' || rawVideoStatus === 'Pending' || rawVideoStatus === 'Under Review') ? 'Pending' : rawVideoStatus;
 
                 return (
                   <tr key={interview.id}>
@@ -589,7 +599,7 @@ const VideoBot = () => {
                       })()}
                     </td>
                     <td>
-                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
                         {status === 'completed' ? (
                           <>
                             {/* Dropdown status select for video screening */}
@@ -597,7 +607,7 @@ const VideoBot = () => {
                               <select
                                 value={(() => {
                                   const status = matchedCandidate.videoStatus || matchedCandidate.video_status || 'Pending';
-                                  return (status === 'Pending' || status === 'Under Review') ? 'Pending' : status;
+                                  return (status === 'Pending' || status === 'Under Review' || status === 'Completed') ? 'Pending' : status;
                                 })()}
                                 onChange={(e) => {
                                   const val = e.target.value;
@@ -611,8 +621,8 @@ const VideoBot = () => {
                                 }}
                                 disabled={actionLoading === matchedCandidate.id}
                                 style={{
-                                  padding: '4px 8px',
-                                  fontSize: '0.75rem',
+                                  padding: '3px 6px',
+                                  fontSize: '0.7rem',
                                   borderRadius: '6px',
                                   border: '1px solid var(--gray-300)',
                                   background: '#fff',
@@ -628,40 +638,40 @@ const VideoBot = () => {
                             )}
                             <button 
                               className="btn btn-outline" 
-                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', minWidth: '110px' }}
+                              style={{ padding: '0.2rem 0.4rem', fontSize: '0.7rem' }}
                               onClick={() => {
                                 const url = `${NEXT_JS_URL}/share/${interview.share_token}`;
                                 copyToClipboard(url, `share-${interview.id}`);
                               }}
                             >
-                              {copiedId === `share-${interview.id}` ? "Copied!" : "Copy Share Link"}
+                              {copiedId === `share-${interview.id}` ? "Copied!" : "Copy Link"}
                             </button>
                             <a 
                               href={`${NEXT_JS_URL}/video-bot-admin/dashboard/interviews/${interview.id}`}
                               target="_blank"
                               rel="noreferrer"
                               className="btn btn-primary" 
-                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', textDecoration: 'none' }}
+                              style={{ padding: '0.2rem 0.4rem', fontSize: '0.7rem', textDecoration: 'none' }}
                             >
-                              <Eye size={14}/> View Screening
+                              <Eye size={12}/> View
                             </a>
                           </>
                         ) : (
                           <button 
                             className="btn btn-outline" 
-                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', minWidth: '110px' }}
+                            style={{ padding: '0.2rem 0.4rem', fontSize: '0.7rem' }}
                             onClick={() => {
                               const url = `${NEXT_JS_URL}/interview/${interview.id}`;
                               copyToClipboard(url, `invite-${interview.id}`);
                             }}
                           >
-                            {copiedId === `invite-${interview.id}` ? "Copied!" : "Copy Invite Link"}
+                            {copiedId === `invite-${interview.id}` ? "Copied!" : "Copy Link"}
                           </button>
                         )}
                         <button 
                           className="btn btn-ghost" 
                           title="Delete Screening" 
-                          style={{ padding: '0.25rem', color: 'var(--danger)' }}
+                          style={{ padding: '0.2rem', color: 'var(--danger)' }}
                           onClick={() => handleDeleteInterview(interview.id)}
                         >
                           <Trash2 size={16} />

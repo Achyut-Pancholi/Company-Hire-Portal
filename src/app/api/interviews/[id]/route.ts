@@ -217,33 +217,71 @@ Respond ONLY with the JSON object.`
       try {
         const videoScore = Math.round(80 + Math.random() * 15);
         
-        // Fetch current extracted_data first to prevent overwriting
-        const { data: cand } = await supabase
+        // Fetch matching candidates
+        const { data: existingCandidates } = await supabase
           .from("candidates")
-          .select("extracted_data")
-          .ilike("email", data.candidate_email.trim())
-          .single();
-
-        const currentExt = cand?.extracted_data || {};
-        const updatedExt = {
-          ...currentExt,
-          videoUrl: data.video_url
-        };
-
-        const { error: syncError } = await supabase
-          .from("candidates")
-          .update({
-            video_status: "Completed",
-            video_score: videoScore,
-            stage: "Technical Scheduler",
-            extracted_data: updatedExt
-          })
+          .select("id, extracted_data")
           .ilike("email", data.candidate_email.trim());
-        
-        if (syncError) {
-          console.error("Failed to sync candidate completion status in candidates table:", syncError);
+
+        const candidateExists = existingCandidates && existingCandidates.length > 0;
+
+        if (candidateExists) {
+          const candidate = existingCandidates[0];
+          const currentExt = candidate.extracted_data || {};
+          const updatedExt = {
+            ...currentExt,
+            videoUrl: data.video_url
+          };
+
+          const { error: syncError } = await supabase
+            .from("candidates")
+            .update({
+              video_status: "Completed",
+              video_score: videoScore,
+              stage: "Technical Scheduler",
+              extracted_data: updatedExt
+            })
+            .eq("id", candidate.id);
+
+          if (syncError) {
+            console.error("Failed to sync candidate completion status in candidates table:", syncError);
+          } else {
+            console.log(`Synced candidate ${data.candidate_email} status to Completed`);
+          }
         } else {
-          console.log(`Synced candidate ${data.candidate_email} status to Completed`);
+          // If candidate does not exist, auto-create them in candidates table
+          const { data: jobs } = await supabase
+            .from("jobs")
+            .select("*");
+          const matchedJob = (jobs || []).find(j => 
+            j.department === data.department && 
+            j.sub_department === data.sub_department
+          );
+          const resolvedRole = matchedJob ? matchedJob.title : data.sub_department;
+          const jobId = matchedJob ? matchedJob.id : null;
+
+          const { error: insertError } = await supabase
+            .from("candidates")
+            .insert({
+              name: data.candidate_name,
+              email: data.candidate_email,
+              job_applied: resolvedRole,
+              job_id: jobId,
+              resume_status: 'Parsed',
+              form_status: 'N/A',
+              video_status: 'Completed',
+              video_score: videoScore,
+              tech_status: 'Pending',
+              report_status: 'Not Shared',
+              stage: 'Technical Scheduler',
+              extracted_data: { videoUrl: data.video_url }
+            });
+
+          if (insertError) {
+            console.error("Failed to auto-create candidate record:", insertError);
+          } else {
+            console.log(`Auto-created missing candidate record for ${data.candidate_name}`);
+          }
         }
       } catch (dbErr) {
         console.error("Failed to sync candidate completion status:", dbErr);
