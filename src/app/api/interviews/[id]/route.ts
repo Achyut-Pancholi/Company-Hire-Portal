@@ -116,12 +116,13 @@ export async function PATCH(
                     role: "system", 
                     content: `You are an expert HR recruiter. Analyze the following interview transcript and return a JSON object with two keys:
 1. "summary": A concise 3-4 bullet point summary highlighting the candidate's key qualifications, experience, and communication style. Use markdown bullet points.
-2. "scores": An object containing ratings out of 5 for "Communication", "Clarity", "Confidence", and "Relevance". Example: {"Communication": 4, "Clarity": 5, "Confidence": 3, "Relevance": 4}.
+2. "scores": An object containing ratings from 0 to 5 for "Communication", "Clarity", "Confidence", and "Relevance". Example: {"Communication": 4, "Clarity": 5, "Confidence": 0, "Relevance": 2}.
 
 CRITICAL INSTRUCTIONS:
 - You MUST evaluate strictly based ONLY on the provided transcript text.
-- If the transcript is mostly empty, shows only background noise (like 'you', 'um', 'thank you'), or the candidate is effectively silent, you MUST give a score of 1 out of 5 for all metrics.
-- The summary must clearly state that the candidate was silent and did not provide substantive answers.
+- You can and SHOULD give a score of 0 for any criteria if the candidate demonstrates very poor performance, lacks any relevant substance, or completely fails to answer properly.
+- If the transcript is mostly empty, shows only background noise (like 'you', 'um', 'thank you'), or the candidate is effectively silent, you MUST give a score of 0 for all metrics.
+- The summary must clearly state if the candidate was silent or performed very poorly.
 Respond ONLY with the JSON object.` 
                   },
                   { role: "user", content: fullText }
@@ -218,19 +219,19 @@ Respond ONLY with the JSON object.`
     // Sync status in candidates table when interview is completed
     if (body.status === "completed" && data) {
       try {
-        let videoScore = 20; // Default baseline if silent
+        let videoScore = 0; // Default baseline if silent
         if (data && data.scores) {
           const s = data.scores as any;
-          const comm = Number(s.Communication) || 1;
-          const clar = Number(s.Clarity) || 1;
-          const conf = Number(s.Confidence) || 1;
-          const rel = Number(s.Relevance) || 1;
+          const comm = s.Communication !== undefined ? Number(s.Communication) : 0;
+          const clar = s.Clarity !== undefined ? Number(s.Clarity) : 0;
+          const conf = s.Confidence !== undefined ? Number(s.Confidence) : 0;
+          const rel = s.Relevance !== undefined ? Number(s.Relevance) : 0;
           const total = comm + clar + conf + rel;
           // Convert sum out of 20 to a percentage out of 100
           videoScore = Math.round((total / 20) * 100);
         } else if (body.status === "completed") {
           // If completion but no scores available for some reason
-          videoScore = 10;
+          videoScore = 0;
         }
         
         // Fetch matching candidates
