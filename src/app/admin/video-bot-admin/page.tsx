@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Video, PlayCircle, Eye, CheckCircle, XCircle, Send, Trash2, Loader2, Mail, CheckSquare, XSquare, MessageSquare } from 'lucide-react';
+import { Video, PlayCircle, Eye, CheckCircle, XCircle, Send, Trash2, Loader2, Mail, CheckSquare, XSquare, MessageSquare, Share } from 'lucide-react';
 import { useAppContext } from '@/components/admin/context/AppContext';
 import Pagination from '@/components/admin/Pagination';
 import SearchableDropdown from '@/components/admin/SearchableDropdown';
@@ -636,36 +636,36 @@ const VideoBot = () => {
                                 <option value="Rejected">Rejected</option>
                               </select>
                             )}
-                            <button 
-                              className="btn btn-outline" 
-                              style={{ padding: '0.2rem 0.4rem', fontSize: '0.7rem' }}
-                              onClick={() => {
-                                const url = `${NEXT_JS_URL}/share/${interview.share_token}`;
-                                copyToClipboard(url, `share-${interview.id}`);
-                              }}
-                            >
-                              {copiedId === `share-${interview.id}` ? "Copied!" : "Copy Link"}
-                            </button>
                             <a 
                               href={`${NEXT_JS_URL}/video-bot-admin/dashboard/interviews/${interview.id}`}
                               target="_blank"
                               rel="noreferrer"
                               className="btn btn-primary" 
-                              style={{ padding: '0.2rem 0.4rem', fontSize: '0.7rem', textDecoration: 'none' }}
+                              style={{ padding: '0.2rem 0.4rem', fontSize: '0.7rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                             >
                               <Eye size={12}/> View
                             </a>
+                            <button 
+                              className="btn btn-outline" 
+                              style={{ padding: '0.2rem 0.4rem', fontSize: '0.7rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                              onClick={() => {
+                                const url = `${NEXT_JS_URL}/share/${interview.share_token}`;
+                                copyToClipboard(url, `share-${interview.id}`);
+                              }}
+                            >
+                              {copiedId === `share-${interview.id}` ? "Copied!" : <><Share size={12} /> Generate Share Link</>}
+                            </button>
                           </>
                         ) : (
                           <button 
                             className="btn btn-outline" 
-                            style={{ padding: '0.2rem 0.4rem', fontSize: '0.7rem' }}
+                            style={{ padding: '0.2rem 0.4rem', fontSize: '0.7rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                             onClick={() => {
                               const url = `${NEXT_JS_URL}/interview/${interview.id}`;
                               copyToClipboard(url, `invite-${interview.id}`);
                             }}
                           >
-                            {copiedId === `invite-${interview.id}` ? "Copied!" : "Copy Link"}
+                            {copiedId === `invite-${interview.id}` ? "Copied!" : <><Share size={12} /> Copy Link</>}
                           </button>
                         )}
                         <button 
