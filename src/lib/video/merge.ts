@@ -26,24 +26,56 @@ export async function uploadVideoToSupabase(
   }
 
   try {
-    const formData = new FormData();
-    // Convert blob to File object so next.js request can parse it as a file
-    const file = new File([blob], "final-interview.webm", { type: "video/webm" });
-    formData.append("video", file);
-    formData.append("interviewId", interviewId);
-
-    const response = await fetch("/api/interviews/upload", {
-      method: "POST",
-      body: formData
-    });
-
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error || "Upload failed");
+    // 1. Get signed upload URL
+    const directUrlRes = await fetch(`/api/interviews/upload?interviewId=${interviewId}`);
+    
+    if (!directUrlRes.ok) {
+      throw new Error(`Failed to get upload URL: ${directUrlRes.status}`);
     }
+    
+    const directUrlData = await directUrlRes.json();
 
-    const data = await response.json();
-    return data.videoUrl;
+    if (directUrlData.success && directUrlData.directUpload) {
+      // 2. Direct upload to Supabase
+      const publicUrl = await new Promise<string>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", directUrlData.uploadUrl, true);
+        xhr.setRequestHeader("Content-Type", "video/webm");
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(directUrlData.publicUrl);
+          } else {
+            reject(new Error(`Direct upload failed: ${xhr.status} - ${xhr.responseText || 'No response'}`));
+          }
+        };
+
+        xhr.onerror = () => reject(new Error("Network error during direct upload to storage"));
+        xhr.send(blob);
+      });
+
+      return publicUrl;
+    } else {
+      // 3. Fallback to POST
+      const formData = new FormData();
+      // Convert blob to File object so next.js request can parse it as a file
+      const file = new File([blob], "final-interview.webm", { type: "video/webm" });
+      formData.append("video", file);
+      formData.append("interviewId", interviewId);
+
+      const response = await fetch("/api/interviews/upload", {
+        method: "POST",
+        body: formData
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || "Upload failed");
+      }
+
+      const data = await response.json();
+      return data.videoUrl;
+    }
   } catch (error: any) {
     console.error("Failed to upload video to API route:", error);
     // If it fails, fallback to direct upload just in case, or throw

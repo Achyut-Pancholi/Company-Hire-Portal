@@ -3,6 +3,44 @@ import { getServiceSupabase } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const interviewId = searchParams.get('interviewId');
+
+    if (!interviewId) {
+      return NextResponse.json({ error: 'interviewId is required' }, { status: 400 });
+    }
+
+    const supabase = getServiceSupabase();
+    const filename = `interviews/${interviewId}/final-interview.webm`;
+
+    const { data, error } = await supabase.storage
+      .from("interview-recordings")
+      .createSignedUploadUrl(filename);
+
+    if (error || !data) {
+      console.error('Failed to create signed upload URL:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    const publicUrlData = supabase.storage
+      .from("interview-recordings")
+      .getPublicUrl(filename);
+
+    return NextResponse.json({
+      success: true,
+      directUpload: true,
+      uploadUrl: data.signedUrl,
+      publicUrl: publicUrlData.data?.publicUrl || "",
+      videoUrl: publicUrlData.data?.publicUrl || ""
+    });
+  } catch (error: any) {
+    console.error("GET Upload Error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
