@@ -227,7 +227,8 @@ STRICT QUALITY CONSTRAINTS:
 3. Leadership Score increases ONLY if there are examples of ownership, mentoring, decisions, or team leading.
 4. Confidence and Communication scores must analyze hesitations and clarity.
 5. Key observations/signals/indicators MUST NOT use generic placeholders or generic praise like "strong candidate" or "good communication" without specific transcript evidence.
-6. The JSON structure MUST be strictly followed. Do not wrap in markdown blocks.`;
+6. The JSON structure MUST be strictly followed. Do not wrap in markdown blocks.
+7. CRITICAL: If the transcript is mostly empty, shows only background noise (like 'you', 'um', 'thank you', 'okay'), or the candidate is effectively silent, you MUST give a score of 0 for ALL metrics (communication, technical, problemSolving, leadership, confidence, professionalism).`;
 
   try {
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {

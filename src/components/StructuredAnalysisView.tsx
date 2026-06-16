@@ -62,6 +62,12 @@ export function StructuredAnalysisView({ text }: { text: string | any }) {
            });
         });
 
+        // Filter out nonsense lines that lack actual words (e.g. JSON artifacts, quotes, commas)
+        finalData = finalData.filter(item => {
+           const alphanumeric = item.replace(/[^a-zA-Z0-9]/g, '');
+           return alphanumeric.length > 2; // Require at least a couple of letters/numbers
+        });
+
         const positiveWords = ['good', 'great', 'excellent', 'strong', 'well', 'impressive', 'demonstrated', 'proficient', 'clear', 'effective', 'ability', 'positive'];
         const negativeWords = ['failed', 'lack', 'difficulty', 'require', 'weak', 'poor', 'bad', 'needs', 'not', 'unable', 'struggled', 'missed', 'unclear', 'necessary'];
         
@@ -92,6 +98,13 @@ export function StructuredAnalysisView({ text }: { text: string | any }) {
             summaryText = data.summary;
           }
         }
+        
+        // Clean up arrays from any nonsense string values
+        const cleanArray = (arr: any[]) => arr.filter(i => typeof i === 'string' && i.replace(/[^a-zA-Z0-9]/g, '').length > 2);
+        pros = cleanArray(pros);
+        cons = cleanArray(cons);
+        okok = cleanArray(okok);
+        summaryList = cleanArray(summaryList);
       }
       
       // Fallback if the JSON didn't have structured arrays but had text
@@ -105,13 +118,19 @@ export function StructuredAnalysisView({ text }: { text: string | any }) {
       let currentSection = "summary";
       
       lines.forEach(line => {
-        const trimmed = line.trim();
+        let trimmed = line.trim();
         if (!trimmed) return;
         
         // Filter out JSON artifacts that leaked into the text if parsing completely failed
         if (/^[\[\]{}],?$/.test(trimmed) || /^"[a-zA-Z0-9_]+"\s*:\s*([\[{]|[\d.]+,?|true,?|false,?|null,?|"[^"]*",?)$/.test(trimmed)) {
           return;
         }
+
+        // Clean up leftover quotes and commas from bad JSON strings
+        trimmed = trimmed.replace(/^["',]+|["',]+$/g, '').trim();
+
+        const alphanumeric = trimmed.replace(/[^a-zA-Z0-9]/g, '');
+        if (alphanumeric.length <= 2) return;
 
         const lower = trimmed.toLowerCase();
         if (lower.startsWith('pros:') || lower.startsWith('strengths:') || lower === 'pros' || lower === 'strengths' || lower === 'pros / strengths' || lower === 'pros / strengths:') {

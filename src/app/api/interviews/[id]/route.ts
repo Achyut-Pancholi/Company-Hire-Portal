@@ -118,7 +118,10 @@ export async function PATCH(
 1. "summary": A concise 3-4 bullet point summary highlighting the candidate's key qualifications, experience, and communication style. Use markdown bullet points.
 2. "scores": An object containing ratings out of 5 for "Communication", "Clarity", "Confidence", and "Relevance". Example: {"Communication": 4, "Clarity": 5, "Confidence": 3, "Relevance": 4}.
 
-CRITICAL INSTRUCTION: If the transcript is mostly empty, shows only background noise (like 'you', 'um', 'thank you'), or the candidate is effectively silent, you MUST give a score of 1 out of 5 for all metrics. The summary must clearly state that the candidate was silent and did not provide substantive answers.
+CRITICAL INSTRUCTIONS:
+- You MUST evaluate strictly based ONLY on the provided transcript text.
+- If the transcript is mostly empty, shows only background noise (like 'you', 'um', 'thank you'), or the candidate is effectively silent, you MUST give a score of 1 out of 5 for all metrics.
+- The summary must clearly state that the candidate was silent and did not provide substantive answers.
 Respond ONLY with the JSON object.` 
                   },
                   { role: "user", content: fullText }
@@ -215,7 +218,20 @@ Respond ONLY with the JSON object.`
     // Sync status in candidates table when interview is completed
     if (body.status === "completed" && data) {
       try {
-        const videoScore = Math.round(80 + Math.random() * 15);
+        let videoScore = 20; // Default baseline if silent
+        if (data && data.scores) {
+          const s = data.scores as any;
+          const comm = Number(s.Communication) || 1;
+          const clar = Number(s.Clarity) || 1;
+          const conf = Number(s.Confidence) || 1;
+          const rel = Number(s.Relevance) || 1;
+          const total = comm + clar + conf + rel;
+          // Convert sum out of 20 to a percentage out of 100
+          videoScore = Math.round((total / 20) * 100);
+        } else if (body.status === "completed") {
+          // If completion but no scores available for some reason
+          videoScore = 10;
+        }
         
         // Fetch matching candidates
         const { data: existingCandidates } = await supabase
