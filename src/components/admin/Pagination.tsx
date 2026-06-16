@@ -15,8 +15,8 @@ export default function Pagination({ currentPage, totalPages, onPageChange, tota
   const endItem = totalCount ? Math.min(currentPage * (pageSize || 20), totalCount) : '-';
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', padding: '10px 0', borderTop: '1px solid var(--border-color)' }}>
-      <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', padding: '10px 0', borderTop: '1px solid var(--border, #e2e8f0)' }}>
+      <div style={{ color: 'var(--text-muted, #64748b)', fontSize: '0.9rem' }}>
         {totalCount !== undefined ? (
           <span>Showing {startItem} to {endItem} of {totalCount} entries</span>
         ) : (
@@ -31,9 +31,9 @@ export default function Pagination({ currentPage, totalPages, onPageChange, tota
           style={{
             padding: '6px 12px',
             borderRadius: '6px',
-            border: '1px solid var(--border-color)',
-            background: currentPage <= 1 ? 'var(--bg-muted)' : 'var(--bg-surface)',
-            color: currentPage <= 1 ? 'var(--text-muted)' : 'var(--text-primary)',
+            border: '1px solid var(--border, #e2e8f0)',
+            background: currentPage <= 1 ? 'var(--gray-100, #f1f5f9)' : 'var(--surface, #ffffff)',
+            color: currentPage <= 1 ? 'var(--text-muted, #64748b)' : 'var(--text-main, #1e293b)',
             cursor: currentPage <= 1 ? 'not-allowed' : 'pointer'
           }}
         >
@@ -54,9 +54,9 @@ export default function Pagination({ currentPage, totalPages, onPageChange, tota
                 style={{
                   padding: '6px 12px',
                   borderRadius: '6px',
-                  border: page === currentPage ? '1px solid var(--primary-color)' : '1px solid var(--border-color)',
-                  background: page === currentPage ? 'var(--primary-color)' : 'var(--bg-surface)',
-                  color: page === currentPage ? '#fff' : 'var(--text-primary)',
+                  border: page === currentPage ? '1px solid var(--primary, #0D9488)' : '1px solid var(--border, #e2e8f0)',
+                  background: page === currentPage ? 'var(--primary, #0D9488)' : 'var(--surface, #ffffff)',
+                  color: page === currentPage ? '#fff' : 'var(--text-main, #1e293b)',
                   cursor: 'pointer',
                   fontWeight: page === currentPage ? 'bold' : 'normal'
                 }}
@@ -68,7 +68,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange, tota
             page === currentPage - 2 ||
             page === currentPage + 2
           ) {
-            return <span key={page} style={{ padding: '6px 4px', color: 'var(--text-muted)' }}>...</span>;
+            return <span key={page} style={{ padding: '6px 4px', color: 'var(--text-muted, #64748b)' }}>...</span>;
           }
           return null;
         })}
@@ -79,9 +79,9 @@ export default function Pagination({ currentPage, totalPages, onPageChange, tota
           style={{
             padding: '6px 12px',
             borderRadius: '6px',
-            border: '1px solid var(--border-color)',
-            background: currentPage >= totalPages ? 'var(--bg-muted)' : 'var(--bg-surface)',
-            color: currentPage >= totalPages ? 'var(--text-muted)' : 'var(--text-primary)',
+            border: '1px solid var(--border, #e2e8f0)',
+            background: currentPage >= totalPages ? 'var(--gray-100, #f1f5f9)' : 'var(--surface, #ffffff)',
+            color: currentPage >= totalPages ? 'var(--text-muted, #64748b)' : 'var(--text-main, #1e293b)',
             cursor: currentPage >= totalPages ? 'not-allowed' : 'pointer'
           }}
         >
