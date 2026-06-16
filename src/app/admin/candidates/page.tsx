@@ -201,10 +201,6 @@ export default function CandidatesPage() {
       return () => {
         supabase.removeChannel(channel);
       };
-    } else {
-      // Fallback polling every 5 seconds if mock/disabled
-      const interval = setInterval(triggerFetch, 5000);
-      return () => clearInterval(interval);
     }
   }, [currentPage, pageSize, debouncedSearch, selectedDept, selectedSubDept, refreshCandidates]);
 
