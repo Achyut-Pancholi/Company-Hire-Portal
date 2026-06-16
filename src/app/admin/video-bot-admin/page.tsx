@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Video, PlayCircle, Eye, CheckCircle, XCircle, Send, Trash2, Loader2, Mail, CheckSquare, XSquare, MessageSquare, Share } from 'lucide-react';
 import { useAppContext } from '@/components/admin/context/AppContext';
+import { createClient } from '@/lib/supabase/client';
 import Pagination from '@/components/admin/Pagination';
 import SearchableDropdown from '@/components/admin/SearchableDropdown';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -64,9 +65,45 @@ const VideoBot = () => {
   // Copied indicator state
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  // Fetch interviews and subscribe to realtime changes (with a polling fallback)
   useEffect(() => {
-    fetchInterviews(currentPage, debouncedSearch);
-  }, [currentPage, debouncedSearch]);
+    const triggerFetch = () => {
+      fetchInterviews(currentPage, debouncedSearch);
+      refreshCandidates(); // Also keep context candidates in sync
+    };
+
+    // Initial fetch
+    triggerFetch();
+
+    // Set up realtime listener
+    const supabase = createClient();
+    if (supabase && typeof supabase.channel === 'function') {
+      const channel = supabase
+        .channel('interviews-realtime-page')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'interviews' },
+          () => {
+            triggerFetch();
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'candidates' },
+          () => {
+            triggerFetch();
+          }
+        )
+        .subscribe();
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } else {
+      // Fallback polling every 5 seconds if mock/disabled
+      const interval = setInterval(triggerFetch, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [currentPage, debouncedSearch, refreshCandidates]);
 
   // Reset to page 1 when search changes
   useEffect(() => {

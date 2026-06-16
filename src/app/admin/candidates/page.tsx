@@ -9,6 +9,7 @@ import SearchableDropdown from '@/components/admin/SearchableDropdown';
 import { useDebounce } from '@/hooks/useDebounce';
 import { SchedulerProvider } from '../modules/scheduler/store/schedulerReducer.js';
 import dynamic from 'next/dynamic';
+import { createClient } from '@/lib/supabase/client';
 
 const SchedulerApp = dynamic(
   () => import('../modules/scheduler/index').then((mod) => mod.SchedulerApp),
@@ -175,9 +176,37 @@ export default function CandidatesPage() {
     return subDepts.length > 0 ? subDepts : ['General'];
   };
 
+  // Fetch candidates and set up realtime updates subscription with a polling fallback
   useEffect(() => {
-    refreshCandidates(currentPage, pageSize, debouncedSearch, selectedDept, selectedSubDept);
-  }, [currentPage, debouncedSearch, selectedDept, selectedSubDept]);
+    const triggerFetch = () => {
+      refreshCandidates(currentPage, pageSize, debouncedSearch, selectedDept, selectedSubDept);
+    };
+
+    // Initial fetch
+    triggerFetch();
+
+    // Set up realtime listener
+    const supabase = createClient();
+    if (supabase && typeof supabase.channel === 'function') {
+      const channel = supabase
+        .channel('candidates-realtime-page')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'candidates' },
+          () => {
+            triggerFetch();
+          }
+        )
+        .subscribe();
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } else {
+      // Fallback polling every 5 seconds if mock/disabled
+      const interval = setInterval(triggerFetch, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [currentPage, pageSize, debouncedSearch, selectedDept, selectedSubDept, refreshCandidates]);
 
   // Reset to page 1 when search or filters change
   useEffect(() => {
